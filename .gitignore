@@ -21,7 +21,8 @@ backend/override.tf.json
 backend/*_override.tf
 backend/*_override.tf.json
 backend/secrets.auto.tfvars
-backend/localstack-tf
+backend/localstack-provider.tf
+backend/tplan
 
 # Lambda deployment packages
 backend/modules/cold-path/lambda_package.zip

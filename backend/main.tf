@@ -14,8 +14,13 @@ terraform {
   # Backend configuration for AWS
   # For LocalStack: use `terraform init -backend=false`
   # For AWS: use `terraform init -backend-config=environments/{env}/backend.tfvars`
-
-
+  backend "s3" {                                                                                                                                   
+    bucket         = "${var.project_name}-terraform-state-${var.environment}"
+    key            = "${var.project_name}/terraform.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "${var.project_name}-terraform-locks"
+    encrypt        = true
+  }
 }
 
 # Provider configuration is in localstack-provider.tf
