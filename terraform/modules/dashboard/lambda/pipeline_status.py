@@ -4,27 +4,31 @@ Queries DynamoDB, Kinesis, and SQS to provide pipeline status information
 """
 import json
 import os
-import logging
 from datetime import datetime, timedelta
 from typing import Dict, Any
 import boto3
 from botocore.exceptions import ClientError
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+# AWS Lambda Powertools
+from aws_lambda_powertools import Logger, Tracer, Metrics
+
+# Environment variables
+PROJECT_NAME = os.environ['PROJECT_NAME']
+DYNAMODB_TABLE_NAME = os.environ['DYNAMODB_TABLE_NAME']
+KINESIS_STREAM_NAME = os.environ['KINESIS_STREAM_NAME']
+SQS_QUEUE_URL = os.environ['SQS_QUEUE_URL']
+ENVIRONMENT = os.environ['ENVIRONMENT']
+
+# Initialize Powertools
+logger = Logger(service=f"{PROJECT_NAME}-pipeline-status")
+tracer = Tracer(service=f"{PROJECT_NAME}-pipeline-status")
+metrics = Metrics(namespace=f"{PROJECT_NAME.title()}/Dashboard", service="pipeline-status")
 
 # Initialize AWS clients
 dynamodb = boto3.client('dynamodb')
 kinesis = boto3.client('kinesis')
 sqs = boto3.client('sqs')
 cloudwatch = boto3.client('cloudwatch')
-
-# Environment variables
-DYNAMODB_TABLE_NAME = os.environ.get('DYNAMODB_TABLE_NAME', '')
-KINESIS_STREAM_NAME = os.environ.get('KINESIS_STREAM_NAME', '')
-SQS_QUEUE_URL = os.environ.get('SQS_QUEUE_URL', '')
-PROJECT_NAME = os.environ.get('PROJECT_NAME', '')
-ENVIRONMENT = os.environ.get('ENVIRONMENT', '')
 
 # Constants
 TOTAL_GITHUB_REPOS = 500_000_000  # 500M repositories target
@@ -230,7 +234,7 @@ def get_scrubber_path_status() -> Dict[str, Any]:
             Namespace='AWS/Lambda',
             MetricName='Invocations',
             Dimensions=[
-                {'Name': 'FunctionName', 'Value': f'{ENVIRONMENT}-{project_name}-pinger'}
+                {'Name': 'FunctionName', 'Value': f'{ENVIRONMENT}-{PROJECT_NAME}-pinger'}
             ],
             StartTime=start_time,
             EndTime=end_time,
@@ -269,13 +273,14 @@ def get_scrubber_path_status() -> Dict[str, Any]:
         }
 
 
+@logger.inject_lambda_context(log_event=True)
+@tracer.capture_lambda_handler
+@metrics.log_metrics(capture_cold_start_metric=True)
 def lambda_handler(event, context):
     """
     API Gateway handler for /api/pipeline-status endpoint
     Returns status of Cold Path, Hot Path, and Scrubber Path pipelines
     """
-    logger.info(f"Received event: {json.dumps(event)}")
-    
     try:
         # Query all pipeline statuses
         cold_path = get_cold_path_status()

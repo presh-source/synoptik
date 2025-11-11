@@ -4,7 +4,6 @@ Queries OpenSearch for trending repositories and real-time metrics
 """
 import json
 import os
-import logging
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 from urllib.parse import urlparse
@@ -12,13 +11,19 @@ import boto3
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from requests_aws4auth import AWS4Auth
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+# AWS Lambda Powertools
+from aws_lambda_powertools import Logger, Tracer, Metrics
 
 # Environment variables
-OPENSEARCH_ENDPOINT = os.environ.get('OPENSEARCH_ENDPOINT', '')
-ENVIRONMENT = os.environ.get('ENVIRONMENT', '')
-AWS_REGION = os.environ.get('AWS_REGION', '')
+PROJECT_NAME = os.environ['PROJECT_NAME']
+OPENSEARCH_ENDPOINT = os.environ['OPENSEARCH_ENDPOINT']
+ENVIRONMENT = os.environ['ENVIRONMENT']
+AWS_REGION = os.environ['AWS_REGION']
+
+# Initialize Powertools
+logger = Logger(service=f"{PROJECT_NAME}-realtime-metrics")
+tracer = Tracer(service=f"{PROJECT_NAME}-realtime-metrics")
+metrics = Metrics(namespace=f"{PROJECT_NAME.title()}/Dashboard", service="realtime-metrics")
 
 # Initialize AWS credentials for OpenSearch
 credentials = boto3.Session().get_credentials()
@@ -334,13 +339,14 @@ def get_total_repositories(language_filter: Optional[str] = None,
         return 0
 
 
+@logger.inject_lambda_context(log_event=True)
+@tracer.capture_lambda_handler
+@metrics.log_metrics(capture_cold_start_metric=True)
 def lambda_handler(event, context):
     """
     API Gateway handler for /api/metrics/realtime and /api/metrics/trending endpoints
     Returns real-time metrics from OpenSearch
     """
-    logger.info(f"Received event: {json.dumps(event)}")
-    
     try:
         # Get path to determine which endpoint was called
         path = event.get('path', '')

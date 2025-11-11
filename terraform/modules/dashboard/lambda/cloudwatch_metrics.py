@@ -4,22 +4,26 @@ Fetches CloudWatch metrics for all pipelines
 """
 import json
 import os
-import logging
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 import boto3
 from botocore.exceptions import ClientError
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+# AWS Lambda Powertools
+from aws_lambda_powertools import Logger, Tracer, Metrics
+
+# Environment variables
+PROJECT_NAME = os.environ['PROJECT_NAME']
+ENVIRONMENT = os.environ['ENVIRONMENT']
+
+# Initialize Powertools
+logger = Logger(service=f"{PROJECT_NAME}-cloudwatch-metrics")
+tracer = Tracer(service=f"{PROJECT_NAME}-cloudwatch-metrics")
+metrics = Metrics(namespace=f"{PROJECT_NAME.title()}/Dashboard", service="cloudwatch-metrics")
 
 # Initialize AWS clients
 cloudwatch = boto3.client('cloudwatch')
 lambda_client = boto3.client('lambda')
-
-# Environment variables
-PROJECT_NAME = os.environ.get('PROJECT_NAME', '')
-ENVIRONMENT = os.environ.get('ENVIRONMENT', '')
 
 # Lambda function names by pipeline
 LAMBDA_FUNCTIONS = {
@@ -362,13 +366,14 @@ def get_overall_system_metrics() -> Dict[str, Any]:
         }
 
 
+@logger.inject_lambda_context(log_event=True)
+@tracer.capture_lambda_handler
+@metrics.log_metrics(capture_cold_start_metric=True)
 def lambda_handler(event, context):
     """
     API Gateway handler for /api/metrics/cloudwatch endpoint
     Returns CloudWatch metrics for all pipelines
     """
-    logger.info(f"Received event: {json.dumps(event)}")
-    
     try:
         # Get metrics for all pipelines
         cold_path = get_cold_path_metrics()

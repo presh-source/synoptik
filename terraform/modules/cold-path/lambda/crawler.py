@@ -20,7 +20,7 @@ from aws_lambda_powertools import Logger, Tracer, Metrics
 from aws_lambda_powertools.metrics import MetricUnit
 
 # Environment variables
-PROJECT_NAME = os.environ.get("PROJECT_NAME", "synoptik")
+PROJECT_NAME = os.environ["PROJECT_NAME"]
 DYNAMODB_TABLE_NAME = os.environ["DYNAMODB_TABLE_NAME"]
 S3_BUCKET_NAME = os.environ["S3_BUCKET_NAME"]
 GITHUB_TOKEN_ARN = os.environ["GITHUB_TOKEN_ARN"]
@@ -436,7 +436,7 @@ def lambda_handler(event, context):
                 "body": {"message": "No progress made", "start_id": start_id},
             }
 
-    except Exception as e:
+    except Exception:
         logger.exception("Fatal error in crawler")
         metrics.add_metric(name="FatalErrors", unit=MetricUnit.Count, value=1)
         raise
