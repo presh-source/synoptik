@@ -1,7 +1,7 @@
 services:
   localstack:
     image: localstack/localstack-pro
-    container_name: ${var.project_name}-localstack
+    container_name: synoptik-localstack
     ports:
       - "4566:4566"            # LocalStack Gateway
       - "4510-4559:4510-4559"  # External services port range
