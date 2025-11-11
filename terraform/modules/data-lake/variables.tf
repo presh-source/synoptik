@@ -1,0 +1,6 @@
+# Data Lake Module - Variables
+
+variable "environment" {
+  description = "Environment name"
+  type        = string
+}
