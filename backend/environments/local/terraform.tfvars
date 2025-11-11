@@ -13,3 +13,7 @@ localstack_config = {
 # LocalStack uses fake credentials
 # These are ignored but required by Terraform AWS provider
 github_token = "fake-token-for-localstack"
+
+# Placeholder Sentry DSNs for local development
+sentry_dsn_frontend = "http://localhost:9000/12345"
+sentry_dsn_backend  = "http://localhost:9000/67890"

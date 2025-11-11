@@ -15,10 +15,7 @@ terraform {
   # For LocalStack: use `terraform init -backend=false`
   # For AWS: use `terraform init -backend-config=environments/{env}/backend.tfvars`
 
-  backend "s3" {
-    # Backend configuration will be provided via backend config file
-    # See environments/*/backend.tfvars
-  }
+
 }
 
 # Provider configuration is in localstack-provider.tf

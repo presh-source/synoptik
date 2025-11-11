@@ -23,6 +23,10 @@ backend/*_override.tf.json
 backend/secrets.auto.tfvars
 backend/localstack-tf
 
+# Lambda deployment packages
+backend/modules/cold-path/lambda_package.zip
+backend/modules/dashboard/lambda_package.zip
+
 # Node
 node_modules/
 dist/
