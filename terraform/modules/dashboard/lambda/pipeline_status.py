@@ -23,7 +23,8 @@ cloudwatch = boto3.client('cloudwatch')
 DYNAMODB_TABLE_NAME = os.environ.get('DYNAMODB_TABLE_NAME', '')
 KINESIS_STREAM_NAME = os.environ.get('KINESIS_STREAM_NAME', '')
 SQS_QUEUE_URL = os.environ.get('SQS_QUEUE_URL', '')
-ENVIRONMENT = os.environ.get('ENVIRONMENT', 'dev')
+PROJECT_NAME = os.environ.get('PROJECT_NAME', '')
+ENVIRONMENT = os.environ.get('ENVIRONMENT', '')
 
 # Constants
 TOTAL_GITHUB_REPOS = 500_000_000  # 500M repositories target
@@ -100,7 +101,7 @@ def calculate_ingestion_rate(updated_at: str, total_processed: int) -> float:
         start_time = end_time - timedelta(hours=1)
         
         response = cloudwatch.get_metric_statistics(
-            Namespace='Synoptik/ColdPath',
+            Namespace=f'{PROJECT_NAME.title()}/ColdPath',
             MetricName='RepositoriesProcessed',
             Dimensions=[],
             StartTime=start_time,
@@ -229,7 +230,7 @@ def get_scrubber_path_status() -> Dict[str, Any]:
             Namespace='AWS/Lambda',
             MetricName='Invocations',
             Dimensions=[
-                {'Name': 'FunctionName', 'Value': f'{ENVIRONMENT}-synoptik-pinger'}
+                {'Name': 'FunctionName', 'Value': f'{ENVIRONMENT}-{project_name}-pinger'}
             ],
             StartTime=start_time,
             EndTime=end_time,

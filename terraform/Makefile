@@ -1,10 +1,10 @@
-# GitHub Digital Twin - Terraform Makefile
+# Synoptik - Terraform Makefile
 
 .PHONY: help setup-backend-dev setup-backend-staging setup-backend-prod init-dev init-staging init-prod plan-dev plan-staging plan-prod apply-dev apply-staging apply-prod destroy-dev destroy-staging destroy-prod validate format
 
 # Default target
 help:
-	@echo "GitHub Digital Twin - Terraform Commands"
+	@echo "Synoptik - Terraform Commands"
 	@echo ""
 	@echo "Backend Setup:"
 	@echo "  make setup-backend-dev      - Create S3 bucket and DynamoDB table for dev"

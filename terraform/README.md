@@ -1,6 +1,6 @@
-# GitHub Digital Twin - Terraform Infrastructure
+# Synoptik - Terraform Infrastructure
 
-This directory contains the Terraform infrastructure code for the GitHub Digital Twin platform.
+This directory contains the Terraform infrastructure code for the Synoptik platform.
 
 ## Project Structure
 

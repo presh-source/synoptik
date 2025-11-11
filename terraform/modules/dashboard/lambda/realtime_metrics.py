@@ -17,8 +17,8 @@ logger.setLevel(logging.INFO)
 
 # Environment variables
 OPENSEARCH_ENDPOINT = os.environ.get('OPENSEARCH_ENDPOINT', '')
-ENVIRONMENT = os.environ.get('ENVIRONMENT', 'dev')
-AWS_REGION = os.environ.get('AWS_REGION', 'us-east-1')
+ENVIRONMENT = os.environ.get('ENVIRONMENT', '')
+AWS_REGION = os.environ.get('AWS_REGION', '')
 
 # Initialize AWS credentials for OpenSearch
 credentials = boto3.Session().get_credentials()

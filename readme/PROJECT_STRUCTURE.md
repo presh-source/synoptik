@@ -1,8 +1,8 @@
-# GitHub Digital Twin - Terraform Project Structure
+# Synoptik - Terraform Project Structure
 
 ## Overview
 
-This document describes the Terraform project structure for the GitHub Digital Twin platform. The infrastructure is organized into modular components that can be deployed independently or together.
+This document describes the Terraform project structure for the Synoptik platform. The infrastructure is organized into modular components that can be deployed independently or together.
 
 ## Directory Structure
 

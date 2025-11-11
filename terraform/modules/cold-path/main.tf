@@ -2,7 +2,7 @@
 
 # DynamoDB table for crawler state management
 resource "aws_dynamodb_table" "crawl_state" {
-  name         = "${var.environment}-synoptik-crawler-state"
+  name         = "${var.environment}-${var.project_name}-crawler-state"
   billing_mode = "PAY_PER_REQUEST" # On-demand capacity
   hash_key     = "state_key"
 
@@ -20,7 +20,7 @@ resource "aws_dynamodb_table" "crawl_state" {
   }
 
   tags = {
-    Name        = "${var.environment}-synoptik-crawler-state"
+    Name        = "${var.environment}-${var.project_name}-crawler-state"
     Environment = var.environment
     Pipeline    = "cold-path"
   }
@@ -53,7 +53,7 @@ resource "aws_dynamodb_table_item" "initial_bookmark" {
 
 # IAM role for CrawlerLambda
 resource "aws_iam_role" "crawler_lambda" {
-  name = "${var.environment}-synoptik-crawler-lambda"
+  name = "${var.environment}-${var.project_name}-crawler-lambda"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -69,7 +69,7 @@ resource "aws_iam_role" "crawler_lambda" {
   })
 
   tags = {
-    Name        = "${var.environment}-synoptik-crawler-lambda"
+    Name        = "${var.environment}-${var.project_name}-crawler-lambda"
     Environment = var.environment
     Pipeline    = "cold-path"
   }
@@ -83,7 +83,7 @@ resource "aws_iam_role_policy_attachment" "crawler_lambda_basic" {
 
 # IAM policy for CrawlerLambda
 resource "aws_iam_role_policy" "crawler_lambda_policy" {
-  name = "${var.environment}-synoptik-crawler-lambda-policy"
+  name = "${var.environment}-${var.project_name}-crawler-lambda-policy"
   role = aws_iam_role.crawler_lambda.id
 
   policy = jsonencode({
@@ -135,7 +135,7 @@ data "archive_file" "crawler_lambda" {
 # Lambda function
 resource "aws_lambda_function" "crawler" {
   filename         = data.archive_file.crawler_lambda.output_path
-  function_name    = "${var.environment}-synoptik-crawler"
+  function_name    = "${var.environment}-${var.project_name}-crawler"
   role             = aws_iam_role.crawler_lambda.arn
   handler          = "crawler.lambda_handler"
   source_code_hash = data.archive_file.crawler_lambda.output_base64sha256
@@ -154,7 +154,7 @@ resource "aws_lambda_function" "crawler" {
   }
 
   tags = {
-    Name        = "${var.environment}-synoptik-crawler"
+    Name        = "${var.environment}-${var.project_name}-crawler"
     Environment = var.environment
     Pipeline    = "cold-path"
   }
@@ -166,7 +166,7 @@ resource "aws_cloudwatch_log_group" "crawler_lambda" {
   retention_in_days = 30
 
   tags = {
-    Name        = "${var.environment}-synoptik-crawler-logs"
+    Name        = "${var.environment}-${var.project_name}-crawler-logs"
     Environment = var.environment
     Pipeline    = "cold-path"
   }
@@ -174,12 +174,12 @@ resource "aws_cloudwatch_log_group" "crawler_lambda" {
 
 # EventBridge rule to trigger Lambda every 15 minutes
 resource "aws_cloudwatch_event_rule" "crawler_schedule" {
-  name                = "${var.environment}-synoptik-crawler-schedule"
-  description         = "Trigger Synoptik crawler Lambda every 15 minutes"
+  name                = "${var.environment}-${var.project_name}-crawler-schedule"
+  description         = "Trigger ${var.project_name} crawler Lambda every 15 minutes"
   schedule_expression = "rate(15 minutes)"
 
   tags = {
-    Name        = "${var.environment}-synoptik-crawler-schedule"
+    Name        = "${var.environment}-${var.project_name}-crawler-schedule"
     Environment = var.environment
     Pipeline    = "cold-path"
   }
@@ -203,10 +203,10 @@ resource "aws_lambda_permission" "allow_eventbridge" {
 
 # SNS topic for critical alerts
 resource "aws_sns_topic" "crawler_alerts" {
-  name = "${var.environment}-synoptik-crawler-alerts"
+  name = "${var.environment}-${var.project_name}-crawler-alerts"
 
   tags = {
-    Name        = "${var.environment}-synoptik-crawler-alerts"
+    Name        = "${var.environment}-${var.project_name}-crawler-alerts"
     Environment = var.environment
     Pipeline    = "cold-path"
   }
@@ -214,7 +214,7 @@ resource "aws_sns_topic" "crawler_alerts" {
 
 # CloudWatch alarm for Lambda errors
 resource "aws_cloudwatch_metric_alarm" "crawler_errors" {
-  alarm_name          = "${var.environment}-synoptik-crawler-errors"
+  alarm_name          = "${var.environment}-${var.project_name}-crawler-errors"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
   metric_name         = "Errors"
@@ -232,7 +232,7 @@ resource "aws_cloudwatch_metric_alarm" "crawler_errors" {
   alarm_actions = [aws_sns_topic.crawler_alerts.arn]
 
   tags = {
-    Name        = "${var.environment}-synoptik-crawler-errors"
+    Name        = "${var.environment}-${var.project_name}-crawler-errors"
     Environment = var.environment
     Pipeline    = "cold-path"
   }
@@ -240,7 +240,7 @@ resource "aws_cloudwatch_metric_alarm" "crawler_errors" {
 
 # CloudWatch alarm for Lambda throttling
 resource "aws_cloudwatch_metric_alarm" "crawler_throttles" {
-  alarm_name          = "${var.environment}-synoptik-crawler-throttles"
+  alarm_name          = "${var.environment}-${var.project_name}-crawler-throttles"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   metric_name         = "Throttles"
@@ -258,7 +258,7 @@ resource "aws_cloudwatch_metric_alarm" "crawler_throttles" {
   alarm_actions = [aws_sns_topic.crawler_alerts.arn]
 
   tags = {
-    Name        = "${var.environment}-synoptik-crawler-throttles"
+    Name        = "${var.environment}-${var.project_name}-crawler-throttles"
     Environment = var.environment
     Pipeline    = "cold-path"
   }
@@ -272,7 +272,7 @@ resource "aws_cloudwatch_log_metric_filter" "crawler_progress" {
 
   metric_transformation {
     name      = "CrawlerProgress"
-    namespace = "Synoptik/ColdPath"
+    namespace = "${title(var.project_name)}/ColdPath"
     value     = "1"
     unit      = "Count"
   }
@@ -286,7 +286,7 @@ resource "aws_cloudwatch_log_metric_filter" "repositories_processed" {
 
   metric_transformation {
     name      = "RepositoriesProcessed"
-    namespace = "Synoptik/ColdPath"
+    namespace = "${title(var.project_name)}/ColdPath"
     value     = "$count"
     unit      = "Count"
   }
@@ -294,11 +294,11 @@ resource "aws_cloudwatch_log_metric_filter" "repositories_processed" {
 
 # CloudWatch alarm for stalled crawler (no progress in 30 minutes)
 resource "aws_cloudwatch_metric_alarm" "crawler_stalled" {
-  alarm_name          = "${var.environment}-synoptik-crawler-stalled"
+  alarm_name          = "${var.environment}-${var.project_name}-crawler-stalled"
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = 2
   metric_name         = "CrawlerProgress"
-  namespace           = "Synoptik/ColdPath"
+  namespace           = "${title(var.project_name)}/ColdPath"
   period              = 900 # 15 minutes
   statistic           = "Sum"
   threshold           = 1
@@ -308,7 +308,7 @@ resource "aws_cloudwatch_metric_alarm" "crawler_stalled" {
   alarm_actions = [aws_sns_topic.crawler_alerts.arn]
 
   tags = {
-    Name        = "${var.environment}-synoptik-crawler-stalled"
+    Name        = "${var.environment}-${var.project_name}-crawler-stalled"
     Environment = var.environment
     Pipeline    = "cold-path"
   }

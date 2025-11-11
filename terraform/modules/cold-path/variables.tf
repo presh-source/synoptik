@@ -1,40 +1,43 @@
-# Cold Path Module - Variables
+variable "project_name" {
+  description = "The name of the project"
+  type        = string
+}
 
 variable "environment" {
-  description = "Environment name"
+  description = "The deployment environment (e.g., dev, staging, prod)"
   type        = string
 }
 
 variable "github_token_arn" {
-  description = "ARN of the GitHub token secret in Secrets Manager"
+  description = "The ARN of the GitHub token secret in Secrets Manager"
   type        = string
 }
 
 variable "data_lake_bucket_name" {
-  description = "Name of the S3 Data Lake bucket"
+  description = "The name of the S3 bucket for the data lake"
   type        = string
 }
 
-variable "requests_per_execution" {
-  description = "Number of API requests per Lambda execution"
-  type        = number
-  default     = 1050
-}
-
-variable "sleep_interval" {
-  description = "Sleep interval between API requests in seconds"
-  type        = number
-  default     = 0.8
-}
-
 variable "lambda_timeout" {
-  description = "Lambda function timeout in seconds"
+  description = "The timeout for the Lambda function in seconds"
   type        = number
-  default     = 900 # 15 minutes
+  default     = 300
 }
 
 variable "lambda_memory" {
-  description = "Lambda function memory in MB"
+  description = "The memory size for the Lambda function in MB"
   type        = number
   default     = 512
+}
+
+variable "requests_per_execution" {
+  description = "The number of GitHub API requests to make per Lambda execution"
+  type        = number
+  default     = 10
+}
+
+variable "sleep_interval" {
+  description = "The sleep interval between GitHub API requests in seconds"
+  type        = number
+  default     = 1
 }

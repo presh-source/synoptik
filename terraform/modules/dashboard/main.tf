@@ -5,15 +5,15 @@
 # ============================================================================
 
 resource "aws_api_gateway_rest_api" "dashboard" {
-  name        = "${var.environment}-synoptik-dashboard-api"
-  description = "Observability Dashboard API for GitHub Digital Twin"
+  name        = "${var.environment}-${var.project_name}-dashboard-api"
+  description = "Observability Dashboard API for ${var.project_name}"
 
   endpoint_configuration {
     types = ["REGIONAL"]
   }
 
   tags = {
-    Name        = "${var.environment}-synoptik-dashboard-api"
+    Name        = "${var.environment}-${var.project_name}-dashboard-api"
     Environment = var.environment
   }
 }
@@ -70,7 +70,7 @@ resource "aws_api_gateway_resource" "metrics_cloudwatch" {
 
 # IAM role for pipeline status Lambda
 resource "aws_iam_role" "pipeline_status_lambda" {
-  name = "${var.environment}-synoptik-pipeline-status-lambda"
+  name = "${var.environment}-${var.project_name}-pipeline-status-lambda"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -86,7 +86,7 @@ resource "aws_iam_role" "pipeline_status_lambda" {
   })
 
   tags = {
-    Name        = "${var.environment}-synoptik-pipeline-status-lambda"
+    Name        = "${var.environment}-${var.project_name}-pipeline-status-lambda"
     Environment = var.environment
   }
 }
@@ -99,7 +99,7 @@ resource "aws_iam_role_policy_attachment" "pipeline_status_lambda_basic" {
 
 # IAM policy for pipeline status Lambda
 resource "aws_iam_role_policy" "pipeline_status_lambda_policy" {
-  name = "${var.environment}-synoptik-pipeline-status-lambda-policy"
+  name = "${var.environment}-${var.project_name}-pipeline-status-lambda-policy"
   role = aws_iam_role.pipeline_status_lambda.id
 
   policy = jsonencode({
@@ -144,7 +144,7 @@ resource "aws_iam_role_policy" "pipeline_status_lambda_policy" {
 
 # IAM role for realtime metrics Lambda
 resource "aws_iam_role" "realtime_metrics_lambda" {
-  name = "${var.environment}-synoptik-realtime-metrics-lambda"
+  name = "${var.environment}-${var.project_name}-realtime-metrics-lambda"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -160,7 +160,7 @@ resource "aws_iam_role" "realtime_metrics_lambda" {
   })
 
   tags = {
-    Name        = "${var.environment}-synoptik-realtime-metrics-lambda"
+    Name        = "${var.environment}-${var.project_name}-realtime-metrics-lambda"
     Environment = var.environment
   }
 }
@@ -173,7 +173,7 @@ resource "aws_iam_role_policy_attachment" "realtime_metrics_lambda_basic" {
 
 # IAM policy for realtime metrics Lambda (OpenSearch access)
 resource "aws_iam_role_policy" "realtime_metrics_lambda_policy" {
-  name = "${var.environment}-synoptik-realtime-metrics-lambda-policy"
+  name = "${var.environment}-${var.project_name}-realtime-metrics-lambda-policy"
   role = aws_iam_role.realtime_metrics_lambda.id
 
   policy = jsonencode({
@@ -193,7 +193,7 @@ resource "aws_iam_role_policy" "realtime_metrics_lambda_policy" {
 
 # IAM role for CloudWatch metrics Lambda
 resource "aws_iam_role" "cloudwatch_metrics_lambda" {
-  name = "${var.environment}-synoptik-cloudwatch-metrics-lambda"
+  name = "${var.environment}-${var.project_name}-cloudwatch-metrics-lambda"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -209,7 +209,7 @@ resource "aws_iam_role" "cloudwatch_metrics_lambda" {
   })
 
   tags = {
-    Name        = "${var.environment}-synoptik-cloudwatch-metrics-lambda"
+    Name        = "${var.environment}-${var.project_name}-cloudwatch-metrics-lambda"
     Environment = var.environment
   }
 }
@@ -222,7 +222,7 @@ resource "aws_iam_role_policy_attachment" "cloudwatch_metrics_lambda_basic" {
 
 # IAM policy for CloudWatch metrics Lambda
 resource "aws_iam_role_policy" "cloudwatch_metrics_lambda_policy" {
-  name = "${var.environment}-synoptik-cloudwatch-metrics-lambda-policy"
+  name = "${var.environment}-${var.project_name}-cloudwatch-metrics-lambda-policy"
   role = aws_iam_role.cloudwatch_metrics_lambda.id
 
   policy = jsonencode({
@@ -263,7 +263,7 @@ data "archive_file" "lambda_functions" {
 # Pipeline Status Lambda
 resource "aws_lambda_function" "pipeline_status" {
   filename         = data.archive_file.lambda_functions.output_path
-  function_name    = "${var.environment}-synoptik-pipeline-status"
+  function_name    = "${var.environment}-${var.project_name}-pipeline-status"
   role             = aws_iam_role.pipeline_status_lambda.arn
   handler          = "pipeline_status.lambda_handler"
   source_code_hash = data.archive_file.lambda_functions.output_base64sha256
@@ -281,18 +281,19 @@ resource "aws_lambda_function" "pipeline_status" {
   }
 
   tags = {
-    Name        = "${var.environment}-synoptik-pipeline-status"
+    Name        = "${var.environment}-${var.project_name}-pipeline-status"
     Environment = var.environment
   }
 }
 
 # CloudWatch Log Group for pipeline status Lambda
 resource "aws_cloudwatch_log_group" "pipeline_status_lambda" {
+  count             = var.use_localstack ? 0 : 1
   name              = "/aws/lambda/${aws_lambda_function.pipeline_status.function_name}"
   retention_in_days = 30
 
   tags = {
-    Name        = "${var.environment}-synoptik-pipeline-status-logs"
+    Name        = "${var.environment}-${var.project_name}-pipeline-status-logs"
     Environment = var.environment
   }
 }
@@ -300,7 +301,7 @@ resource "aws_cloudwatch_log_group" "pipeline_status_lambda" {
 # Realtime Metrics Lambda
 resource "aws_lambda_function" "realtime_metrics" {
   filename         = data.archive_file.lambda_functions.output_path
-  function_name    = "${var.environment}-synoptik-realtime-metrics"
+  function_name    = "${var.environment}-${var.project_name}-realtime-metrics"
   role             = aws_iam_role.realtime_metrics_lambda.arn
   handler          = "realtime_metrics.lambda_handler"
   source_code_hash = data.archive_file.lambda_functions.output_base64sha256
@@ -316,18 +317,19 @@ resource "aws_lambda_function" "realtime_metrics" {
   }
 
   tags = {
-    Name        = "${var.environment}-synoptik-realtime-metrics"
+    Name        = "${var.environment}-${var.project_name}-realtime-metrics"
     Environment = var.environment
   }
 }
 
 # CloudWatch Log Group for realtime metrics Lambda
 resource "aws_cloudwatch_log_group" "realtime_metrics_lambda" {
+  count             = var.use_localstack ? 0 : 1
   name              = "/aws/lambda/${aws_lambda_function.realtime_metrics.function_name}"
   retention_in_days = 30
 
   tags = {
-    Name        = "${var.environment}-synoptik-realtime-metrics-logs"
+    Name        = "${var.environment}-${var.project_name}-realtime-metrics-logs"
     Environment = var.environment
   }
 }
@@ -335,7 +337,7 @@ resource "aws_cloudwatch_log_group" "realtime_metrics_lambda" {
 # CloudWatch Metrics Lambda
 resource "aws_lambda_function" "cloudwatch_metrics" {
   filename         = data.archive_file.lambda_functions.output_path
-  function_name    = "${var.environment}-synoptik-cloudwatch-metrics"
+  function_name    = "${var.environment}-${var.project_name}-cloudwatch-metrics"
   role             = aws_iam_role.cloudwatch_metrics_lambda.arn
   handler          = "cloudwatch_metrics.lambda_handler"
   source_code_hash = data.archive_file.lambda_functions.output_base64sha256
@@ -350,18 +352,19 @@ resource "aws_lambda_function" "cloudwatch_metrics" {
   }
 
   tags = {
-    Name        = "${var.environment}-synoptik-cloudwatch-metrics"
+    Name        = "${var.environment}-${var.project_name}-cloudwatch-metrics"
     Environment = var.environment
   }
 }
 
 # CloudWatch Log Group for CloudWatch metrics Lambda
 resource "aws_cloudwatch_log_group" "cloudwatch_metrics_lambda" {
+  count             = var.use_localstack ? 0 : 1
   name              = "/aws/lambda/${aws_lambda_function.cloudwatch_metrics.function_name}"
   retention_in_days = 30
 
   tags = {
-    Name        = "${var.environment}-synoptik-cloudwatch-metrics-logs"
+    Name        = "${var.environment}-${var.project_name}-cloudwatch-metrics-logs"
     Environment = var.environment
   }
 }
@@ -694,7 +697,7 @@ resource "aws_api_gateway_stage" "dashboard" {
   stage_name    = var.environment
 
   tags = {
-    Name        = "${var.environment}-synoptik-dashboard-stage"
+    Name        = "${var.environment}-${var.project_name}-dashboard-stage"
     Environment = var.environment
   }
 }
@@ -714,16 +717,4 @@ resource "aws_api_gateway_method_settings" "dashboard" {
   }
 }
 
-# ============================================================================
-# Outputs
-# ============================================================================
-
-output "api_gateway_url" {
-  description = "URL of the API Gateway"
-  value       = aws_api_gateway_stage.dashboard.invoke_url
-}
-
-output "frontend_url" {
-  description = "URL of the frontend application"
-  value       = ""
-}
+# Outputs are defined in outputs.tf

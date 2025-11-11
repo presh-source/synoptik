@@ -14,11 +14,11 @@ NC='\033[0m' # No Color
 
 # Configuration
 LOCALSTACK_ENDPOINT=${LOCALSTACK_ENDPOINT:-http://localhost:4566}
-BUCKET_NAME="synoptik-dashboard-local"
+BUCKET_NAME="${var.project_name}-dashboard-local"
 DISTRIBUTION_ID="E1234567890ABC"  # LocalStack uses fake IDs
 
 echo -e "${BLUE}╔════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║        Synoptik - LocalStack Deployment               ║${NC}"
+echo -e "${BLUE}║        ${var.project_name} - LocalStack Deployment                ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
@@ -43,7 +43,7 @@ command -v awslocal >/dev/null 2>&1 || {
 # Create .env.local for LocalStack API endpoint
 echo -e "${YELLOW}Configuring environment...${NC}"
 cat > .env.local << EOF
-VITE_API_URL=http://localhost:4566/restapis/local-api-id/local/_user_request_
+VITE_API_URL=${DASHBOARD_API_URL:-http://localhost:4566/restapis/local-api-id/local/_user_request_}
 EOF
 echo -e "${GREEN}✓ Created .env.local${NC}"
 echo ""

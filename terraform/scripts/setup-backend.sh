@@ -31,8 +31,8 @@ fi
 
 ENV=$1
 REGION="us-east-1"
-BUCKET_NAME="synoptik-terraform-state-${ENV}"
-DYNAMODB_TABLE="synoptik-terraform-locks-${ENV}"
+BUCKET_NAME="${var.project_name}-terraform-state-${ENV}"
+DYNAMODB_TABLE="${var.project_name}-terraform-locks-${ENV}"
 
 print_info "Setting up Terraform backend for environment: ${ENV}"
 print_info "Region: ${REGION}"
@@ -100,7 +100,7 @@ else
         --key-schema AttributeName=LockID,KeyType=HASH \
         --billing-mode PAY_PER_REQUEST \
         --region "${REGION}" \
-        --tags Key=Environment,Value="${ENV}" Key=Project,Value=synoptik
+        --tags Key=Environment,Value="${ENV}" Key=Project,Value="${var.project_name}"
     
     print_info "Waiting for DynamoDB table to be active..."
     aws dynamodb wait table-exists --table-name "${DYNAMODB_TABLE}" --region "${REGION}"

@@ -102,6 +102,6 @@ All code, documentation, and configuration files use "synoptik" (lowercase) or "
 
 ## Historical Note
 
-The project was initially referred to as "GitHub Digital Twin" in some design documents and specifications. All user-facing components, infrastructure resources, and deployment configurations now use "Synoptik" as the official project name.
+The project was initially referred to as "Synoptik" in some design documents and specifications. All user-facing components, infrastructure resources, and deployment configurations now use "Synoptik" as the official project name.
 
-Design documents in `.kiro/specs/github-digital-twin/` retain the original naming for historical reference and traceability to requirements.
+Design documents in `.kiro/specs/Synoptik/` retain the original naming for historical reference and traceability to requirements.

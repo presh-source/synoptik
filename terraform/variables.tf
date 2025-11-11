@@ -1,4 +1,4 @@
-# GitHub Digital Twin - Variables
+# Synoptik - Variables
 
 variable "aws_region" {
   description = "AWS region for all resources"
@@ -29,9 +29,8 @@ variable "vpc_cidr" {
 }
 
 variable "project_name" {
-  description = "Project name for resource naming"
+  description = "The name of the project"
   type        = string
-  default     = "synoptik"
 }
 
 variable "localstack_config" {

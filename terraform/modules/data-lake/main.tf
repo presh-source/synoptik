@@ -1,10 +1,10 @@
 # Data Lake Module - S3 Storage
 
 resource "aws_s3_bucket" "data_lake" {
-  bucket = "${var.environment}-synoptik-data-lake"
+  bucket = "${var.environment}-${var.project_name}-data-lake"
 
   tags = {
-    Name        = "${var.environment}-synoptik-data-lake"
+    Name        = "${var.environment}-${var.project_name}-data-lake"
     Environment = var.environment
   }
 }
@@ -68,17 +68,19 @@ resource "aws_s3_bucket_public_access_block" "data_lake" {
 }
 
 # Glue Data Catalog Database for Athena queries
-resource "aws_glue_catalog_database" "synoptik" {
-  name        = "${var.environment}_synoptik"
-  description = "Glue Data Catalog for Synoptik data lake"
+resource "aws_glue_catalog_database" "glue_db" {
+  count       = var.use_localstack ? 0 : 1
+  name        = "${var.environment}-${var.project_name}"
+  description = "Glue Data Catalog for ${var.project_name} data lake"
 
   catalog_id = data.aws_caller_identity.current.account_id
 }
 
 # Glue Catalog Table for Cold Path repositories (Parquet format)
 resource "aws_glue_catalog_table" "repositories" {
+  count         = var.use_localstack ? 0 : 1
   name          = "repositories"
-  database_name = aws_glue_catalog_database.synoptik.name
+  database_name = aws_glue_catalog_database.glue_db[0].name
 
   table_type = "EXTERNAL_TABLE"
 

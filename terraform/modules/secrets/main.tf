@@ -1,13 +1,13 @@
 # Secrets Manager Module - GitHub Token Storage
 
 resource "aws_secretsmanager_secret" "github_token" {
-  name        = "${var.environment}-synoptik-github-token"
-  description = "GitHub Personal Access Token for Synoptik API access"
+  name        = "${var.environment}-${var.project_name}-github-token"
+  description = "GitHub Personal Access Token for ${var.project_name} API access"
 
   recovery_window_in_days = 7
 
   tags = {
-    Name        = "${var.environment}-synoptik-github-token"
+    Name        = "${var.environment}-${var.project_name}-github-token"
     Environment = var.environment
   }
 }

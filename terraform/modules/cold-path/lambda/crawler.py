@@ -1,5 +1,5 @@
 """
-Synoptik GitHub Repository Crawler Lambda Function
+GitHub Repository Crawler Lambda Function
 Crawls GitHub repositories using the /repositories
 endpoint and stores raw data in S3 as Parquet files
 Uses AWS Lambda Powertools for observability
@@ -19,22 +19,23 @@ from io import BytesIO
 from aws_lambda_powertools import Logger, Tracer, Metrics
 from aws_lambda_powertools.metrics import MetricUnit
 
-# Initialize Powertools
-logger = Logger(service="synoptik-crawler")
-tracer = Tracer(service="synoptik-crawler")
-metrics = Metrics(namespace="Synoptik/ColdPath", service="crawler")
-
-# AWS clients
-dynamodb = boto3.resource("dynamodb")
-s3_client = boto3.client("s3")
-secrets_client = boto3.client("secretsmanager")
-
 # Environment variables
+PROJECT_NAME = os.environ.get("PROJECT_NAME", "synoptik")
 DYNAMODB_TABLE_NAME = os.environ["DYNAMODB_TABLE_NAME"]
 S3_BUCKET_NAME = os.environ["S3_BUCKET_NAME"]
 GITHUB_TOKEN_ARN = os.environ["GITHUB_TOKEN_ARN"]
 REQUESTS_PER_EXECUTION = int(os.environ.get("REQUESTS_PER_EXECUTION", "1050"))
 SLEEP_INTERVAL = float(os.environ.get("SLEEP_INTERVAL", "0.8"))
+
+# Initialize Powertools
+logger = Logger(service=f"{PROJECT_NAME}-crawler")
+tracer = Tracer(service=f"{PROJECT_NAME}-crawler")
+metrics = Metrics(namespace=f"{PROJECT_NAME.title()}/ColdPath", service="crawler")
+
+# AWS clients
+dynamodb = boto3.resource("dynamodb")
+s3_client = boto3.client("s3")
+secrets_client = boto3.client("secretsmanager")
 
 # GitHub API configuration
 GITHUB_API_BASE = "https://api.github.com"
@@ -209,7 +210,7 @@ def fetch_repositories(
     headers = {
         "Authorization": f"token {github_token}",
         "Accept": "application/vnd.github.v3+json",
-        "User-Agent": "Synoptik-Crawler",
+        "User-Agent": f"{PROJECT_NAME}-Crawler",
     }
 
     url = f"{REPOSITORIES_ENDPOINT}?since={since_id}&per_page=100"

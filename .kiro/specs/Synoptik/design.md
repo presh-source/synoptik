@@ -2,7 +2,7 @@
 
 ## Overview
 
-The GitHub Digital Twin platform is a distributed, event-driven system that creates a complete replica of the public GitHub ecosystem. The architecture consists of three independent pipelines that work in concert to provide historical baseline data, real-time updates, and data quality maintenance. The system leverages AWS managed services to achieve scalability, durability, and cost-effectiveness.
+The Synoptik platform is a distributed, event-driven system that creates a complete replica of the public GitHub ecosystem. The architecture consists of three independent pipelines that work in concert to provide historical baseline data, real-time updates, and data quality maintenance. The system leverages AWS managed services to achieve scalability, durability, and cost-effectiveness.
 
 ### Architecture Principles
 

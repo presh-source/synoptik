@@ -1,49 +1,40 @@
-# Dashboard Module - Variables
+variable "use_localstack" {
+  description = "Whether to use LocalStack for AWS services"
+  type        = bool
+  default     = false
+}
+
+variable "project_name" {
+  description = "The name of the project"
+  type        = string
+}
 
 variable "environment" {
-  description = "Environment name"
+  description = "The deployment environment (e.g., dev, staging, prod)"
   type        = string
 }
 
 variable "opensearch_endpoint" {
-  description = "Endpoint of the OpenSearch cluster"
+  description = "The endpoint of the OpenSearch cluster"
   type        = string
 }
 
 variable "neptune_endpoint" {
-  description = "Endpoint of the Neptune cluster"
+  description = "The endpoint of the Neptune cluster"
   type        = string
 }
 
 variable "cold_path_dynamodb_table" {
-  description = "Name of the Cold Path DynamoDB table"
+  description = "The name of the DynamoDB table for the cold path"
   type        = string
 }
 
 variable "kinesis_stream_name" {
-  description = "Name of the Kinesis Data Stream"
+  description = "The name of the Kinesis stream for the hot path"
   type        = string
 }
 
 variable "scrubber_queue_url" {
-  description = "URL of the Scrubber SQS queue"
+  description = "The URL of the SQS queue for the scrubber path"
   type        = string
-}
-
-variable "project_name" {
-  description = "Name of the project"
-  type        = string
-  default     = "synoptik"
-}
-
-variable "acm_certificate_arn" {
-  description = "ARN of ACM certificate for custom domain (optional)"
-  type        = string
-  default     = ""
-}
-
-variable "custom_domain_name" {
-  description = "Custom domain name for the dashboard (optional)"
-  type        = string
-  default     = ""
 }

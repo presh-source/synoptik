@@ -1,22 +1,20 @@
-version: '3.8'
-
 services:
   localstack:
-    image: localstack/localstack:latest
-    container_name: synoptik-localstack
+    image: localstack/localstack-pro
+    container_name: ${var.project_name}-localstack
     ports:
       - "4566:4566"            # LocalStack Gateway
       - "4510-4559:4510-4559"  # External services port range
     environment:
       # Core configuration
-      - SERVICES=s3,dynamodb,lambda,apigateway,cloudfront,kinesis,sqs,secretsmanager,cloudwatch,iam,sts
+      - SERVICES=s3,dynamodb,lambda,apigateway,cloudfront,kinesis,sqs,secretsmanager,cloudwatch,iam,sts,sns,events,logs
       - DEBUG=1
-      - LAMBDA_EXECUTOR=docker
+      - LAMBDA_EXECUTOR=local
       - DOCKER_HOST=unix:///var/run/docker.sock
       
       # Persistence
       - PERSISTENCE=1
-      - DATA_DIR=/tmp/localstack/data
+      - DATA_DIR=/var/lib/localstack
       
       # AWS Configuration
       - AWS_DEFAULT_REGION=us-east-1
@@ -24,30 +22,34 @@ services:
       - AWS_SECRET_ACCESS_KEY=test
       
       # LocalStack Pro features (optional - requires license)
-      # - LOCALSTACK_API_KEY=${LOCALSTACK_API_KEY}
+      # Use ONLY one of: LOCALSTACK_AUTH_TOKEN or LOCALSTACK_AUTH_TOKEN
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN:-}
+      
+      # Pro activation control
+      - ACTIVATE_PRO=${ACTIVATE_PRO:-1}
       
       # Additional configuration
       - EAGER_SERVICE_LOADING=1
       - SKIP_SSL_CERT_DOWNLOAD=1
       
     volumes:
-      - "${LOCALSTACK_VOLUME_DIR:-./localstack-data}:/tmp/localstack"
+      - "${LOCALSTACK_VOLUME_DIR:-./localstack-data}:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
     networks:
       - localstack-network
 
   # Optional: LocalStack Web UI (requires LocalStack Pro)
-  # localstack-ui:
-  #   image: localstack/localstack-pro
-  #   container_name: localstack-ui
-  #   ports:
-  #     - "8080:8080"
-  #   environment:
-  #     - LOCALSTACK_API_KEY=${LOCALSTACK_API_KEY}
-  #   depends_on:
-  #     - localstack
-  #   networks:
-  #     - localstack-network
+  localstack-ui:
+    image: localstack/localstack-pro
+    container_name: localstack-ui
+    ports:
+      - "8080:8080"
+    environment:
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN}
+    depends_on:
+      - localstack
+    networks:
+      - localstack-network
 
 networks:
   localstack-network:

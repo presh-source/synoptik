@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-Get the GitHub Digital Twin infrastructure up and running in minutes.
+Get the Synoptik infrastructure up and running in minutes.
 
 ## Prerequisites Checklist
 

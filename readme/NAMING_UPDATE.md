@@ -50,7 +50,7 @@ All AWS resources have been updated to use "synoptik" instead of "synoptik" for 
 - **Tables**: `repositories` (unchanged)
 
 ### Lambda User-Agent
-- **Before**: `GitHub-Digital-Twin-Crawler`
+- **Before**: `Synoptik-Crawler`
 - **After**: `Synoptik-Crawler`
 
 ## Files Updated

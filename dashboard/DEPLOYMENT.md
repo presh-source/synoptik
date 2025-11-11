@@ -1,6 +1,6 @@
 # Dashboard Deployment Guide
 
-This guide covers deploying the GitHub Digital Twin Dashboard to AWS using S3 and CloudFront.
+This guide covers deploying the Synoptik Dashboard to AWS using S3 and CloudFront.
 
 ## Architecture
 

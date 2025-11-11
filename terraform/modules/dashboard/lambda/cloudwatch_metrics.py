@@ -18,16 +18,17 @@ cloudwatch = boto3.client('cloudwatch')
 lambda_client = boto3.client('lambda')
 
 # Environment variables
-ENVIRONMENT = os.environ.get('ENVIRONMENT', 'dev')
+PROJECT_NAME = os.environ.get('PROJECT_NAME', '')
+ENVIRONMENT = os.environ.get('ENVIRONMENT', '')
 
 # Lambda function names by pipeline
 LAMBDA_FUNCTIONS = {
-    'cold_path': f'{ENVIRONMENT}-synoptik-crawler',
+    'cold_path': f'{ENVIRONMENT}-{PROJECT_NAME}-crawler',
     'hot_path': [
-        f'{ENVIRONMENT}-synoptik-events-poller',
-        f'{ENVIRONMENT}-synoptik-graph-updater'
+        f'{ENVIRONMENT}-{PROJECT_NAME}-events-poller',
+        f'{ENVIRONMENT}-{PROJECT_NAME}-graph-updater'
     ],
-    'scrubber_path': f'{ENVIRONMENT}-synoptik-pinger'
+    'scrubber_path': f'{ENVIRONMENT}-{PROJECT_NAME}-pinger'
 }
 
 
@@ -175,7 +176,7 @@ def get_cold_path_metrics() -> Dict[str, Any]:
         
         # Get custom metric for API request rate
         api_request_rate = get_metric_statistics(
-            'Synoptik/ColdPath',
+            f'{PROJECT_NAME.title()}/ColdPath',
             'APIRequestRate',
             [],
             statistic='Average'
@@ -183,7 +184,7 @@ def get_cold_path_metrics() -> Dict[str, Any]:
         
         # Get repositories processed rate
         repos_processed = get_metric_statistics(
-            'Synoptik/ColdPath',
+            f'{PROJECT_NAME.title()}/ColdPath',
             'RepositoriesProcessed',
             [],
             statistic='Sum'
@@ -222,15 +223,14 @@ def get_hot_path_metrics() -> Dict[str, Any]:
         # Get Kinesis metrics
         kinesis_incoming = get_metric_statistics(
             'AWS/Kinesis',
-            'IncomingRecords',
-            [{'Name': 'StreamName', 'Value': f'{ENVIRONMENT}-synoptik-events-stream'}],
+[{'Name': 'StreamName', 'Value': f'{ENVIRONMENT}-{PROJECT_NAME}-events-stream'}],
             statistic='Sum'
         ) or 0.0
         
         kinesis_iterator_age = get_metric_statistics(
             'AWS/Kinesis',
             'GetRecords.IteratorAgeMilliseconds',
-            [{'Name': 'StreamName', 'Value': f'{ENVIRONMENT}-synoptik-events-stream'}],
+            [{'Name': 'StreamName', 'Value': f'{ENVIRONMENT}-{PROJECT_NAME}-events-stream'}],
             statistic='Maximum'
         ) or 0.0
         
@@ -281,14 +281,14 @@ def get_scrubber_path_metrics() -> Dict[str, Any]:
         sqs_messages_sent = get_metric_statistics(
             'AWS/SQS',
             'NumberOfMessagesSent',
-            [{'Name': 'QueueName', 'Value': f'{ENVIRONMENT}-synoptik-scrubber-queue'}],
+            [{'Name': 'QueueName', 'Value': f'{ENVIRONMENT}-{PROJECT_NAME}-scrubber-queue'}],
             statistic='Sum'
         ) or 0.0
         
         sqs_messages_deleted = get_metric_statistics(
             'AWS/SQS',
             'NumberOfMessagesDeleted',
-            [{'Name': 'QueueName', 'Value': f'{ENVIRONMENT}-synoptik-scrubber-queue'}],
+            [{'Name': 'QueueName', 'Value': f'{ENVIRONMENT}-{PROJECT_NAME}-scrubber-queue'}],
             statistic='Sum'
         ) or 0.0
         
@@ -327,7 +327,7 @@ def get_overall_system_metrics() -> Dict[str, Any]:
         
         for page in paginator.paginate():
             for func in page['Functions']:
-                if func['FunctionName'].startswith(f'{ENVIRONMENT}-synoptik'):
+                if func['FunctionName'].startswith(f'{ENVIRONMENT}-{PROJECT_NAME}'):
                     all_functions.append(func['FunctionName'])
         
         # Calculate aggregate metrics

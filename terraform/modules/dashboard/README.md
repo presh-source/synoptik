@@ -1,6 +1,6 @@
 # Dashboard Module
 
-This module implements the observability dashboard backend API for the GitHub Digital Twin platform.
+This module implements the observability dashboard backend API for the Synoptik platform.
 
 ## Overview
 

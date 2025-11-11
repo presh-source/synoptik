@@ -38,15 +38,15 @@ output "dashboard_bucket_arn" {
 
 output "cloudfront_distribution_id" {
   description = "ID of the CloudFront distribution"
-  value       = aws_cloudfront_distribution.dashboard.id
+  value       = var.use_localstack ? null : aws_cloudfront_distribution.dashboard[0].id
 }
 
 output "cloudfront_domain_name" {
   description = "Domain name of the CloudFront distribution"
-  value       = aws_cloudfront_distribution.dashboard.domain_name
+  value       = var.use_localstack ? null : aws_cloudfront_distribution.dashboard[0].domain_name
 }
 
 output "dashboard_url" {
   description = "URL of the dashboard"
-  value       = "https://${aws_cloudfront_distribution.dashboard.domain_name}"
+  value       = var.use_localstack ? null : "https://${aws_cloudfront_distribution.dashboard[0].domain_name}"
 }

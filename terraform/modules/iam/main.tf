@@ -2,7 +2,7 @@
 
 # Lambda Execution Role (Base)
 resource "aws_iam_role" "lambda_execution" {
-  name = "${var.environment}-synoptik-lambda-execution"
+  name = "${var.environment}-${var.project_name}-lambda-execution"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -18,7 +18,7 @@ resource "aws_iam_role" "lambda_execution" {
   })
 
   tags = {
-    Name        = "${var.environment}-synoptik-lambda-execution"
+    Name        = "${var.environment}-${var.project_name}-lambda-execution"
     Environment = var.environment
   }
 }
@@ -31,7 +31,7 @@ resource "aws_iam_role_policy_attachment" "lambda_basic" {
 
 # Glue Execution Role
 resource "aws_iam_role" "glue_execution" {
-  name = "${var.environment}-synoptik-glue-execution"
+  name = "${var.environment}-${var.project_name}-glue-execution"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -47,7 +47,7 @@ resource "aws_iam_role" "glue_execution" {
   })
 
   tags = {
-    Name        = "${var.environment}-synoptik-glue-execution"
+    Name        = "${var.environment}-${var.project_name}-glue-execution"
     Environment = var.environment
   }
 }
@@ -60,7 +60,7 @@ resource "aws_iam_role_policy_attachment" "glue_service" {
 
 # EventBridge Role
 resource "aws_iam_role" "eventbridge" {
-  name = "${var.environment}-synoptik-eventbridge"
+  name = "${var.environment}-${var.project_name}-eventbridge"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -76,14 +76,14 @@ resource "aws_iam_role" "eventbridge" {
   })
 
   tags = {
-    Name        = "${var.environment}-synoptik-eventbridge"
+    Name        = "${var.environment}-${var.project_name}-eventbridge"
     Environment = var.environment
   }
 }
 
 # Firehose Role
 resource "aws_iam_role" "firehose" {
-  name = "${var.environment}-synoptik-firehose"
+  name = "${var.environment}-${var.project_name}-firehose"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -99,7 +99,7 @@ resource "aws_iam_role" "firehose" {
   })
 
   tags = {
-    Name        = "${var.environment}-synoptik-firehose"
+    Name        = "${var.environment}-${var.project_name}-firehose"
     Environment = var.environment
   }
 }

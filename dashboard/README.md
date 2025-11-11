@@ -1,6 +1,6 @@
-# Synoptik Dashboard
+# ${var.project_name} Dashboard
 
-A real-time observability dashboard for monitoring the Synoptik platform.
+A real-time observability dashboard for monitoring the ${var.project_name} platform.
 
 ## Features
 
@@ -113,7 +113,7 @@ docker-compose -f docker-compose.localstack.yml up -d
 ```
 
 Access the dashboard at:
-- http://localhost:4566/synoptik-dashboard-local/index.html
+- http://localhost:4566/${var.project_name}-dashboard-local/index.html
 
 See [../LOCALSTACK_SETUP.md](../LOCALSTACK_SETUP.md) for complete LocalStack setup guide.
 
