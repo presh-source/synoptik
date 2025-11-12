@@ -63,7 +63,7 @@ jobs:
           fetch-depth: 0  # Fetch full history for Sentry release comparison
 
       - name: Verify deployment progression (staging requires dev, prod requires staging)
-      
+        if: github.event.inputs.action == 'apply' && (env.DEPLOY_ENV == 'staging' || env.DEPLOY_ENV == 'prod')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -131,8 +131,18 @@ jobs:
       - name: Terraform Init
         working-directory: backend
         run: |
-          terraform init \
-            -backend-config=environments/${{ env.DEPLOY_ENV }}/backend.tfvars
+          echo "Requested destroy for environment: ${{ env.DEPLOY_ENV }}"
+          
+          terraform destroy \
+            -var-file=environments/${{ env.DEPLOY_ENV }}/terraform.tfvars \
+            -var="project_name=${{ env.PROJECT_NAME }}" \
+            -var="aws_region=${{ secrets.AWS_REGION }}" \
+            -var="github_token=${{ secrets.GH_TOKEN_SECRET }}" \
+            -var="sentry_dsn_frontend=${{ secrets.SENTRY_DSN_FRONTEND }}" \
+            -var="sentry_dsn_backend=${{ secrets.SENTRY_DSN_BACKEND }}" \
+            -var="app_version=${{ github.sha }}" \
+            -auto-approve
+            
 
       - name: Terraform Validate
         working-directory: backend
