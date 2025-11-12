@@ -61,8 +61,7 @@ if aws s3api head-bucket --bucket "${BUCKET_NAME}" 2>/dev/null; then
 else
     aws s3api create-bucket \
         --bucket "${BUCKET_NAME}" \
-        --region "${REGION}" \
-        --tags Key=Environment,Value="${ENV}" Key=Project,Value="${PROJECT_NAME}"
+        --region "${REGION}"
     print_info "S3 bucket created successfully"
 fi
 
