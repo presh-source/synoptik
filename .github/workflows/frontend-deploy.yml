@@ -40,6 +40,7 @@ on:
 env:
   PROJECT_NAME: ${{ github.event.repository.name }}
   NODE_VERSION: '18'
+  TERRAFORM_VERSION: '1.5.0'
   AWS_REGION: 'us-east-1'
   DEPLOY_ENV: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'prod') || (startsWith(github.ref, 'refs/heads/release/') && 'staging') || (github.ref == 'refs/heads/develop' && 'dev') || 'dev' }}
 
@@ -85,11 +86,20 @@ jobs:
           VITE_APP_VERSION: ${{ github.sha }}
           VITE_ENVIRONMENT: ${{ env.DEPLOY_ENV }}
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.ROLE_NAME }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Format Check
+        working-directory: backend
+        run: terraform fmt -check -recursive
 
       - name: Get deployment targets from Terraform
         id: targets
@@ -98,6 +108,10 @@ jobs:
           terraform init -backend-config=environments/${{ env.DEPLOY_ENV }}/backend.tfvars
           echo "bucket_name=$(terraform output -raw dashboard_bucket_name)" >> $GITHUB_OUTPUT
           echo "distribution_id=$(terraform output -raw cloudfront_distribution_id)" >> $GITHUB_OUTPUT
+
+      - name: Terraform Validate
+        working-directory: backend
+        run: terraform validate
 
       - name: Deploy to S3
         if: github.event.inputs.action == 'deploy' && (env.DEPLOY_ENV != 'prod' || github.event.inputs.confirm == 'yes')
