@@ -8,8 +8,8 @@ data "aws_route53_zone" "main" {
 }
 
 resource "aws_acm_certificate" "dashboard" {
-  count             = (var.domain_name != "" || var.api_domain_name != "") && var.acm_certificate_arn == "" ? 1 : 0
-  domain_name       = var.domain_name != "" ? var.domain_name : var.api_domain_name
+  count       = (var.domain_name != "" || var.api_domain_name != "") && var.acm_certificate_arn == "" ? 1 : 0
+  domain_name = var.domain_name != "" ? var.domain_name : var.api_domain_name
   subject_alternative_names = var.domain_name != "" && var.api_domain_name != "" ? [
     var.api_domain_name
   ] : []
