@@ -98,19 +98,19 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform Format Check
-        working-directory: backend
+        working-directory: frontend
         run: terraform fmt -check -recursive
 
       - name: Get deployment targets from Terraform
         id: targets
-        working-directory: backend
+        working-directory: frontend
         run: |
           terraform init -backend-config=environments/${{ env.DEPLOY_ENV }}/backend.tfvars
           echo "bucket_name=$(terraform output -raw dashboard_bucket_name)" >> $GITHUB_OUTPUT
           echo "distribution_id=$(terraform output -raw cloudfront_distribution_id)" >> $GITHUB_OUTPUT
 
       - name: Terraform Validate
-        working-directory: backend
+        working-directory: frontend
         run: terraform validate
 
       - name: Deploy to S3
@@ -138,13 +138,13 @@ jobs:
             --distribution-id ${{ steps.targets.outputs.distribution_id }} \
             --paths "/*"
 
-      - name: Create Sentry release for backend
+      - name: Create Sentry release for frontend
         if: (github.event.inputs.action == 'apply' || github.event_name == 'push') && env.SENTRY_AUTH_TOKEN != ''
         continue-on-error: true  # Don't fail workflow if Sentry integration fails
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: "${{ env.PROJECT_NAME }}-backend"
+          SENTRY_PROJECT: "${{ env.PROJECT_NAME }}-frontend"
         run: |
           curl -sL https://sentry.io/get-cli/ | bash
           sentry-cli releases new "${{ github.sha }}"
