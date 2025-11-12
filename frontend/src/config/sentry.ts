@@ -46,6 +46,7 @@ export const initSentry = () => {
       ],
       
       // Filter events before sending
+      // @ts-ignore
       beforeSend(event, hint) {
         // Don't send events in development
         if (import.meta.env.DEV) {

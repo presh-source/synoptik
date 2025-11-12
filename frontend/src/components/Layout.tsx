@@ -42,9 +42,9 @@ export default function Layout({ children }: LayoutProps) {
   const drawer = (
     <Box>
       <Toolbar>
-      <Title order={1} className={classes.title}>
-        {project_name}
-      </Title>
+        <Typography variant="h6" noWrap>
+          Synoptik
+        </Typography>
       </Toolbar>
       <List>
         {menuItems.map((item) => (
@@ -84,9 +84,9 @@ export default function Layout({ children }: LayoutProps) {
           >
             <MenuIcon />
           </IconButton>
-      <Text size="sm" color="dimmed">
-        {project_name} Dashboard
-      </Text>
+          <Typography variant="h6" noWrap>
+            Synoptik Dashboard
+          </Typography>
         </Toolbar>
       </AppBar>
       <Box

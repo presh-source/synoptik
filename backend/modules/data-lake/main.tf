@@ -3,10 +3,23 @@
 resource "aws_s3_bucket" "data_lake" {
   bucket = "${var.environment}-${var.project_name}-data-lake"
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-data-lake"
-    Environment = var.environment
-  }
+  tags = var.tags
+}
+
+resource "aws_s3_bucket_policy" "data_lake" {
+  bucket = aws_s3_bucket.data_lake.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "DenyDeleteBucket"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:DeleteBucket"
+        Resource  = aws_s3_bucket.data_lake.arn
+      },
+    ]
+  })
 }
 
 resource "aws_s3_bucket_versioning" "data_lake" {

@@ -17,10 +17,7 @@ resource "aws_iam_role" "lambda_execution" {
     ]
   })
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-lambda-execution"
-    Environment = var.environment
-  }
+  tags = var.tags
 }
 
 # Attach basic Lambda execution policy
@@ -46,10 +43,7 @@ resource "aws_iam_role" "glue_execution" {
     ]
   })
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-glue-execution"
-    Environment = var.environment
-  }
+  tags = var.tags
 }
 
 # Attach AWS Glue service role policy
@@ -75,10 +69,7 @@ resource "aws_iam_role" "eventbridge" {
     ]
   })
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-eventbridge"
-    Environment = var.environment
-  }
+  tags = var.tags
 }
 
 # Firehose Role
@@ -98,8 +89,5 @@ resource "aws_iam_role" "firehose" {
     ]
   })
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-firehose"
-    Environment = var.environment
-  }
+  tags = var.tags
 }

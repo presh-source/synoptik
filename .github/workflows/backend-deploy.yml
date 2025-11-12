@@ -30,7 +30,13 @@ on:
           - destroy
 
 env:
+  PROJECT_NAME: ${{ github.event.repository.name }}
+  AWS_REGION: 'us-east-1'
   TERRAFORM_VERSION: '1.5.0'
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   terraform:
@@ -51,31 +57,32 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubOIDCRole
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform Format Check
-        working-directory: terraform
+        working-directory: backend
         run: terraform fmt -check -recursive
         continue-on-error: true
 
       - name: Terraform Init
-        working-directory: terraform
+        working-directory: backend
         run: |
           terraform init \
             -backend-config=environments/${{ github.event.inputs.environment || 'dev' }}/backend.tfvars
 
       - name: Terraform Validate
-        working-directory: terraform
+        working-directory: backend
         run: terraform validate
 
       - name: Terraform Plan
-        working-directory: terraform
+        working-directory: backend
         run: |
           terraform plan \
             -var-file=environments/${{ github.event.inputs.environment || 'dev' }}/terraform.tfvars \
-            -var="github_token=${{ secrets.GITHUB_TOKEN_SECRET }}" \
+            -var="project_name=${{ env.PROJECT_NAME }}" \
+            -var="aws_region=${{ env.AWS_REGION }}" \
+            -var="github_token=${{ secrets.GB_TOKEN_SECRET }}" \
             -var="sentry_dsn_frontend=${{ secrets.SENTRY_DSN_FRONTEND }}" \
             -var="sentry_dsn_backend=${{ secrets.SENTRY_DSN_BACKEND }}" \
             -var="app_version=${{ github.sha }}" \
@@ -83,16 +90,18 @@ jobs:
 
       - name: Terraform Apply
         if: github.event.inputs.action == 'apply' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
-        working-directory: terraform
+        working-directory: backend
         run: terraform apply -auto-approve tfplan
 
       - name: Terraform Destroy
         if: github.event.inputs.action == 'destroy'
-        working-directory: terraform
+        working-directory: backend
         run: |
           terraform destroy \
             -var-file=environments/${{ github.event.inputs.environment || 'dev' }}/terraform.tfvars \
-            -var="github_token=${{ secrets.GITHUB_TOKEN_SECRET }}" \
+            -var="project_name=${{ env.PROJECT_NAME }}" \
+            -var="aws_region=${{ env.AWS_REGION }}" \
+            -var="github_token=${{ secrets.GB_TOKEN_SECRET }}" \
             -var="sentry_dsn_frontend=${{ secrets.SENTRY_DSN_FRONTEND }}" \
             -var="sentry_dsn_backend=${{ secrets.SENTRY_DSN_BACKEND }}" \
             -var="app_version=${{ github.sha }}" \
@@ -100,7 +109,7 @@ jobs:
 
       - name: Get Terraform Outputs
         if: github.event.inputs.action != 'destroy'
-        working-directory: terraform
+        working-directory: backend
         run: |
           echo "### Terraform Outputs" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

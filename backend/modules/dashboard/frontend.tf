@@ -51,6 +51,13 @@ resource "aws_s3_bucket_policy" "dashboard" {
         }
         Action   = "s3:GetObject"
         Resource = "${aws_s3_bucket.dashboard.arn}/*"
+      },
+      {
+        Sid       = "DenyDeleteBucket"
+        Effect    = "Deny"
+        Principal = "*"
+        Action    = "s3:DeleteBucket"
+        Resource  = aws_s3_bucket.dashboard.arn
       }
     ]
   })

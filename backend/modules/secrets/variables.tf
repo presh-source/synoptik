@@ -4,7 +4,7 @@ variable "project_name" {
 }
 
 variable "environment" {
-  description = "The deployment environment (e.g., dev, staging, prod)"
+  description = "The environment name"
   type        = string
 }
 
@@ -15,15 +15,19 @@ variable "github_token" {
 }
 
 variable "sentry_dsn_frontend" {
-  description = "Sentry DSN for frontend"
+  description = "Sentry DSN for frontend (React dashboard)"
   type        = string
   sensitive   = true
-  default     = ""
 }
 
 variable "sentry_dsn_backend" {
-  description = "Sentry DSN for backend"
+  description = "Sentry DSN for backend (Lambda functions)"
   type        = string
   sensitive   = true
-  default     = ""
+}
+
+variable "tags" {
+  description = "A map of tags to assign to the resources"
+  type        = map(string)
+  default     = {}
 }

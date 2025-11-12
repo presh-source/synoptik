@@ -6,10 +6,7 @@ resource "aws_secretsmanager_secret" "github_token" {
 
   recovery_window_in_days = 7
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-github-token"
-    Environment = var.environment
-  }
+  tags = var.tags
 }
 
 resource "aws_secretsmanager_secret_version" "github_token" {
