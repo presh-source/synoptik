@@ -19,11 +19,9 @@ resource "aws_dynamodb_table" "crawl_state" {
     enabled = true
   }
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-crawler-state"
-    Environment = var.environment
-    Pipeline    = "cold-path"
-  }
+  deletion_protection_enabled = true
+
+  tags = var.tags
 }
 
 # Initialize the bookmark with last_processed_id = 0
@@ -68,11 +66,7 @@ resource "aws_iam_role" "crawler_lambda" {
     ]
   })
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-crawler-lambda"
-    Environment = var.environment
-    Pipeline    = "cold-path"
-  }
+  tags = var.tags
 }
 
 # Attach basic Lambda execution policy
@@ -153,11 +147,7 @@ resource "aws_lambda_function" "crawler" {
     }
   }
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-crawler"
-    Environment = var.environment
-    Pipeline    = "cold-path"
-  }
+  tags = var.tags
 }
 
 # CloudWatch Log Group for Lambda
@@ -165,11 +155,7 @@ resource "aws_cloudwatch_log_group" "crawler_lambda" {
   name              = "/aws/lambda/${aws_lambda_function.crawler.function_name}"
   retention_in_days = 30
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-crawler-logs"
-    Environment = var.environment
-    Pipeline    = "cold-path"
-  }
+  tags = var.tags
 }
 
 # EventBridge rule to trigger Lambda every 15 minutes
@@ -178,11 +164,7 @@ resource "aws_cloudwatch_event_rule" "crawler_schedule" {
   description         = "Trigger ${var.project_name} crawler Lambda every 15 minutes"
   schedule_expression = "rate(15 minutes)"
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-crawler-schedule"
-    Environment = var.environment
-    Pipeline    = "cold-path"
-  }
+  tags = var.tags
 }
 
 # EventBridge target - Lambda function
@@ -205,11 +187,7 @@ resource "aws_lambda_permission" "allow_eventbridge" {
 resource "aws_sns_topic" "crawler_alerts" {
   name = "${var.environment}-${var.project_name}-crawler-alerts"
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-crawler-alerts"
-    Environment = var.environment
-    Pipeline    = "cold-path"
-  }
+  tags = var.tags
 }
 
 # CloudWatch alarm for Lambda errors
@@ -231,11 +209,7 @@ resource "aws_cloudwatch_metric_alarm" "crawler_errors" {
 
   alarm_actions = [aws_sns_topic.crawler_alerts.arn]
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-crawler-errors"
-    Environment = var.environment
-    Pipeline    = "cold-path"
-  }
+  tags = var.tags
 }
 
 # CloudWatch alarm for Lambda throttling
@@ -257,11 +231,7 @@ resource "aws_cloudwatch_metric_alarm" "crawler_throttles" {
 
   alarm_actions = [aws_sns_topic.crawler_alerts.arn]
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-crawler-throttles"
-    Environment = var.environment
-    Pipeline    = "cold-path"
-  }
+  tags = var.tags
 }
 
 # Custom CloudWatch metric for crawler progress
@@ -307,9 +277,5 @@ resource "aws_cloudwatch_metric_alarm" "crawler_stalled" {
 
   alarm_actions = [aws_sns_topic.crawler_alerts.arn]
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-crawler-stalled"
-    Environment = var.environment
-    Pipeline    = "cold-path"
-  }
+  tags = var.tags
 }

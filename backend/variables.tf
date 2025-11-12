@@ -31,6 +31,7 @@ variable "vpc_cidr" {
 variable "project_name" {
   description = "The name of the project"
   type        = string
+  default     = "synoptik"
 }
 
 variable "localstack_config" {
@@ -60,4 +61,12 @@ variable "app_version" {
   description = "Application version for release tracking"
   type        = string
   default     = "1.0.0"
+}
+
+variable "tags" {
+  description = "Common tags to apply to all resources"
+  type        = map(string)
+  default = {
+    ManagedBy = "Terraform"
+  }
 }
