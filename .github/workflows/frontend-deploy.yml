@@ -57,7 +57,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch full history for Sentry release comparison
+          fetch-depth: 50  # Fetch last 50 commits (faster than full history)
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -123,23 +123,17 @@ jobs:
             --distribution-id ${{ steps.targets.outputs.distribution_id }} \
             --paths "/*"
 
-      - name: Create Sentry release
-        if: github.event.inputs.action == 'deploy' && env.SENTRY_AUTH_TOKEN != ''
+      - name: Create Sentry release for backend
+        if: (github.event.inputs.action == 'apply' || github.event_name == 'push') && env.SENTRY_AUTH_TOKEN != ''
+        continue-on-error: true  # Don't fail workflow if Sentry integration fails
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: "${{ env.PROJECT_NAME }}-frontend"
+          SENTRY_PROJECT: "${{ env.PROJECT_NAME }}-backend"
         run: |
           curl -sL https://sentry.io/get-cli/ | bash
-          
-          # Create release
           sentry-cli releases new "${{ github.sha }}"
-          
-          # Associate commits (with fallback for missing previous release)
-          sentry-cli releases set-commits "${{ github.sha }}" --auto --ignore-missing || \
-            echo "Warning: Could not determine previous release, using recent commits"
-          
-          # Finalize and deploy
+          sentry-cli releases set-commits "${{ github.sha }}" --auto --ignore-missing
           sentry-cli releases finalize "${{ github.sha }}"
           sentry-cli releases deploys "${{ github.sha }}" new -e ${{ env.DEPLOY_ENV }}
 
