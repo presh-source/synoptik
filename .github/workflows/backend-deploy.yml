@@ -76,7 +76,6 @@ jobs:
       - name: Terraform Format Check
         working-directory: backend
         run: terraform fmt -check -recursive
-        continue-on-error: true
 
       - name: Terraform Init
         working-directory: backend

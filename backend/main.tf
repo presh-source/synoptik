@@ -10,7 +10,7 @@ terraform {
       version = "~> 5.0"
     }
   }
-  
+
   # Backend configuration for AWS
   # For LocalStack: use `terraform init -backend=false`
   # For AWS: use `terraform init -backend-config=environments/{env}/backend.tfvars`
@@ -67,26 +67,26 @@ module "data_lake" {
 
 # Cold Path Pipeline
 module "cold_path" {
-  source                   = "./modules/cold-path"
-  project_name             = var.project_name
-  environment              = var.environment
-  github_token_arn         = module.secrets.github_token_arn
-  data_lake_bucket_name    = module.data_lake.bucket_name
-  tags                     = local.merged_tags
-  lambda_timeout           = 300
-  lambda_memory            = 512
+  source                 = "./modules/cold-path"
+  project_name           = var.project_name
+  environment            = var.environment
+  github_token_arn       = module.secrets.github_token_arn
+  data_lake_bucket_name  = module.data_lake.bucket_name
+  tags                   = local.merged_tags
+  lambda_timeout         = 300
+  lambda_memory          = 512
   requests_per_execution = 10
-  sleep_interval           = 1
+  sleep_interval         = 1
 
   depends_on = [module.secrets, module.data_lake]
 }
 
 # Hot Path Pipeline
 module "hot_path" {
-  source      = "./modules/hot-path"
+  source       = "./modules/hot-path"
   project_name = var.project_name
-  environment = var.environment
-  tags        = local.merged_tags
+  environment  = var.environment
+  tags         = local.merged_tags
 
   depends_on = [module.secrets]
 }
@@ -137,7 +137,7 @@ module "dashboard" {
   environment              = var.environment
   use_localstack           = local.use_localstack
   opensearch_endpoint      = "http://localhost:4566" # Mock
-  neptune_endpoint         = "localhost:8182"      # Mock
+  neptune_endpoint         = "localhost:8182"        # Mock
   cold_path_dynamodb_table = module.cold_path.dynamodb_table_name
   kinesis_stream_name      = module.hot_path.kinesis_stream_name
   scrubber_queue_url       = "http://localhost:4566/000000000000/scrubber-queue" # Mock

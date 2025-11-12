@@ -1,3 +1,4 @@
 # Production Environment Configuration
 
-environment  = "prod"
+environment = "prod"
+
