@@ -144,6 +144,9 @@ module "dashboard" {
   scrubber_queue_url       = "http://localhost:4566/000000000000/scrubber-queue" # Mock
   sentry_dsn_secret_arn    = module.secrets.sentry_dsn_backend_arn
   app_version              = var.app_version
+  domain_name              = var.domain_name
+  api_domain_name          = var.api_domain_name
+  acm_certificate_arn      = var.acm_certificate_arn
   tags                     = local.merged_tags
 
   depends_on = [module.secrets, module.cold_path]

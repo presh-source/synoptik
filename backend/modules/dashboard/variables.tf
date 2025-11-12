@@ -54,3 +54,21 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "domain_name" {
+  description = "Custom domain name for the frontend (e.g., dev.synoptik.dev)"
+  type        = string
+  default     = ""
+}
+
+variable "api_domain_name" {
+  description = "Custom domain name for the API (e.g., api.dev.synoptik.dev)"
+  type        = string
+  default     = ""
+}
+
+variable "acm_certificate_arn" {
+  description = "ARN of the ACM certificate for the custom domain (must be in us-east-1 region)"
+  type        = string
+  default     = ""
+}

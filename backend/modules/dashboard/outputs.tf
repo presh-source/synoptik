@@ -48,5 +48,25 @@ output "cloudfront_domain_name" {
 
 output "dashboard_url" {
   description = "URL of the dashboard"
-  value       = var.use_localstack ? null : "https://${aws_cloudfront_distribution.dashboard[0].domain_name}"
+  value       = var.use_localstack ? null : (var.domain_name != "" ? "https://${var.domain_name}" : "https://${aws_cloudfront_distribution.dashboard[0].domain_name}")
+}
+
+output "api_url" {
+  description = "URL of the API"
+  value       = var.api_domain_name != "" ? "https://${var.api_domain_name}/api" : "${aws_api_gateway_stage.dashboard.invoke_url}/api"
+}
+
+output "domain_name" {
+  description = "Custom domain name for the frontend"
+  value       = var.domain_name != "" ? var.domain_name : null
+}
+
+output "api_domain_name" {
+  description = "Custom domain name for the API"
+  value       = var.api_domain_name != "" ? var.api_domain_name : null
+}
+
+output "acm_certificate_arn" {
+  description = "ARN of the ACM certificate"
+  value       = var.acm_certificate_arn != "" ? var.acm_certificate_arn : ((var.domain_name != "" || var.api_domain_name != "") ? aws_acm_certificate.dashboard[0].arn : null)
 }

@@ -669,6 +669,27 @@ resource "aws_api_gateway_stage" "dashboard" {
   tags = var.tags
 }
 
+# API Gateway Custom Domain Name
+resource "aws_api_gateway_domain_name" "dashboard" {
+  count           = var.api_domain_name != "" ? 1 : 0
+  domain_name     = var.api_domain_name
+  certificate_arn = var.acm_certificate_arn != "" ? var.acm_certificate_arn : aws_acm_certificate.dashboard[0].arn
+
+  endpoint_configuration {
+    types = ["EDGE"]
+  }
+
+  tags = var.tags
+}
+
+# API Gateway Base Path Mapping
+resource "aws_api_gateway_base_path_mapping" "dashboard" {
+  count       = var.api_domain_name != "" ? 1 : 0
+  api_id      = aws_api_gateway_rest_api.dashboard.id
+  stage_name  = aws_api_gateway_stage.dashboard.stage_name
+  domain_name = aws_api_gateway_domain_name.dashboard[0].domain_name
+}
+
 # API Gateway throttling settings
 resource "aws_api_gateway_method_settings" "dashboard" {
   rest_api_id = aws_api_gateway_rest_api.dashboard.id

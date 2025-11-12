@@ -71,3 +71,21 @@ variable "tags" {
     Project   = "Synoptik"
   }
 }
+
+variable "domain_name" {
+  description = "Custom domain name for the frontend (e.g., dev.synoptik.dev)"
+  type        = string
+  default     = ""
+}
+
+variable "api_domain_name" {
+  description = "Custom domain name for the API (e.g., api.dev.synoptik.dev)"
+  type        = string
+  default     = ""
+}
+
+variable "acm_certificate_arn" {
+  description = "ARN of existing ACM certificate for custom domain (must be in us-east-1)"
+  type        = string
+  default     = ""
+}
