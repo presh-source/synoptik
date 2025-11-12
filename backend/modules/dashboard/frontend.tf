@@ -127,11 +127,7 @@ resource "aws_cloudfront_distribution" "dashboard" {
     # minimum_protocol_version = "TLSv1.2_2021"
   }
 
-  tags = {
-    Name        = "${var.project_name}-dashboard"
-    Environment = var.environment
-    ManagedBy   = "Terraform"
-  }
+  tags = var.tags
 }
 
 # CloudWatch log group for CloudFront access logs (optional)

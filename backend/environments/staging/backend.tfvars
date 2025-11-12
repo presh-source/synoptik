@@ -1,7 +1,7 @@
 # S3 Backend Configuration for Staging Environment
 
-bucket         = "synoptik-terraform-state-staging"
+bucket         = "staging-synoptik-terraform-state"
 key            = "terraform.tfstate"
 region         = "us-east-1"
-dynamodb_table = "synoptik-terraform-locks-staging"
+dynamodb_table = "staging-synoptik-terraform-locks"
 encrypt        = true

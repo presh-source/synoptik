@@ -32,8 +32,8 @@ fi
 ENV=$1
 REGION="us-east-1"
 PROJECT_NAME="synoptik"
-BUCKET_NAME="${PROJECT_NAME}-terraform-state-${ENV}"
-DYNAMODB_TABLE="${PROJECT_NAME}-terraform-locks-${ENV}"
+BUCKET_NAME="${ENV}-${PROJECT_NAME}-terraform-state"
+DYNAMODB_TABLE="${ENV}-${PROJECT_NAME}-terraform-locks"
 
 print_info "Setting up Terraform backend for environment: ${ENV}"
 print_info "Region: ${REGION}"
@@ -61,7 +61,8 @@ if aws s3api head-bucket --bucket "${BUCKET_NAME}" 2>/dev/null; then
 else
     aws s3api create-bucket \
         --bucket "${BUCKET_NAME}" \
-        --region "${REGION}"
+        --region "${REGION}" \
+        --tags Key=Environment,Value="${ENV}" Key=Project,Value="${PROJECT_NAME}"
     print_info "S3 bucket created successfully"
 fi
 
