@@ -133,21 +133,22 @@ module "hot_path" {
 
 # Dashboard (API Gateway, Lambda, Frontend)
 module "dashboard" {
-  source                   = "./modules/dashboard"
-  project_name             = var.project_name
-  environment              = var.environment
-  use_localstack           = local.use_localstack
-  opensearch_endpoint      = "http://localhost:4566" # Mock
-  neptune_endpoint         = "localhost:8182"        # Mock
-  cold_path_dynamodb_table = module.cold_path.dynamodb_table_name
-  kinesis_stream_name      = module.hot_path.kinesis_stream_name
-  scrubber_queue_url       = "http://localhost:4566/000000000000/scrubber-queue" # Mock
-  sentry_dsn_secret_arn    = module.secrets.sentry_dsn_backend_arn
-  app_version              = var.app_version
-  domain_name              = var.domain_name
-  api_domain_name          = var.api_domain_name
-  acm_certificate_arn      = var.acm_certificate_arn
-  tags                     = local.merged_tags
+  source                          = "./modules/dashboard"
+  project_name                    = var.project_name
+  environment                     = var.environment
+  use_localstack                  = local.use_localstack
+  opensearch_endpoint             = "http://localhost:4566" # Mock
+  neptune_endpoint                = "localhost:8182"        # Mock
+  cold_path_dynamodb_table        = module.cold_path.dynamodb_table_name
+  kinesis_stream_name             = module.hot_path.kinesis_stream_name
+  scrubber_queue_url              = "http://localhost:4566/000000000000/scrubber-queue" # Mock
+  sentry_dsn_secret_arn           = module.secrets.sentry_dsn_backend_arn
+  app_version                     = var.app_version
+  domain_name                     = var.domain_name
+  api_domain_name                 = var.api_domain_name
+  acm_certificate_arn             = var.acm_certificate_arn
+  api_gateway_cloudwatch_role_arn = module.iam.api_gateway_cloudwatch_role_arn
+  tags                            = local.merged_tags
 
   depends_on = [module.secrets, module.cold_path]
 }

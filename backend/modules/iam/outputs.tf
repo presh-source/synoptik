@@ -29,3 +29,8 @@ output "firehose_role_arn" {
   description = "ARN of the Firehose role"
   value       = aws_iam_role.firehose.arn
 }
+
+output "api_gateway_cloudwatch_role_arn" {
+  description = "ARN of the API Gateway CloudWatch Logs role"
+  value       = aws_iam_role.api_gateway_cloudwatch.arn
+}

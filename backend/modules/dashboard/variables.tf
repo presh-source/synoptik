@@ -72,3 +72,8 @@ variable "acm_certificate_arn" {
   type        = string
   default     = ""
 }
+
+variable "api_gateway_cloudwatch_role_arn" {
+  description = "ARN of the IAM role for API Gateway to write to CloudWatch Logs"
+  type        = string
+}

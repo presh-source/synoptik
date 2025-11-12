@@ -690,6 +690,11 @@ resource "aws_api_gateway_base_path_mapping" "dashboard" {
   domain_name = aws_api_gateway_domain_name.dashboard[0].domain_name
 }
 
+# API Gateway Account settings for CloudWatch Logs
+resource "aws_api_gateway_account" "dashboard" {
+  cloudwatch_role_arn = var.api_gateway_cloudwatch_role_arn
+}
+
 # API Gateway throttling settings
 resource "aws_api_gateway_method_settings" "dashboard" {
   rest_api_id = aws_api_gateway_rest_api.dashboard.id
@@ -703,6 +708,8 @@ resource "aws_api_gateway_method_settings" "dashboard" {
     data_trace_enabled     = true
     metrics_enabled        = true
   }
+
+  depends_on = [aws_api_gateway_account.dashboard]
 }
 
 # Outputs are defined in outputs.tf
