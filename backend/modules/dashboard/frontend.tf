@@ -1,12 +1,8 @@
 # S3 bucket for hosting the React application
 resource "aws_s3_bucket" "dashboard" {
-  bucket = "${var.project_name}-dashboard-${var.environment}"
+  bucket = "${var.environment}-${var.project_name}-dashboard"
 
-  tags = {
-    Name        = "${var.project_name}-dashboard"
-    Environment = var.environment
-    ManagedBy   = "Terraform"
-  }
+  tags = var.tags
 }
 
 # Block public access to the S3 bucket (CloudFront will access it)
@@ -144,9 +140,5 @@ resource "aws_cloudwatch_log_group" "cloudfront_logs" {
   name              = "/aws/cloudfront/${var.project_name}-dashboard"
   retention_in_days = 7
 
-  tags = {
-    Name        = "${var.project_name}-cloudfront-logs"
-    Environment = var.environment
-    ManagedBy   = "Terraform"
-  }
+  tags = var.tags
 }

@@ -68,5 +68,6 @@ variable "tags" {
   type        = map(string)
   default = {
     ManagedBy = "Terraform"
+    Project   = "Synoptik"
   }
 }
