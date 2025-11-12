@@ -99,7 +99,7 @@ jobs:
 
       - name: Get deployment targets from Terraform
         id: targets
-        working-directory: frontend
+        working-directory: backend
         run: |
           terraform init -backend-config=environments/${{ env.DEPLOY_ENV }}/backend.tfvars
           echo "bucket_name=$(terraform output -raw dashboard_bucket_name)" >> $GITHUB_OUTPUT
