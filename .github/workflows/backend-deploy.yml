@@ -138,16 +138,20 @@ jobs:
         working-directory: backend
         run: terraform validate
 
-
-      - name: Terraform Apply
-        if: github.event.inputs.action == 'apply' && (env.DEPLOY_ENV != 'prod' || github.event.inputs.confirm == 'yes')
+      - name: Terraform Plan
         working-directory: backend
         run: |
-          if [ ! -f tfplan ]; then
-            echo "tfplan not found — run terraform plan first"
-            exit 1
-          fi
-          terraform apply -input=false -auto-approve tfplan
+          terraform plan \
+            -var-file=environments/${{ env.DEPLOY_ENV }}/terraform.tfvars \
+            -var="project_name=${{ env.PROJECT_NAME }}" \
+            -var="aws_region=${{ secrets.AWS_REGION }}" \
+            -var="github_token=${{ secrets.GH_TOKEN_SECRET }}" \
+            -var="sentry_dsn_frontend=${{ secrets.SENTRY_DSN_FRONTEND }}" \
+            -var="sentry_dsn_backend=${{ secrets.SENTRY_DSN_BACKEND }}" \
+            -var="app_version=${{ github.sha }}" \
+            -out=tfplan
+
+      
 
       - name: Create deployment record
         if: github.event.inputs.action == 'apply' && success()
