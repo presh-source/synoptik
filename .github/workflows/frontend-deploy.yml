@@ -40,6 +40,7 @@ on:
 env:
   PROJECT_NAME: ${{ github.event.repository.name }}
   NODE_VERSION: '18'
+  AWS_REGION: 'us-east-1'
   DEPLOY_ENV: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'prod') || (startsWith(github.ref, 'refs/heads/release/') && 'staging') || (github.ref == 'refs/heads/develop' && 'dev') || 'dev' }}
 
 permissions:
