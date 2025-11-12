@@ -22,6 +22,7 @@ backend/terraform.tfstate
 backend/terraform.tfstate.backup
 backend/*.tfvars
 backend/environments/local/
+backend/localstack-provider.tf
 backend/crash.log
 backend/crash.*.log
 backend/override.tf
