@@ -56,6 +56,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for Sentry release comparison
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -129,8 +131,15 @@ jobs:
           SENTRY_PROJECT: "${{ env.PROJECT_NAME }}-frontend"
         run: |
           curl -sL https://sentry.io/get-cli/ | bash
+          
+          # Create release
           sentry-cli releases new "${{ github.sha }}"
-          sentry-cli releases set-commits "${{ github.sha }}" --auto
+          
+          # Associate commits (with fallback for missing previous release)
+          sentry-cli releases set-commits "${{ github.sha }}" --auto --ignore-missing || \
+            echo "Warning: Could not determine previous release, using recent commits"
+          
+          # Finalize and deploy
           sentry-cli releases finalize "${{ github.sha }}"
           sentry-cli releases deploys "${{ github.sha }}" new -e ${{ env.DEPLOY_ENV }}
 
