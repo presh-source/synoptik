@@ -63,7 +63,7 @@ jobs:
           fetch-depth: 0  # Fetch full history for Sentry release comparison
 
       - name: Verify deployment progression (staging requires dev, prod requires staging)
-      
+        if: github.event.inputs.action == 'apply' && (env.DEPLOY_ENV == 'staging' || env.DEPLOY_ENV == 'prod')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
