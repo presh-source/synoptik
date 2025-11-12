@@ -151,7 +151,15 @@ jobs:
             -var="app_version=${{ github.sha }}" \
             -out=tfplan
 
-      
+      - name: Terraform Apply
+        if: github.event.inputs.action == 'apply' && (env.DEPLOY_ENV != 'prod' || github.event.inputs.confirm == 'yes')
+        working-directory: backend
+        run: |
+          if [ ! -f tfplan ]; then
+            echo "tfplan not found — run terraform plan first"
+            exit 1
+          fi
+          terraform apply -input=false -auto-approve tfplan
 
       - name: Create deployment record
         if: github.event.inputs.action == 'apply' && success()
