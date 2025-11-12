@@ -98,7 +98,6 @@ jobs:
             -var="sentry_dsn_backend=${{ secrets.SENTRY_DSN_BACKEND }}" \
             -var="app_version=${{ github.sha }}" \
             -out=tfplan
-            -lock=false
 
       - name: Terraform Apply
         if: github.event.inputs.action == 'apply' && (env.DEPLOY_ENV != 'prod' || github.event.inputs.confirm == 'yes')
