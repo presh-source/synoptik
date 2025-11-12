@@ -1,19 +1,27 @@
+# ===================================
 # LocalStack
+# ===================================
 .localstack/
-scripts/localstack
+scripts/localstack/localstack-data/
+localstack/docker/localstack-data/
 
+# ===================================
 # Environment files
+# ===================================
 .env
 .env.local
 .env.*.local
+.env.production
 
+# ===================================
 # Terraform/Backend
+# ===================================
 backend/.terraform/
 backend/.terraform.lock.hcl
 backend/terraform.tfstate
 backend/terraform.tfstate.backup
 backend/*.tfvars
-!backend/environments/**/*.tfvars
+backend/environments/local/
 backend/crash.log
 backend/crash.*.log
 backend/override.tf
@@ -21,8 +29,7 @@ backend/override.tf.json
 backend/*_override.tf
 backend/*_override.tf.json
 backend/secrets.auto.tfvars
-backend/localstack-provider.tf
-backend/tplan
+backend/tfplan
 
 # Lambda deployment packages
 backend/modules/cold-path/lambda_package.zip

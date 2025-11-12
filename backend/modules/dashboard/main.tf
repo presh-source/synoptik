@@ -12,10 +12,7 @@ resource "aws_api_gateway_rest_api" "dashboard" {
     types = ["REGIONAL"]
   }
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-dashboard-api"
-    Environment = var.environment
-  }
+  tags = var.tags
 }
 
 # ============================================================================
@@ -85,10 +82,7 @@ resource "aws_iam_role" "pipeline_status_lambda" {
     ]
   })
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-pipeline-status-lambda"
-    Environment = var.environment
-  }
+  tags = var.tags
 }
 
 # Attach basic Lambda execution policy
@@ -159,10 +153,7 @@ resource "aws_iam_role" "realtime_metrics_lambda" {
     ]
   })
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-realtime-metrics-lambda"
-    Environment = var.environment
-  }
+  tags = var.tags
 }
 
 # Attach basic Lambda execution policy
@@ -208,10 +199,7 @@ resource "aws_iam_role" "cloudwatch_metrics_lambda" {
     ]
   })
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-cloudwatch-metrics-lambda"
-    Environment = var.environment
-  }
+  tags = var.tags
 }
 
 # Attach basic Lambda execution policy
@@ -280,10 +268,7 @@ resource "aws_lambda_function" "pipeline_status" {
     }
   }
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-pipeline-status"
-    Environment = var.environment
-  }
+  tags = var.tags
 }
 
 # CloudWatch Log Group for pipeline status Lambda
@@ -292,10 +277,7 @@ resource "aws_cloudwatch_log_group" "pipeline_status_lambda" {
   name              = "/aws/lambda/${aws_lambda_function.pipeline_status.function_name}"
   retention_in_days = 30
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-pipeline-status-logs"
-    Environment = var.environment
-  }
+  tags = var.tags
 }
 
 # Realtime Metrics Lambda
@@ -316,10 +298,7 @@ resource "aws_lambda_function" "realtime_metrics" {
     }
   }
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-realtime-metrics"
-    Environment = var.environment
-  }
+  tags = var.tags
 }
 
 # CloudWatch Log Group for realtime metrics Lambda
@@ -328,10 +307,7 @@ resource "aws_cloudwatch_log_group" "realtime_metrics_lambda" {
   name              = "/aws/lambda/${aws_lambda_function.realtime_metrics.function_name}"
   retention_in_days = 30
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-realtime-metrics-logs"
-    Environment = var.environment
-  }
+  tags = var.tags
 }
 
 # CloudWatch Metrics Lambda
@@ -351,10 +327,7 @@ resource "aws_lambda_function" "cloudwatch_metrics" {
     }
   }
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-cloudwatch-metrics"
-    Environment = var.environment
-  }
+  tags = var.tags
 }
 
 # CloudWatch Log Group for CloudWatch metrics Lambda
@@ -363,10 +336,7 @@ resource "aws_cloudwatch_log_group" "cloudwatch_metrics_lambda" {
   name              = "/aws/lambda/${aws_lambda_function.cloudwatch_metrics.function_name}"
   retention_in_days = 30
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-cloudwatch-metrics-logs"
-    Environment = var.environment
-  }
+  tags = var.tags
 }
 
 # ============================================================================
@@ -581,7 +551,7 @@ resource "aws_api_gateway_integration_response" "metrics_trending_options" {
   status_code = aws_api_gateway_method_response.metrics_trending_options.status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+    "method.response.header.Access-control-allow-headers" = "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
     "method.response.header.Access-Control-Allow-Methods" = "'GET,OPTIONS'"
     "method.response.header.Access-Control-Allow-Origin"  = "'*'"
   }
@@ -696,10 +666,7 @@ resource "aws_api_gateway_stage" "dashboard" {
   rest_api_id   = aws_api_gateway_rest_api.dashboard.id
   stage_name    = var.environment
 
-  tags = {
-    Name        = "${var.environment}-${var.project_name}-dashboard-stage"
-    Environment = var.environment
-  }
+  tags = var.tags
 }
 
 # API Gateway throttling settings

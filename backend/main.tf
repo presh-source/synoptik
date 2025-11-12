@@ -10,17 +10,10 @@ terraform {
       version = "~> 5.0"
     }
   }
-
+  
   # Backend configuration for AWS
   # For LocalStack: use `terraform init -backend=false`
   # For AWS: use `terraform init -backend-config=environments/{env}/backend.tfvars`
-  backend "s3" {                                                                                                                                   
-    bucket         = "${var.project_name}-terraform-state-${var.environment}"
-    key            = "${var.project_name}/terraform.tfstate"
-    region         = "us-east-1"
-    dynamodb_table = "${var.project_name}-terraform-locks"
-    encrypt        = true
-  }
 }
 
 # Provider configuration is in localstack-provider.tf
@@ -28,6 +21,13 @@ terraform {
 # Data sources
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
+
+locals {
+  merged_tags = merge(var.tags, {
+    Project     = var.project_name
+    Environment = var.environment
+  })
+}
 
 # ============================================================================
 # Core Modules
@@ -38,16 +38,18 @@ module "iam" {
   source       = "./modules/iam"
   project_name = var.project_name
   environment  = var.environment
+  tags         = local.merged_tags
 }
 
 # Secrets Manager for GitHub token and Sentry DSNs
 module "secrets" {
-  source               = "./modules/secrets"
-  project_name         = var.project_name
-  environment          = var.environment
-  github_token         = var.github_token
-  sentry_dsn_frontend  = var.sentry_dsn_frontend
-  sentry_dsn_backend   = var.sentry_dsn_backend
+  source              = "./modules/secrets"
+  project_name        = var.project_name
+  environment         = var.environment
+  github_token        = var.github_token
+  sentry_dsn_frontend = var.sentry_dsn_frontend
+  sentry_dsn_backend  = var.sentry_dsn_backend
+  tags                = local.merged_tags
 }
 
 # Data Lake (S3)
@@ -56,6 +58,7 @@ module "data_lake" {
   project_name   = var.project_name
   environment    = var.environment
   use_localstack = local.use_localstack
+  tags           = local.merged_tags
 }
 
 # ============================================================================
@@ -64,25 +67,29 @@ module "data_lake" {
 
 # Cold Path Pipeline
 module "cold_path" {
-  source                = "./modules/cold-path"
-  project_name          = var.project_name
-  environment           = var.environment
-  github_token_arn      = module.secrets.github_token_arn
-  data_lake_bucket_name = module.data_lake.bucket_name
+  source                   = "./modules/cold-path"
+  project_name             = var.project_name
+  environment              = var.environment
+  github_token_arn         = module.secrets.github_token_arn
+  data_lake_bucket_name    = module.data_lake.bucket_name
+  tags                     = local.merged_tags
+  lambda_timeout           = 300
+  lambda_memory            = 512
+  requests_per_execution = 10
+  sleep_interval           = 1
 
   depends_on = [module.secrets, module.data_lake]
 }
 
 # Hot Path Pipeline
-# module "hot_path" {
-#   source = "./modules/hot-path"
-#
-#   environment           = var.environment
-#   github_token_arn      = module.secrets.github_token_arn
-#   data_lake_bucket_name = module.data_lake.bucket_name
-#
-#   depends_on = [module.secrets]
-# }
+module "hot_path" {
+  source      = "./modules/hot-path"
+  project_name = var.project_name
+  environment = var.environment
+  tags        = local.merged_tags
+
+  depends_on = [module.secrets]
+}
 
 # Scrubber Path Pipeline
 # module "scrubber_path" {
@@ -125,23 +132,20 @@ module "cold_path" {
 
 # Dashboard (API Gateway, Lambda, Frontend)
 module "dashboard" {
-  source         = "./modules/dashboard"
-  project_name   = var.project_name
-  environment    = var.environment
-  use_localstack = local.use_localstack
+  source                   = "./modules/dashboard"
+  project_name             = var.project_name
+  environment              = var.environment
+  use_localstack           = local.use_localstack
+  opensearch_endpoint      = "http://localhost:4566" # Mock
+  neptune_endpoint         = "localhost:8182"      # Mock
+  cold_path_dynamodb_table = module.cold_path.dynamodb_table_name
+  kinesis_stream_name      = module.hot_path.kinesis_stream_name
+  scrubber_queue_url       = "http://localhost:4566/000000000000/scrubber-queue" # Mock
+  sentry_dsn_secret_arn    = module.secrets.sentry_dsn_backend_arn
+  app_version              = var.app_version
+  tags                     = local.merged_tags
 
-  # Mock values for unimplemented dependencies
-  opensearch_endpoint      = "http://localhost:4566"
-  neptune_endpoint         = "localhost:8182"
-  cold_path_dynamodb_table = "${var.project_name}-cold-path-state-${var.environment}"
-  kinesis_stream_name      = "${var.project_name}-hot-path-stream-${var.environment}"
-  scrubber_queue_url       = "http://localhost:4566/000000000000/${var.project_name}-scrubber-queue-${var.environment}"
-
-  # Sentry configuration
-  sentry_dsn_secret_arn = module.secrets.sentry_dsn_backend_arn
-  app_version           = var.app_version
-
-  depends_on = [module.secrets]
+  depends_on = [module.secrets, module.cold_path]
 }
 
 # ============================================================================

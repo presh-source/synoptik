@@ -75,13 +75,7 @@ aws s3api put-bucket-versioning \
 print_info "Enabling encryption on S3 bucket"
 aws s3api put-bucket-encryption \
     --bucket "${BUCKET_NAME}" \
-    --server-side-encryption-configuration '{ \
-        "Rules": [{ \
-            "ApplyServerSideEncryptionByDefault": { \
-                "SSEAlgorithm": "AES256" \
-            } \
-        }] \
-    }'
+    --server-side-encryption-configuration '{ "Rules": [{ "ApplyServerSideEncryptionByDefault": { "SSEAlgorithm": "AES256" } }] }'
 
 # Block public access
 print_info "Blocking public access on S3 bucket"
@@ -99,9 +93,11 @@ else
         --table-name "${DYNAMODB_TABLE}" \
         --attribute-definitions AttributeName=LockID,AttributeType=S \
         --key-schema AttributeName=LockID,KeyType=HASH \
-        --billing-mode PAY_PER_REQUEST \
+        --billing-mode PROVISIONED \
+        --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
+        --deletion-protection-enabled \
         --region "${REGION}" \
-        --tags Key=Environment,Value="${ENV}" Key=Project,Value="${var.project_name}"
+        --tags Key=Environment,Value="${ENV}" Key=Project,Value="${PROJECT_NAME}"
     
     print_info "Waiting for DynamoDB table to be active..."
     aws dynamodb wait table-exists --table-name "${DYNAMODB_TABLE}" --region "${REGION}"
