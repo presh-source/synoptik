@@ -102,8 +102,30 @@ jobs:
         working-directory: backend
         run: |
           terraform init -backend-config=environments/${{ env.DEPLOY_ENV }}/backend.tfvars
-          echo "bucket_name=$(terraform output -raw dashboard_bucket_name)" >> $GITHUB_OUTPUT
-          echo "distribution_id=$(terraform output -raw cloudfront_distribution_id)" >> $GITHUB_OUTPUT
+          
+          # Check if outputs exist (infrastructure must be applied first)
+          if ! terraform output dashboard_bucket_name &>/dev/null; then
+            echo "::error::Infrastructure not yet deployed. Please run backend deployment first."
+            echo "::error::Run: cd backend && terraform apply -var-file=environments/${{ env.DEPLOY_ENV }}/terraform.tfvars"
+            exit 1
+          fi
+          
+          BUCKET_NAME=$(terraform output -raw dashboard_bucket_name)
+          DISTRIBUTION_ID=$(terraform output -raw cloudfront_distribution_id)
+          
+          if [ -z "$BUCKET_NAME" ] || [ "$BUCKET_NAME" = "null" ]; then
+            echo "::error::Dashboard bucket not found in Terraform state"
+            exit 1
+          fi
+          
+          if [ -z "$DISTRIBUTION_ID" ] || [ "$DISTRIBUTION_ID" = "null" ]; then
+            echo "::warning::CloudFront distribution not found (may be using LocalStack)"
+            DISTRIBUTION_ID=""
+          fi
+          
+          echo "bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
+          echo "distribution_id=$DISTRIBUTION_ID" >> $GITHUB_OUTPUT
+          echo "Deployment targets: S3=$BUCKET_NAME, CloudFront=$DISTRIBUTION_ID"
 
       - name: Deploy to S3
         if: github.event.inputs.action == 'deploy' && (env.DEPLOY_ENV != 'prod' || github.event.inputs.confirm == 'yes')
@@ -124,8 +146,9 @@ jobs:
             --metadata-directive REPLACE
 
       - name: Invalidate CloudFront cache
-        if: github.event.inputs.action == 'deploy' && (env.DEPLOY_ENV != 'prod' || github.event.inputs.confirm == 'yes')
+        if: github.event.inputs.action == 'deploy' && steps.targets.outputs.distribution_id != '' && (env.DEPLOY_ENV != 'prod' || github.event.inputs.confirm == 'yes')
         run: |
+          echo "Invalidating CloudFront distribution: ${{ steps.targets.outputs.distribution_id }}"
           aws cloudfront create-invalidation \
             --distribution-id ${{ steps.targets.outputs.distribution_id }} \
             --paths "/*"

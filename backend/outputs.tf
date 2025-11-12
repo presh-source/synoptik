@@ -30,6 +30,11 @@ output "cloudfront_domain_name" {
   value       = module.dashboard.cloudfront_domain_name
 }
 
+output "cloudfront_distribution_id" {
+  description = "ID of the CloudFront distribution"
+  value       = module.dashboard.cloudfront_distribution_id
+}
+
 output "dashboard_url" {
   description = "URL of the dashboard"
   value       = module.dashboard.dashboard_url
