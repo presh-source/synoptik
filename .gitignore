@@ -21,7 +21,7 @@ backend/.terraform.lock.hcl
 backend/terraform.tfstate
 backend/terraform.tfstate.backup
 backend/*.tfvars
-!backend/environments/**/*.tfvars
+backend/environments/local/
 backend/crash.log
 backend/crash.*.log
 backend/override.tf

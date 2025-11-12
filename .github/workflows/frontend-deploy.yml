@@ -3,27 +3,44 @@ name: Deploy Frontend
 on:
   push:
     branches:
-      - main
       - develop
+      - release
+      - production
     paths:
-      - 'dashboard/**'
+      - 'frontend/**'
       - '.github/workflows/frontend-deploy.yml'
   workflow_dispatch:
     inputs:
       environment:
         description: 'Environment to deploy to'
-        required: true
+        required: false
         default: 'dev'
         type: choice
         options:
           - dev
           - staging
           - prod
+      action:
+        description: 'Deployment action'
+        required: true
+        default: 'deploy'
+        type: choice
+        options:
+          - deploy
+          - rollback
+      confirm:
+        description: 'Confirm deployment for prod (must be "yes" to allow deploy)'
+        required: false
+        default: 'no'
+        type: choice
+        options:
+          - yes
+          - no
 
 env:
   PROJECT_NAME: ${{ github.event.repository.name }}
-  AWS_REGION: 'us-east-1'
   NODE_VERSION: '18'
+  DEPLOY_ENV: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'prod') || (startsWith(github.ref, 'refs/heads/release/') && 'staging') || (github.ref == 'refs/heads/develop' && 'dev') || 'dev' }}
 
 permissions:
   id-token: write
@@ -34,7 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     
     environment:
-      name: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'prod') || 'dev' }}
+      name: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'prod') || (startsWith(github.ref, 'refs/heads/release/') && 'staging') || (github.ref == 'refs/heads/develop' && 'dev') || 'dev' }}
     
     steps:
       - name: Checkout code
@@ -45,77 +62,84 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: dashboard/package-lock.json
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        working-directory: dashboard
+        working-directory: frontend
         run: npm ci --legacy-peer-deps
 
       - name: Run linter
-        working-directory: dashboard
+        working-directory: frontend
         run: npm run lint
         continue-on-error: true
 
       - name: Build application
-        working-directory: dashboard
+        working-directory: frontend
         run: npm run build
         env:
           VITE_API_URL: ${{ secrets.API_URL }}
           VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN_FRONTEND }}
           VITE_APP_VERSION: ${{ github.sha }}
+          VITE_ENVIRONMENT: ${{ env.DEPLOY_ENV }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubOIDCRole
-          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.ROLE_NAME || 'GitHubOIDCRole' }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Get deployment targets from Terraform
         id: targets
         working-directory: backend
         run: |
-          terraform init -backend-config=environments/${{ github.event.inputs.environment || 'dev' }}/backend.tfvars
+          terraform init -backend-config=environments/${{ env.DEPLOY_ENV }}/backend.tfvars
           echo "bucket_name=$(terraform output -raw dashboard_bucket_name)" >> $GITHUB_OUTPUT
           echo "distribution_id=$(terraform output -raw cloudfront_distribution_id)" >> $GITHUB_OUTPUT
 
       - name: Deploy to S3
-        working-directory: dashboard
+        if: github.event.inputs.action == 'deploy' && (env.DEPLOY_ENV != 'prod' || github.event.inputs.confirm == 'yes')
+        working-directory: frontend
         run: |
-          # Upload all files except index.html with long cache
+          echo "Deploying to environment: ${{ env.DEPLOY_ENV }}"
+          if [ "${{ env.DEPLOY_ENV }}" = "prod" ]; then
+            echo "WARNING: Production deployment requires GitHub Environment protection and reviewer approval."
+          fi
+          
           aws s3 sync dist/ s3://${{ steps.targets.outputs.bucket_name }}/ \
             --delete \
             --cache-control "public, max-age=31536000, immutable" \
             --exclude "index.html"
           
-          # Upload index.html with no-cache
           aws s3 cp dist/index.html s3://${{ steps.targets.outputs.bucket_name }}/index.html \
             --cache-control "no-cache, no-store, must-revalidate" \
             --metadata-directive REPLACE
 
       - name: Invalidate CloudFront cache
+        if: github.event.inputs.action == 'deploy' && (env.DEPLOY_ENV != 'prod' || github.event.inputs.confirm == 'yes')
         run: |
           aws cloudfront create-invalidation \
             --distribution-id ${{ steps.targets.outputs.distribution_id }} \
             --paths "/*"
 
       - name: Create Sentry release
-        if: env.SENTRY_AUTH_TOKEN != ''
+        if: github.event.inputs.action == 'deploy' && env.SENTRY_AUTH_TOKEN != ''
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: synoptik-dashboard
+          SENTRY_PROJECT: "${{ env.PROJECT_NAME }}-frontend"
         run: |
           curl -sL https://sentry.io/get-cli/ | bash
           sentry-cli releases new "${{ github.sha }}"
           sentry-cli releases set-commits "${{ github.sha }}" --auto
           sentry-cli releases finalize "${{ github.sha }}"
-          sentry-cli releases deploys "${{ github.sha }}" new -e ${{ github.event.inputs.environment || 'dev' }}
+          sentry-cli releases deploys "${{ github.sha }}" new -e ${{ env.DEPLOY_ENV }}
 
       - name: Deployment summary
         run: |
           echo "### Frontend Deployment Complete! :rocket:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Environment:** ${{ github.event.inputs.environment || 'dev' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ env.DEPLOY_ENV }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Action:** ${{ github.event.inputs.action || 'deploy' }}" >> $GITHUB_STEP_SUMMARY
           echo "**S3 Bucket:** ${{ steps.targets.outputs.bucket_name }}" >> $GITHUB_STEP_SUMMARY
           echo "**CloudFront Distribution:** ${{ steps.targets.outputs.distribution_id }}" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY

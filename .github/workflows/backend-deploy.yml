@@ -3,16 +3,17 @@ name: Deploy Backend (Infrastructure)
 on:
   push:
     branches:
-      - main
       - develop
+      - release
+      - production
     paths:
-      - 'terraform/**'
+      - 'backend/**'
       - '.github/workflows/backend-deploy.yml'
   workflow_dispatch:
     inputs:
       environment:
         description: 'Environment to deploy to'
-        required: true
+        required: false
         default: 'dev'
         type: choice
         options:
@@ -28,11 +29,20 @@ on:
           - plan
           - apply
           - destroy
+      confirm:
+        description: 'Confirm apply for prod (must be "yes" to allow apply)'
+        required: false
+        default: 'no'
+        type: choice
+        options:
+          - yes
+          - no
 
 env:
   PROJECT_NAME: ${{ github.event.repository.name }}
   AWS_REGION: 'us-east-1'
   TERRAFORM_VERSION: '1.5.0'
+  DEPLOY_ENV: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'prod') || (startsWith(github.ref, 'refs/heads/release/') && 'staging') || (github.ref == 'refs/heads/develop' && 'dev') || 'dev' }}
 
 permissions:
   id-token: write
@@ -41,10 +51,11 @@ permissions:
 jobs:
   terraform:
     runs-on: ubuntu-latest
-    
+
+    # Use the environment for GitHub Environment secrets
     environment:
-      name: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'prod') || 'dev' }}
-    
+      name: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'prod') || (startsWith(github.ref, 'refs/heads/release/') && 'staging') || (github.ref == 'refs/heads/develop' && 'dev') || 'dev' }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -57,8 +68,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHubOIDCRole
-          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/${{ secrets.ROLE_NAME || 'GitHubOIDCRole' }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Terraform Format Check
         working-directory: backend
@@ -69,7 +80,7 @@ jobs:
         working-directory: backend
         run: |
           terraform init \
-            -backend-config=environments/${{ github.event.inputs.environment || 'dev' }}/backend.tfvars
+            -backend-config=environments/${{ env.DEPLOY_ENV }}/backend.tfvars
 
       - name: Terraform Validate
         working-directory: backend
@@ -79,29 +90,38 @@ jobs:
         working-directory: backend
         run: |
           terraform plan \
-            -var-file=environments/${{ github.event.inputs.environment || 'dev' }}/terraform.tfvars \
+            -var-file=environments/${{ env.DEPLOY_ENV }}/terraform.tfvars \
             -var="project_name=${{ env.PROJECT_NAME }}" \
-            -var="aws_region=${{ env.AWS_REGION }}" \
-            -var="github_token=${{ secrets.GB_TOKEN_SECRET }}" \
+            -var="aws_region=${{ secrets.AWS_REGION }}" \
+            -var="github_token=${{ secrets.GITHUB_TOKEN_SECRET }}" \
             -var="sentry_dsn_frontend=${{ secrets.SENTRY_DSN_FRONTEND }}" \
             -var="sentry_dsn_backend=${{ secrets.SENTRY_DSN_BACKEND }}" \
             -var="app_version=${{ github.sha }}" \
             -out=tfplan
 
       - name: Terraform Apply
-        if: github.event.inputs.action == 'apply' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
-        working-directory: backend
-        run: terraform apply -auto-approve tfplan
-
-      - name: Terraform Destroy
-        if: github.event.inputs.action == 'destroy'
+        if: github.event.inputs.action == 'apply' && (env.DEPLOY_ENV != 'prod' || github.event.inputs.confirm == 'yes')
         working-directory: backend
         run: |
+          if [ ! -f tfplan ]; then
+            echo "tfplan not found — run terraform plan first"
+            exit 1
+          fi
+          terraform apply -input=false -auto-approve tfplan
+
+      - name: Terraform Destroy
+        if: github.event.inputs.action == 'destroy' && github.event.inputs.confirm == 'yes'
+        working-directory: backend
+        run: |
+          echo "Requested destroy for environment: ${{ env.DEPLOY_ENV }}"
+          if [ "${{ env.DEPLOY_ENV }}" = "prod" ]; then
+            echo "WARNING: Destroy in PROD requires GitHub Environment protection and reviewer approval."
+          fi
           terraform destroy \
-            -var-file=environments/${{ github.event.inputs.environment || 'dev' }}/terraform.tfvars \
+            -var-file=environments/${{ env.DEPLOY_ENV }}/terraform.tfvars \
             -var="project_name=${{ env.PROJECT_NAME }}" \
-            -var="aws_region=${{ env.AWS_REGION }}" \
-            -var="github_token=${{ secrets.GB_TOKEN_SECRET }}" \
+            -var="aws_region=${{ secrets.AWS_REGION }}" \
+            -var="github_token=${{ secrets.GITHUB_TOKEN_SECRET }}" \
             -var="sentry_dsn_frontend=${{ secrets.SENTRY_DSN_FRONTEND }}" \
             -var="sentry_dsn_backend=${{ secrets.SENTRY_DSN_BACKEND }}" \
             -var="app_version=${{ github.sha }}" \
@@ -110,11 +130,12 @@ jobs:
       - name: Get Terraform Outputs
         if: github.event.inputs.action != 'destroy'
         working-directory: backend
+        continue-on-error: true
         run: |
           echo "### Terraform Outputs" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          terraform output >> $GITHUB_STEP_SUMMARY
+          terraform output >> $GITHUB_STEP_SUMMARY 2>&1 || echo "No outputs available yet" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Create Sentry release for backend
@@ -122,19 +143,19 @@ jobs:
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: synoptik-backend
+          SENTRY_PROJECT: "${{ env.PROJECT_NAME }}-backend"
         run: |
           curl -sL https://sentry.io/get-cli/ | bash
           sentry-cli releases new "${{ github.sha }}"
           sentry-cli releases set-commits "${{ github.sha }}" --auto
           sentry-cli releases finalize "${{ github.sha }}"
-          sentry-cli releases deploys "${{ github.sha }}" new -e ${{ github.event.inputs.environment || 'dev' }}
+          sentry-cli releases deploys "${{ github.sha }}" new -e ${{ env.DEPLOY_ENV }}
 
       - name: Deployment summary
         run: |
           echo "### Backend Deployment Complete! :rocket:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Environment:** ${{ github.event.inputs.environment || 'dev' }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Action:** ${{ github.event.inputs.action || 'apply' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ env.DEPLOY_ENV }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Action:** ${{ github.event.inputs.action || 'plan' }}" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "**Deployed by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
