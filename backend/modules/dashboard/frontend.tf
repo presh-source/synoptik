@@ -128,6 +128,9 @@ resource "aws_cloudfront_distribution" "dashboard" {
   }
 
   tags = var.tags
+
+  # Ensure certificate is validated before creating CloudFront distribution
+  depends_on = [aws_acm_certificate_validation.dashboard]
 }
 
 # CloudWatch log group for CloudFront access logs (optional)

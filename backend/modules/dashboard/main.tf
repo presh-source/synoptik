@@ -680,6 +680,9 @@ resource "aws_api_gateway_domain_name" "dashboard" {
   }
 
   tags = var.tags
+
+  # Ensure certificate is validated before creating domain
+  depends_on = [aws_acm_certificate_validation.dashboard]
 }
 
 # API Gateway Base Path Mapping
