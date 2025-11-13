@@ -126,10 +126,10 @@ resource "null_resource" "install_dependencies" {
   }
 
   provisioner "local-exec" {
-    command     = <<-EOT
-      rm -rf ${path.module}/lambda_build
-      mkdir -p ${path.module}/lambda_build/python
-      pip install -r ${path.module}/lambda/requirements.txt -t ${path.module}/lambda_build/python --upgrade
+    command = <<-EOT
+      rm -rf lambda_build
+      mkdir -p lambda_build/python
+      pip install -r lambda/requirements.txt -t lambda_build/python --upgrade
     EOT
     working_dir = path.module
   }

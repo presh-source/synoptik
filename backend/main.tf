@@ -84,7 +84,7 @@ module "cold_path" {
   tags                   = local.merged_tags
   lambda_timeout         = 900
   lambda_memory          = 128
-  requests_per_execution = 10
+  requests_per_execution = 1050
   sleep_interval         = 1
 
   depends_on = [module.secrets, module.data_lake]
