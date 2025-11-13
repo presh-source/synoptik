@@ -1,4 +1,7 @@
 # Lambda function dependencies
+requests==2.31.0
+aws-lambda-powertools==2.31.0
+aws-xray-sdk==2.12.0
 
 # Sentry SDK for error tracking
 sentry-sdk==1.40.0

@@ -172,8 +172,7 @@ resource "aws_lambda_function" "crawler" {
   memory_size      = var.lambda_memory
   layers = [
     aws_lambda_layer_version.crawler_dependencies.arn,
-    "arn:aws:lambda:${data.aws_region.current.name}:336392948345:layer:AWSSDKPandas-Python311:${var.aws_sdk_pandas_layer_version}",
-    "arn:aws:lambda:${data.aws_region.current.name}:580247275435:layer:AWSLambdaPowertoolsPython311:${var.aws_powertools_layer_version}"
+    "arn:aws:lambda:${data.aws_region.current.name}:336392948345:layer:AWSSDKPandas-Python311:${var.aws_sdk_pandas_layer_version}"
   ]
 
   environment {
