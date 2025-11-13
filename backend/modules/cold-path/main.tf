@@ -132,7 +132,9 @@ resource "null_resource" "install_dependencies" {
     command     = <<-EOT
       rm -rf lambda_build
       mkdir -p lambda_build/python
-      pip install -r lambda/requirements.txt -t lambda_build/python --upgrade
+      pip install -r lambda/requirements.txt -t lambda_build/python --upgrade --quiet
+      # Create a marker file to indicate successful installation
+      echo "Dependencies installed at $(date)" > lambda_build/.installed
     EOT
     working_dir = path.module
   }
@@ -140,10 +142,11 @@ resource "null_resource" "install_dependencies" {
 
 # Package Lambda dependencies as a layer
 data "archive_file" "crawler_lambda_layer" {
-  type        = "zip"
-  source_dir  = "${path.module}/lambda_build"
-  output_path = "${path.module}/lambda_layer.zip"
-  depends_on  = [null_resource.install_dependencies]
+  type             = "zip"
+  source_dir       = "${path.module}/lambda_build"
+  output_path      = "${path.module}/lambda_layer.zip"
+  output_file_mode = "0666"
+  depends_on       = [null_resource.install_dependencies]
 }
 
 # Lambda layer for dependencies

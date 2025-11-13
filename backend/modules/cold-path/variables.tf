@@ -51,5 +51,5 @@ variable "sleep_interval" {
 variable "aws_sdk_pandas_layer_version" {
   description = "Version of AWS SDK Pandas layer for us-east-1. Check https://aws-sdk-pandas.readthedocs.io/en/stable/layers.html for latest"
   type        = number
-  default     = 13 # Known working version for Python 3.11
+  default     = 23 # Known working version for Python 3.11
 }
