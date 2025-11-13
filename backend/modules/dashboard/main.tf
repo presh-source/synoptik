@@ -19,42 +19,35 @@ resource "aws_api_gateway_rest_api" "dashboard" {
 # API Gateway Resources (URL paths)
 # ============================================================================
 
-# /api resource
-resource "aws_api_gateway_resource" "api" {
-  rest_api_id = aws_api_gateway_rest_api.dashboard.id
-  parent_id   = aws_api_gateway_rest_api.dashboard.root_resource_id
-  path_part   = "api"
-}
-
-# /api/pipeline-status resource
+# /pipeline-status resource
 resource "aws_api_gateway_resource" "pipeline_status" {
   rest_api_id = aws_api_gateway_rest_api.dashboard.id
-  parent_id   = aws_api_gateway_resource.api.id
+  parent_id   = aws_api_gateway_rest_api.dashboard.root_resource_id
   path_part   = "pipeline-status"
 }
 
-# /api/metrics resource
+# /metrics resource
 resource "aws_api_gateway_resource" "metrics" {
   rest_api_id = aws_api_gateway_rest_api.dashboard.id
-  parent_id   = aws_api_gateway_resource.api.id
+  parent_id   = aws_api_gateway_rest_api.dashboard.root_resource_id
   path_part   = "metrics"
 }
 
-# /api/metrics/realtime resource
+# /metrics/realtime resource
 resource "aws_api_gateway_resource" "metrics_realtime" {
   rest_api_id = aws_api_gateway_rest_api.dashboard.id
   parent_id   = aws_api_gateway_resource.metrics.id
   path_part   = "realtime"
 }
 
-# /api/metrics/trending resource
+# /metrics/trending resource
 resource "aws_api_gateway_resource" "metrics_trending" {
   rest_api_id = aws_api_gateway_rest_api.dashboard.id
   parent_id   = aws_api_gateway_resource.metrics.id
   path_part   = "trending"
 }
 
-# /api/metrics/cloudwatch resource
+# /metrics/cloudwatch resource
 resource "aws_api_gateway_resource" "metrics_cloudwatch" {
   rest_api_id = aws_api_gateway_rest_api.dashboard.id
   parent_id   = aws_api_gateway_resource.metrics.id
@@ -379,7 +372,7 @@ resource "aws_cloudwatch_log_group" "cloudwatch_metrics_lambda" {
 # API Gateway Methods and Integrations
 # ============================================================================
 
-# GET /api/pipeline-status
+# GET /pipeline-status
 resource "aws_api_gateway_method" "pipeline_status_get" {
   rest_api_id   = aws_api_gateway_rest_api.dashboard.id
   resource_id   = aws_api_gateway_resource.pipeline_status.id
@@ -396,7 +389,7 @@ resource "aws_api_gateway_integration" "pipeline_status_get" {
   uri                     = aws_lambda_function.pipeline_status.invoke_arn
 }
 
-# GET /api/metrics/realtime
+# GET /metrics/realtime
 resource "aws_api_gateway_method" "metrics_realtime_get" {
   rest_api_id   = aws_api_gateway_rest_api.dashboard.id
   resource_id   = aws_api_gateway_resource.metrics_realtime.id
@@ -420,7 +413,7 @@ resource "aws_api_gateway_integration" "metrics_realtime_get" {
   uri                     = aws_lambda_function.realtime_metrics.invoke_arn
 }
 
-# GET /api/metrics/trending
+# GET /metrics/trending
 resource "aws_api_gateway_method" "metrics_trending_get" {
   rest_api_id   = aws_api_gateway_rest_api.dashboard.id
   resource_id   = aws_api_gateway_resource.metrics_trending.id
@@ -437,7 +430,7 @@ resource "aws_api_gateway_integration" "metrics_trending_get" {
   uri                     = aws_lambda_function.realtime_metrics.invoke_arn
 }
 
-# GET /api/metrics/cloudwatch
+# GET /metrics/cloudwatch
 resource "aws_api_gateway_method" "metrics_cloudwatch_get" {
   rest_api_id   = aws_api_gateway_rest_api.dashboard.id
   resource_id   = aws_api_gateway_resource.metrics_cloudwatch.id
@@ -458,7 +451,7 @@ resource "aws_api_gateway_integration" "metrics_cloudwatch_get" {
 # CORS Configuration
 # ============================================================================
 
-# OPTIONS method for /api/pipeline-status (CORS preflight)
+# OPTIONS method for /pipeline-status (CORS preflight)
 resource "aws_api_gateway_method" "pipeline_status_options" {
   rest_api_id   = aws_api_gateway_rest_api.dashboard.id
   resource_id   = aws_api_gateway_resource.pipeline_status.id
@@ -503,7 +496,7 @@ resource "aws_api_gateway_integration_response" "pipeline_status_options" {
   }
 }
 
-# OPTIONS method for /api/metrics/realtime (CORS preflight)
+# OPTIONS method for /metrics/realtime (CORS preflight)
 resource "aws_api_gateway_method" "metrics_realtime_options" {
   rest_api_id   = aws_api_gateway_rest_api.dashboard.id
   resource_id   = aws_api_gateway_resource.metrics_realtime.id
@@ -548,7 +541,7 @@ resource "aws_api_gateway_integration_response" "metrics_realtime_options" {
   }
 }
 
-# OPTIONS method for /api/metrics/trending (CORS preflight)
+# OPTIONS method for /metrics/trending (CORS preflight)
 resource "aws_api_gateway_method" "metrics_trending_options" {
   rest_api_id   = aws_api_gateway_rest_api.dashboard.id
   resource_id   = aws_api_gateway_resource.metrics_trending.id
@@ -593,7 +586,7 @@ resource "aws_api_gateway_integration_response" "metrics_trending_options" {
   }
 }
 
-# OPTIONS method for /api/metrics/cloudwatch (CORS preflight)
+# OPTIONS method for /metrics/cloudwatch (CORS preflight)
 resource "aws_api_gateway_method" "metrics_cloudwatch_options" {
   rest_api_id   = aws_api_gateway_rest_api.dashboard.id
   resource_id   = aws_api_gateway_resource.metrics_cloudwatch.id
@@ -675,7 +668,6 @@ resource "aws_api_gateway_deployment" "dashboard" {
 
   triggers = {
     redeployment = sha1(jsonencode([
-      aws_api_gateway_resource.api.id,
       aws_api_gateway_resource.pipeline_status.id,
       aws_api_gateway_resource.metrics.id,
       aws_api_gateway_resource.metrics_realtime.id,

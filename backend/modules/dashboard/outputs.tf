@@ -53,7 +53,7 @@ output "dashboard_url" {
 
 output "api_url" {
   description = "URL of the API"
-  value       = var.api_domain_name != "" ? "https://${var.api_domain_name}/api" : "${aws_api_gateway_stage.dashboard.invoke_url}/api"
+  value       = var.api_domain_name != "" ? "https://${var.api_domain_name}" : aws_api_gateway_stage.dashboard.invoke_url
 }
 
 output "domain_name" {
