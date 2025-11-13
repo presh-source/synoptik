@@ -35,9 +35,10 @@ backend/tfplan
 # Lambda deployment packages
 backend/modules/cold-path/lambda_package.zip
 backend/modules/cold-path/lambda_layer.zip
+backend/modules/cold-path/lambda_build/
 backend/modules/dashboard/lambda_package.zip
 backend/modules/dashboard/lambda_layer.zip
-
+backend/modules/dashboard/lambda_build/
 
 # Node
 node_modules/

@@ -122,31 +122,24 @@ resource "aws_iam_role_policy" "crawler_lambda_policy" {
   })
 }
 
-# Install Lambda dependencies locally
-resource "null_resource" "install_dependencies" {
-  triggers = {
-    requirements = filemd5("${path.module}/lambda/requirements.txt")
-  }
+# Install Lambda dependencies locally using an external data source to ensure it runs before archiving
+data "external" "pip_install" {
+  program = ["/bin/bash", "${path.module}/install_deps.sh", path.module]
 
-  provisioner "local-exec" {
-    command     = <<-EOT
-      rm -rf lambda_build
-      mkdir -p lambda_build/python
-      pip install -r lambda/requirements.txt -t lambda_build/python --upgrade --quiet
-      # Create a marker file to indicate successful installation
-      echo "Dependencies installed at $(date)" > lambda_build/.installed
-    EOT
-    working_dir = path.module
+  # Re-run when requirements.txt changes
+  query = {
+    requirements_md5 = filemd5("${path.module}/lambda/requirements.txt")
   }
 }
 
 # Package Lambda dependencies as a layer
 data "archive_file" "crawler_lambda_layer" {
-  type             = "zip"
-  source_dir       = "${path.module}/lambda_build"
-  output_path      = "${path.module}/lambda_layer.zip"
-  output_file_mode = "0666"
-  depends_on       = [null_resource.install_dependencies]
+  type        = "zip"
+  source_dir  = "${path.module}/lambda_build"
+  output_path = "${path.module}/lambda_layer.zip"
+
+  # This creates the dependency: archive runs after pip_install completes
+  depends_on = [data.external.pip_install]
 }
 
 # Lambda layer for dependencies
