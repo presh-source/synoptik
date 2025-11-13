@@ -126,7 +126,7 @@ resource "null_resource" "install_dependencies" {
   }
 
   provisioner "local-exec" {
-    command = <<-EOT
+    command     = <<-EOT
       rm -rf lambda_build
       mkdir -p lambda_build/python
       pip install -r lambda/requirements.txt -t lambda_build/python --upgrade
