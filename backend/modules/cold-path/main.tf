@@ -177,8 +177,8 @@ resource "aws_lambda_function" "crawler" {
   layers = [
     aws_lambda_layer_version.crawler_dependencies.arn,
     # AWS Data Wrangler layer (includes pandas, pyarrow, boto3, and more)
-    # https://aws-sdk-pandas.readthedocs.io/en/stable/layers.html
-    "arn:aws:lambda:${data.aws_region.current.name}:336392948345:layer:AWSSDKPandas-Python311:14"
+    # Latest versions: https://aws-sdk-pandas.readthedocs.io/en/stable/layers.html
+    "arn:aws:lambda:${data.aws_region.current.name}:336392948345:layer:AWSSDKPandas-Python311:${var.aws_sdk_pandas_layer_version}"
   ]
 
   environment {
