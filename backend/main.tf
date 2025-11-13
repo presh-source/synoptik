@@ -9,6 +9,14 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.0"
+    }
+    archive = {
+      source  = "hashicorp/archive"
+      version = "~> 2.0"
+    }
   }
 
   # Backend configuration for AWS
@@ -74,8 +82,8 @@ module "cold_path" {
   github_token_arn       = module.secrets.github_token_arn
   data_lake_bucket_name  = module.data_lake.bucket_name
   tags                   = local.merged_tags
-  lambda_timeout         = 300
-  lambda_memory          = 512
+  lambda_timeout         = 900
+  lambda_memory          = 128
   requests_per_execution = 10
   sleep_interval         = 1
 

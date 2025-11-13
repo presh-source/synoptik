@@ -119,11 +119,46 @@ resource "aws_iam_role_policy" "crawler_lambda_policy" {
   })
 }
 
-# Package Lambda function
+# Install Lambda dependencies locally
+resource "null_resource" "install_dependencies" {
+  triggers = {
+    requirements = filemd5("${path.module}/lambda/requirements.txt")
+  }
+
+  provisioner "local-exec" {
+    command     = <<-EOT
+      rm -rf ${path.module}/lambda_build
+      mkdir -p ${path.module}/lambda_build/python
+      pip install -r ${path.module}/lambda/requirements.txt -t ${path.module}/lambda_build/python --upgrade
+    EOT
+    working_dir = path.module
+  }
+}
+
+# Package Lambda dependencies as a layer
+data "archive_file" "crawler_lambda_layer" {
+  type        = "zip"
+  source_dir  = "${path.module}/lambda_build"
+  output_path = "${path.module}/lambda_layer.zip"
+  depends_on  = [null_resource.install_dependencies]
+}
+
+# Lambda layer for dependencies
+resource "aws_lambda_layer_version" "crawler_dependencies" {
+  filename            = data.archive_file.crawler_lambda_layer.output_path
+  layer_name          = "${var.environment}-${var.project_name}-crawler-deps"
+  compatible_runtimes = ["python3.11"]
+  source_code_hash    = data.archive_file.crawler_lambda_layer.output_base64sha256
+
+  depends_on = [data.archive_file.crawler_lambda_layer]
+}
+
+# Package Lambda function code (without dependencies)
 data "archive_file" "crawler_lambda" {
   type        = "zip"
   source_dir  = "${path.module}/lambda"
   output_path = "${path.module}/lambda_package.zip"
+  excludes    = ["requirements.txt", "__pycache__", "*.pyc"]
 }
 
 # Lambda function
@@ -136,6 +171,7 @@ resource "aws_lambda_function" "crawler" {
   runtime          = "python3.11"
   timeout          = var.lambda_timeout
   memory_size      = var.lambda_memory
+  layers           = [aws_lambda_layer_version.crawler_dependencies.arn]
 
   environment {
     variables = {
