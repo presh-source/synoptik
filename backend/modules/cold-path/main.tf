@@ -1,5 +1,8 @@
 # Cold Path Module - GitHub Repository Crawler Pipeline
 
+# Get current AWS region
+data "aws_region" "current" {}
+
 # DynamoDB table for crawler state management
 resource "aws_dynamodb_table" "crawl_state" {
   name         = "${var.environment}-${var.project_name}-crawler-state"
@@ -171,7 +174,12 @@ resource "aws_lambda_function" "crawler" {
   runtime          = "python3.11"
   timeout          = var.lambda_timeout
   memory_size      = var.lambda_memory
-  layers           = [aws_lambda_layer_version.crawler_dependencies.arn]
+  layers = [
+    aws_lambda_layer_version.crawler_dependencies.arn,
+    # AWS Data Wrangler layer (includes pandas, pyarrow, boto3, and more)
+    # https://aws-sdk-pandas.readthedocs.io/en/stable/layers.html
+    "arn:aws:lambda:${data.aws_region.current.name}:336392948345:layer:AWSSDKPandas-Python311:14"
+  ]
 
   environment {
     variables = {

@@ -101,7 +101,6 @@ jobs:
             -out=tfplan
 
       - name: Terraform Apply
-        if: github.event.inputs.action == 'apply' && (env.DEPLOY_ENV != 'prod' || github.event.inputs.confirm == 'yes')
         working-directory: backend
         run: |
           if [ ! -f tfplan ]; then
@@ -121,7 +120,6 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Create Sentry release for backend
-        if: (github.event.inputs.action == 'apply' || github.event_name == 'push') && env.SENTRY_AUTH_TOKEN != ''
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
