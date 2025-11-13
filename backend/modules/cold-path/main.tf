@@ -172,9 +172,7 @@ resource "aws_lambda_function" "crawler" {
   memory_size      = var.lambda_memory
   layers = [
     aws_lambda_layer_version.crawler_dependencies.arn,
-    # AWS Data Wrangler layer (includes pandas, pyarrow, boto3, and more)
-    # Latest versions: https://aws-sdk-pandas.readthedocs.io/en/stable/layers.html
-    "arn:aws:lambda:${data.aws_region.current.name}:336392948345:layer:AWSSDKPandas-Python311:${var.aws_sdk_pandas_layer_version}"
+    "arn:aws:lambda:${data.aws_region.current.name}:336392948345:layer:AWSSDKPandas-Python311:${var.aws_sdk_pandas_layer_version}",
     "arn:aws:lambda:${data.aws_region.current.name}:580247275435:layer:AWSLambdaPowertoolsPython311:28"
   ]
 

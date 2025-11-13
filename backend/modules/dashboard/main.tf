@@ -296,6 +296,7 @@ resource "aws_lambda_function" "pipeline_status" {
       KINESIS_STREAM_NAME = var.kinesis_stream_name
       SQS_QUEUE_URL       = var.scrubber_queue_url
       ENVIRONMENT         = var.environment
+      PROJECT_NAME        = var.project_name
     }
   }
 
@@ -327,6 +328,7 @@ resource "aws_lambda_function" "realtime_metrics" {
     variables = {
       OPENSEARCH_ENDPOINT = var.opensearch_endpoint
       ENVIRONMENT         = var.environment
+      PROJECT_NAME        = var.project_name
     }
   }
 
@@ -356,7 +358,8 @@ resource "aws_lambda_function" "cloudwatch_metrics" {
 
   environment {
     variables = {
-      ENVIRONMENT = var.environment
+      ENVIRONMENT  = var.environment
+      PROJECT_NAME = var.project_name
     }
   }
 
