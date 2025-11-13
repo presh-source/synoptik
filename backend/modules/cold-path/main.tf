@@ -175,6 +175,7 @@ resource "aws_lambda_function" "crawler" {
     # AWS Data Wrangler layer (includes pandas, pyarrow, boto3, and more)
     # Latest versions: https://aws-sdk-pandas.readthedocs.io/en/stable/layers.html
     "arn:aws:lambda:${data.aws_region.current.name}:336392948345:layer:AWSSDKPandas-Python311:${var.aws_sdk_pandas_layer_version}"
+    "arn:aws:lambda:${data.aws_region.current.name}:580247275435:layer:AWSLambdaPowertoolsPython311:28"
   ]
 
   environment {
@@ -184,6 +185,7 @@ resource "aws_lambda_function" "crawler" {
       GITHUB_TOKEN_ARN       = var.github_token_arn
       REQUESTS_PER_EXECUTION = var.requests_per_execution
       SLEEP_INTERVAL         = var.sleep_interval
+      PROJECT_NAME           = var.project_name
     }
   }
 

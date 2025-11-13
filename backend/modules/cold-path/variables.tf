@@ -53,3 +53,10 @@ variable "aws_sdk_pandas_layer_version" {
   type        = number
   default     = 23 # Known working version for Python 3.11
 }
+
+variable "aws_powertools_layer_version" {
+  description = "Version of AWS Lambda Powertools layer for Python 3.11. Check https://awslabs.github.io/aws-lambda-powertools-python/latest/core/layers/ for latest"
+  type        = number
+  default     = 28 # Known working version for Python 3.11
+  
+}
