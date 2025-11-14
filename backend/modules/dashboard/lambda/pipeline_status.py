@@ -48,9 +48,7 @@ def get_cold_path_status():
             return {
                 "lastProcessedId": 0,
                 "totalProcessed": 0,
-                "ingestionRate": 0,
                 "progressPercentage": 0,
-                "estimatedCompletion": "N/A",
                 "updatedAt": datetime.utcnow().isoformat(),
             }
 
@@ -60,9 +58,7 @@ def get_cold_path_status():
         return {
             "lastProcessedId": int(item.get("last_processed_id", 0)),
             "totalProcessed": total_processed,
-            "ingestionRate": 0,  # Placeholder - requires historical data to calculate
             "progressPercentage": progress,
-            "estimatedCompletion": "Calculating...",  # Placeholder
             "updatedAt": item.get("updated_at", datetime.utcnow().isoformat()),
         }
     except Exception as e:

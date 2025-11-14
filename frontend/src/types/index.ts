@@ -2,9 +2,7 @@
 export interface ColdPathStatus {
   lastProcessedId: number
   totalProcessed: number
-  ingestionRate: number
   progressPercentage: number
-  estimatedCompletion: string
   updatedAt: string
 }
 

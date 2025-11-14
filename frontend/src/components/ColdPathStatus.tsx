@@ -48,18 +48,6 @@ export default function ColdPathStatusCard({ data }: ColdPathStatusProps) {
             </Typography>
             <Typography variant="h6">{formatNumber(data.totalProcessed)}</Typography>
           </Box>
-          <Box>
-            <Typography variant="body2" color="text.secondary">
-              Ingestion Rate
-            </Typography>
-            <Typography variant="h6">{formatNumber(data.ingestionRate)}/hr</Typography>
-          </Box>
-          <Box>
-            <Typography variant="body2" color="text.secondary">
-              Est. Completion
-            </Typography>
-            <Typography variant="body2">{data.estimatedCompletion}</Typography>
-          </Box>
         </Box>
 
         <Box sx={{ mt: 2 }}>
