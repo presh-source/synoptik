@@ -17,7 +17,7 @@ export const metricsApi = {
   },
 
   getTrendingRepositories: async (): Promise<RealTimeMetrics['trendingRepositories']> => {
-    const response = await apiClient.get('/repositories/trending')
+    const response = await apiClient.get('/metrics/trending')
     return response.data
   },
 }
