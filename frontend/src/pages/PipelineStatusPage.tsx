@@ -1,4 +1,4 @@
-import { Box, Typography, Grid, CircularProgress, Alert } from '@mui/material'
+import { Box, Typography, Grid, CircularProgress, Alert, Card, CardContent } from '@mui/material'
 import { usePipelineStatus } from '@/hooks/usePipelineStatus'
 import ColdPathStatusCard from '@/components/ColdPathStatus'
 import HotPathStatusCard from '@/components/HotPathStatus'
@@ -51,19 +51,56 @@ export default function PipelineStatusPage() {
 
       <Grid container spacing={3}>
         <Grid item xs={12}>
-          <ErrorRateIndicator errorRates={data.errorRates} />
+          {data.errorRates ? (
+            <ErrorRateIndicator errorRates={data.errorRates} />
+          ) : (
+            <Alert severity="warning">Error rate data not available.</Alert>
+          )}
         </Grid>
 
         <Grid item xs={12} md={6} lg={4}>
-          <ColdPathStatusCard data={data.coldPath} />
+          {data.coldPath ? (
+            <ColdPathStatusCard data={data.coldPath} />
+          ) : (
+            <Card>
+              <CardContent>
+                <Typography variant="h6">Cold Path Status</Typography>
+                <Alert severity="info" sx={{ mt: 2 }}>
+                  Data not available.
+                </Alert>
+              </CardContent>
+            </Card>
+          )}
         </Grid>
 
         <Grid item xs={12} md={6} lg={4}>
-          <HotPathStatusCard data={data.hotPath} />
+          {data.hotPath ? (
+            <HotPathStatusCard data={data.hotPath} />
+          ) : (
+            <Card>
+              <CardContent>
+                <Typography variant="h6">Hot Path Status</Typography>
+                <Alert severity="info" sx={{ mt: 2 }}>
+                  Data not available.
+                </Alert>
+              </CardContent>
+            </Card>
+          )}
         </Grid>
 
         <Grid item xs={12} md={6} lg={4}>
-          <ScrubberPathStatusCard data={data.scrubberPath} />
+          {data.scrubberPath ? (
+            <ScrubberPathStatusCard data={data.scrubberPath} />
+          ) : (
+            <Card>
+              <CardContent>
+                <Typography variant="h6">Scrubber Path Status</Typography>
+                <Alert severity="info" sx={{ mt: 2 }}>
+                  Data not available.
+                </Alert>
+              </CardContent>
+            </Card>
+          )}
         </Grid>
       </Grid>
     </Box>
