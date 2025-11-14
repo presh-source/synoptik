@@ -128,7 +128,7 @@ jobs:
           echo "Deployment targets: S3=$BUCKET_NAME, CloudFront=$DISTRIBUTION_ID"
 
       - name: Deploy to S3
-        if: github.event.inputs.action == 'deploy' && (env.DEPLOY_ENV != 'prod' || github.event.inputs.confirm == 'yes')
+        if: github.event.inputs.action == 'deploy' && (env.DEPLOY_ENV != 'prod' || github.event.inputs.confirm == 'yes') || env.DEPLOY_ENV == 'dev'
         working-directory: frontend
         run: |
           echo "Deploying to environment: ${{ env.DEPLOY_ENV }}"
