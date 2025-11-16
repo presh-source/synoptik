@@ -25,7 +25,7 @@ DYNAMODB_TABLE_NAME = os.environ["DYNAMODB_TABLE_NAME"]
 S3_BUCKET_NAME = os.environ["S3_BUCKET_NAME"]
 GITHUB_TOKEN_ARN = os.environ["GITHUB_TOKEN_ARN"]
 REQUESTS_PER_EXECUTION = int(os.environ.get("REQUESTS_PER_EXECUTION", "1050"))
-SLEEP_INTERVAL = float(os.environ.get("SLEEP_INTERVAL", "1"))
+SLEEP_INTERVAL = float(os.environ.get("SLEEP_INTERVAL", "0.8"))
 
 # Initialize Powertools
 logger = Logger(service=f"{PROJECT_NAME}-crawler")
@@ -40,7 +40,6 @@ secrets_client = boto3.client("secretsmanager")
 # GitHub API configuration
 GITHUB_API_BASE = "https://api.github.com"
 REPOSITORIES_ENDPOINT = f"{GITHUB_API_BASE}/repositories"
-API_SESSION = requests.Session()
 
 
 @tracer.capture_method
@@ -225,13 +224,7 @@ def fetch_repositories(
     url = f"{REPOSITORIES_ENDPOINT}?since={since_id}&per_page=100"
 
     try:
-        start_time = time.perf_counter() # Start timer
-        response = API_SESSION.get(url, headers=headers, timeout=30)
-        end_time = time.perf_counter() # End timer
-        request_duration = (end_time - start_time) * 1000 # Duration in milliseconds
-
-        metrics.add_metric(name="GitHubAPIRequestDuration", unit=MetricUnit.Milliseconds, value=request_duration)
-        logger.debug("GitHub API request duration", extra={"duration_ms": request_duration})
+        response = requests.get(url, headers=headers, timeout=30)
 
         # Log rate limit info
         rate_limit_remaining = response.headers.get("X-RateLimit-Remaining")
@@ -337,12 +330,13 @@ def crawl_repositories(
     start_id: int, num_requests: int, github_token: str, context
 ) -> tuple[int, int]:
     """
-    Execute the crawl loop with pacing.
-    Processes one page of repositories at a time to conserve memory.
+    Execute the crawl loop with pacing
     Returns (last_processed_id, total_repos_fetched)
     """
     current_id = start_id
     total_repos = 0
+    batch_repos = []
+    batch_start_id = start_id
 
     for i in range(num_requests):
         # Check remaining time (stop 30 seconds before timeout)
@@ -360,29 +354,28 @@ def crawl_repositories(
         # Fetch repositories
         repos = fetch_repositories(current_id, github_token)
 
-        if not repos:
-            if repos is None:
-                logger.warning(
-                    "Failed to fetch repositories, stopping.",
-                    extra={"current_id": current_id},
-                )
-            else:  # Empty list
-                logger.info("No more repositories returned, reached end of dataset.")
-                metrics.add_metric(
-                    name="DatasetEndReached", unit=MetricUnit.Count, value=1
-                )
-            break  # Stop if fetch fails or if there's no more data
+        if repos is None:
+            logger.warning(
+                "Failed to fetch repositories", extra={"current_id": current_id}
+            )
+            time.sleep(SLEEP_INTERVAL)
+            continue
 
-        # Process and save this batch immediately to conserve memory
-        batch_start_id = repos[0]["id"]
-        last_repo_id = repos[-1]["id"]
-        save_to_s3_parquet(repos, batch_start_id, last_repo_id)
+        if len(repos) == 0:
+            logger.info("No more repositories returned, reached end of dataset")
+            metrics.add_metric(name="DatasetEndReached", unit=MetricUnit.Count, value=1)
+            break
 
+        # Add to batch
+        batch_repos.extend(repos)
         total_repos += len(repos)
+
+        # Update current_id to the last repo ID in this batch
+        last_repo_id = repos[-1]["id"]
         current_id = last_repo_id
 
         logger.debug(
-            "Fetched and saved batch",
+            "Fetched batch",
             extra={
                 "request_number": i + 1,
                 "repos_count": len(repos),
@@ -390,8 +383,18 @@ def crawl_repositories(
             },
         )
 
+        # Save batch to S3 every 10 requests (approximately 1000 repos)
+        if (i + 1) % 10 == 0 and batch_repos:
+            save_to_s3_parquet(batch_repos, batch_start_id, current_id)
+            batch_repos = []
+            batch_start_id = current_id + 1
+
         # Pace requests
         time.sleep(SLEEP_INTERVAL)
+
+    # Save any remaining repos in the batch
+    if batch_repos:
+        save_to_s3_parquet(batch_repos, batch_start_id, current_id)
 
     metrics.add_metric(
         name="TotalRepositoriesFetched", unit=MetricUnit.Count, value=total_repos
