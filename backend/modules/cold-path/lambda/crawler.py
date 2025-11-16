@@ -24,7 +24,7 @@ PROJECT_NAME = os.environ["PROJECT_NAME"]
 DYNAMODB_TABLE_NAME = os.environ["DYNAMODB_TABLE_NAME"]
 S3_BUCKET_NAME = os.environ["S3_BUCKET_NAME"]
 GITHUB_TOKEN_ARN = os.environ["GITHUB_TOKEN_ARN"]
-REQUESTS_PER_EXECUTION = int(os.environ.get("REQUESTS_PER_EXECUTION", "1050"))
+REQUESTS_PER_EXECUTION = int(os.environ.get("REQUESTS_PER_EXECUTION", "1000"))
 SLEEP_INTERVAL = float(os.environ.get("SLEEP_INTERVAL", "0.8"))
 
 # Initialize Powertools
