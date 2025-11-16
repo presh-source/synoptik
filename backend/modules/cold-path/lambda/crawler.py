@@ -23,7 +23,7 @@ from aws_lambda_powertools.metrics import MetricUnit
 PROJECT_NAME = os.environ["PROJECT_NAME"]
 DYNAMODB_TABLE_NAME = os.environ["DYNAMODB_TABLE_NAME"]
 S3_BUCKET_NAME = os.environ["S3_BUCKET_NAME"]
-GITHUB_TOKEN_ARN = os.environ["GITHUB_TOKEN_ARN"]
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 REQUESTS_PER_EXECUTION = int(os.environ.get("REQUESTS_PER_EXECUTION", "1000"))
 SLEEP_INTERVAL = float(os.environ.get("SLEEP_INTERVAL", "0.8"))
 
@@ -35,23 +35,10 @@ metrics = Metrics(namespace=f"{PROJECT_NAME.title()}/ColdPath", service="crawler
 # AWS clients
 dynamodb = boto3.resource("dynamodb")
 s3_client = boto3.client("s3")
-secrets_client = boto3.client("secretsmanager")
 
 # GitHub API configuration
 GITHUB_API_BASE = "https://api.github.com"
 REPOSITORIES_ENDPOINT = f"{GITHUB_API_BASE}/repositories"
-
-
-@tracer.capture_method
-def get_github_token() -> str:
-    """Retrieve GitHub token from Secrets Manager"""
-    try:
-        response = secrets_client.get_secret_value(SecretId=GITHUB_TOKEN_ARN)
-        logger.info("Successfully retrieved GitHub token")
-        return response["SecretString"]
-    except ClientError as e:
-        logger.error("Failed to retrieve GitHub token", extra={"error": str(e)})
-        raise
 
 
 @tracer.capture_method
@@ -418,15 +405,16 @@ def lambda_handler(event, context):
     )
 
     try:
-        # Get GitHub token
-        github_token = get_github_token()
+        if not GITHUB_TOKEN:
+            logger.error("GITHUB_TOKEN environment variable not set.")
+            raise ValueError("GitHub token is not configured.")
 
         # Get last processed ID
         start_id = get_last_processed_id()
 
         # Execute crawl
         last_id, total_fetched = crawl_repositories(
-            start_id, REQUESTS_PER_EXECUTION, github_token, context
+            start_id, REQUESTS_PER_EXECUTION, GITHUB_TOKEN, context
         )
 
         # Update bookmark

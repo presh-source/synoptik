@@ -290,6 +290,7 @@ resource "aws_lambda_function" "pipeline_status" {
       SQS_QUEUE_URL       = var.scrubber_queue_url
       ENVIRONMENT         = var.environment
       PROJECT_NAME        = var.project_name
+      SENTRY_DSN          = var.sentry_dsn_backend
     }
   }
 
@@ -322,6 +323,7 @@ resource "aws_lambda_function" "realtime_metrics" {
       OPENSEARCH_ENDPOINT = var.opensearch_endpoint
       ENVIRONMENT         = var.environment
       PROJECT_NAME        = var.project_name
+      SENTRY_DSN          = var.sentry_dsn_backend
     }
   }
 
@@ -353,6 +355,7 @@ resource "aws_lambda_function" "cloudwatch_metrics" {
     variables = {
       ENVIRONMENT  = var.environment
       PROJECT_NAME = var.project_name
+      SENTRY_DSN   = var.sentry_dsn_backend
     }
   }
 

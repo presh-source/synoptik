@@ -8,9 +8,10 @@ variable "environment" {
   type        = string
 }
 
-variable "github_token_arn" {
-  description = "The ARN of the GitHub token secret"
+variable "github_token" {
+  description = "The GitHub token"
   type        = string
+  sensitive   = true
 }
 
 variable "data_lake_bucket_name" {

@@ -105,13 +105,6 @@ resource "aws_iam_role_policy" "crawler_lambda_policy" {
       {
         Effect = "Allow"
         Action = [
-          "secretsmanager:GetSecretValue"
-        ]
-        Resource = var.github_token_arn
-      },
-      {
-        Effect = "Allow"
-        Action = [
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents"
@@ -179,7 +172,7 @@ resource "aws_lambda_function" "crawler" {
     variables = {
       DYNAMODB_TABLE_NAME    = aws_dynamodb_table.crawl_state.name
       S3_BUCKET_NAME         = var.data_lake_bucket_name
-      GITHUB_TOKEN_ARN       = var.github_token_arn
+      GITHUB_TOKEN           = var.github_token
       REQUESTS_PER_EXECUTION = var.requests_per_execution
       SLEEP_INTERVAL         = var.sleep_interval
       PROJECT_NAME           = var.project_name

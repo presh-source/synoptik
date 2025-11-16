@@ -54,17 +54,6 @@ module "iam" {
   tags         = local.merged_tags
 }
 
-# Secrets Manager for GitHub token and Sentry DSNs
-module "secrets" {
-  source              = "./modules/secrets"
-  project_name        = var.project_name
-  environment         = var.environment
-  github_token        = var.github_token
-  sentry_dsn_frontend = var.sentry_dsn_frontend
-  sentry_dsn_backend  = var.sentry_dsn_backend
-  tags                = local.merged_tags
-}
-
 # Data Lake (S3)
 module "data_lake" {
   source         = "./modules/data-lake"
@@ -83,7 +72,7 @@ module "cold_path" {
   source                 = "./modules/cold-path"
   project_name           = var.project_name
   environment            = var.environment
-  github_token_arn       = module.secrets.github_token_arn
+  github_token           = var.github_token
   data_lake_bucket_name  = module.data_lake.bucket_name
   tags                   = local.merged_tags
   lambda_timeout         = 900
@@ -91,7 +80,7 @@ module "cold_path" {
   requests_per_execution = 1050
   sleep_interval         = 1
 
-  depends_on = [module.secrets, module.data_lake]
+  depends_on = [module.data_lake]
 }
 
 # Hot Path Pipeline
@@ -100,8 +89,6 @@ module "hot_path" {
   project_name = var.project_name
   environment  = var.environment
   tags         = local.merged_tags
-
-  depends_on = [module.secrets]
 }
 
 # Scrubber Path Pipeline
@@ -109,10 +96,10 @@ module "hot_path" {
 #   source = "./modules/scrubber-path"
 #   project_name          = var.project_name
 #   environment           = var.environment
-#   github_token_arn      = module.secrets.github_token_arn
+#   github_token          = var.github_token
 #   data_lake_bucket_name = module.data_lake.bucket_name
 #
-#   depends_on = [module.secrets]
+#   depends_on = []
 # }
 
 # ============================================================================
@@ -154,7 +141,7 @@ module "dashboard" {
   cold_path_dynamodb_table        = module.cold_path.dynamodb_table_name
   kinesis_stream_name             = module.hot_path.kinesis_stream_name
   scrubber_queue_url              = "http://localhost:4566/000000000000/scrubber-queue" # Mock
-  sentry_dsn_secret_arn           = module.secrets.sentry_dsn_backend_arn
+  sentry_dsn_backend              = var.sentry_dsn_backend
   app_version                     = var.app_version
   domain_name                     = var.domain_name
   api_domain_name                 = var.api_domain_name
@@ -162,7 +149,7 @@ module "dashboard" {
   api_gateway_cloudwatch_role_arn = module.iam.api_gateway_cloudwatch_role_arn
   tags                            = local.merged_tags
 
-  depends_on = [module.secrets, module.cold_path]
+  depends_on = [module.cold_path]
 }
 
 # ============================================================================

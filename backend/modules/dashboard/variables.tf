@@ -39,9 +39,10 @@ variable "scrubber_queue_url" {
   type        = string
 }
 
-variable "sentry_dsn_secret_arn" {
-  description = "The ARN of the Sentry DSN secret"
+variable "sentry_dsn_backend" {
+  description = "The Sentry DSN for the backend"
   type        = string
+  sensitive   = true
 }
 
 variable "app_version" {
