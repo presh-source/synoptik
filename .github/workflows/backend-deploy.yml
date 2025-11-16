@@ -81,7 +81,8 @@ jobs:
         working-directory: backend
         run: |
           terraform init \
-            -backend-config=environments/${{ env.DEPLOY_ENV }}/backend.tfvars
+            -backend-config=environments/${{ env.DEPLOY_ENV }}/backend.tfvars \
+            -lock=false
 
       - name: Terraform Validate
         working-directory: backend
