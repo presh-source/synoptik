@@ -25,7 +25,7 @@ DYNAMODB_TABLE_NAME = os.environ["DYNAMODB_TABLE_NAME"]
 S3_BUCKET_NAME = os.environ["S3_BUCKET_NAME"]
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 REQUESTS_PER_EXECUTION = int(os.environ.get("REQUESTS_PER_EXECUTION", "1000"))
-SLEEP_INTERVAL = float(os.environ.get("SLEEP_INTERVAL", "0.8"))
+SLEEP_INTERVAL = float(os.environ.get("SLEEP_INTERVAL", "01"))
 
 # Initialize Powertools
 logger = Logger(service=f"{PROJECT_NAME}-crawler")

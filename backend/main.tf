@@ -76,8 +76,8 @@ module "cold_path" {
   data_lake_bucket_name  = module.data_lake.bucket_name
   tags                   = local.merged_tags
   lambda_timeout         = 900
-  lambda_memory          = 128
-  requests_per_execution = 1050
+  lambda_memory          = 256
+  requests_per_execution = 1000
   sleep_interval         = 1
 
   depends_on = [module.data_lake]

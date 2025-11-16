@@ -9,12 +9,6 @@ output "data_lake_bucket_name" {
   value       = module.data_lake.bucket_name
 }
 
-output "github_token_secret_arn" {
-  description = "ARN of the GitHub token in Secrets Manager"
-  value       = module.secrets.github_token_arn
-  sensitive   = true
-}
-
 output "dashboard_api_url" {
   description = "URL of the Dashboard API Gateway"
   value       = module.dashboard.api_gateway_url
