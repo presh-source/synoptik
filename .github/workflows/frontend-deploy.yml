@@ -121,11 +121,6 @@ jobs:
             exit 1
           fi
           
-          if [ -z "$DISTRIBUTION_ID" ] || [ "$DISTRIBUTION_ID" = "null" ]; then
-            echo "::warning::CloudFront distribution not found (may be using LocalStack)"
-            DISTRIBUTION_ID=""
-          fi
-          
           echo "bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
           echo "distribution_id=$DISTRIBUTION_ID" >> $GITHUB_OUTPUT
           echo "Deployment targets: S3=$BUCKET_NAME, CloudFront=$DISTRIBUTION_ID"
