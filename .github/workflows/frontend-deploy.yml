@@ -85,6 +85,7 @@ jobs:
           VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN_FRONTEND }}
           VITE_APP_VERSION: ${{ github.sha }}
           VITE_ENVIRONMENT: ${{ env.DEPLOY_ENV }}
+          VITE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
