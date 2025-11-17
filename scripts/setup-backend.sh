@@ -31,7 +31,7 @@ fi
 
 ENV=$1
 REGION="us-east-1"
-PROJECT_NAME="synoptik"
+PROJECT_NAME="project"
 BUCKET_NAME="${ENV}-${PROJECT_NAME}-terraform-state"
 DYNAMODB_TABLE="${ENV}-${PROJECT_NAME}-terraform-locks"
 

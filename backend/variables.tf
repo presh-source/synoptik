@@ -1,4 +1,4 @@
-# Synoptik - Variables
+# Variables
 
 variable "aws_region" {
   description = "AWS region for all resources"
@@ -67,19 +67,19 @@ variable "tags" {
   description = "Common tags to apply to all resources"
   type        = map(string)
   default = {
-    ManagedBy = "Terraform"
-    Project   = "Synoptik"
+    ManagedBy = "terraform"
+    Project   = "synoptik"
   }
 }
 
 variable "domain_name" {
-  description = "Custom domain name for the frontend (e.g., dev.synoptik.dev)"
+  description = "Custom domain name for the frontend"
   type        = string
   default     = ""
 }
 
 variable "api_domain_name" {
-  description = "Custom domain name for the API (e.g., api.dev.synoptik.dev)"
+  description = "Custom domain name for the API"
   type        = string
   default     = ""
 }

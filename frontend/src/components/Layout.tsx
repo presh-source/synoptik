@@ -43,7 +43,7 @@ export default function Layout({ children }: LayoutProps) {
     <Box>
       <Toolbar>
         <Typography variant="h6" noWrap>
-          Synoptik
+          ${import.meta.env.VITE_PROJECT_NAME}
         </Typography>
       </Toolbar>
       <List>
@@ -85,7 +85,7 @@ export default function Layout({ children }: LayoutProps) {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap>
-            Synoptik Dashboard
+            ${import.meta.env.VITE_PROJECT_NAME} Dashboard
           </Typography>
         </Toolbar>
       </AppBar>

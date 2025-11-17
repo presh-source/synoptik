@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Complete LocalStack Deployment Script for Synoptik
 # This script deploys the entire stack to LocalStack
 
 set -e
@@ -19,7 +18,7 @@ PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
 LOCALSTACK_ENDPOINT="http://localhost:4566"
 
 echo -e "${BLUE}╔════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║     Synoptik - Complete LocalStack Deployment         ║${NC}"
+echo -e "${BLUE}║     Complete LocalStack Deployment                     ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
@@ -68,7 +67,7 @@ docker-compose -f docker-compose.localstack.yml down -v
 rm -rf localstack-data
 
 # Check if LocalStack is already running
-if docker ps | grep -q synoptik-localstack; then
+if docker ps | grep -q project-localstack; then
     echo -e "${YELLOW}LocalStack is already running${NC}"
 else
     docker-compose -f docker-compose.localstack.yml up -d
@@ -228,7 +227,7 @@ npm run build
 
 # Get S3 bucket name from Terraform
 cd "$PROJECT_ROOT/backend"
-DASHBOARD_BUCKET=$(terraform output -raw dashboard_bucket_name 2>/dev/null || echo "synoptik-dashboard-local")
+DASHBOARD_BUCKET=$(terraform output -raw dashboard_bucket_name 2>/dev/null || echo "dashboard-local")
 
 # Deploy to LocalStack S3
 cd "$PROJECT_ROOT/frontend"

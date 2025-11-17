@@ -57,13 +57,13 @@ variable "tags" {
 }
 
 variable "domain_name" {
-  description = "Custom domain name for the frontend (e.g., dev.synoptik.dev)"
+  description = "Custom domain name for the frontend"
   type        = string
   default     = ""
 }
 
 variable "api_domain_name" {
-  description = "Custom domain name for the API (e.g., api.dev.synoptik.dev)"
+  description = "Custom domain name for the API"
   type        = string
   default     = ""
 }

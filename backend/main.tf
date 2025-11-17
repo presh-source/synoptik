@@ -1,5 +1,4 @@
-# Synoptik - Main Terraform Configuration
-# Synoptik Infrastructure
+# Main Terraform Configuration
 
 terraform {
   required_version = ">= 1.5.0"

@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://api.dev.synoptik.dev',
+  baseURL: import.meta.env.VITE_API_URL || `https://api.dev.${import.meta.env.VITE_PROJECT_NAME}.dev`,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

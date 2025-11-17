@@ -1,4 +1,4 @@
-# Synoptik - Outputs
+# Outputs
 
 # ============================================================================
 # Implemented Module Outputs

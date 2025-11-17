@@ -6,6 +6,8 @@ import os
 import sentry_sdk
 from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 
+PROJECT_NAME = os.environ["PROJECT_NAME"]
+
 
 def init_sentry():
     """
@@ -35,7 +37,7 @@ def init_sentry():
         # Environment
         environment=os.environ.get("ENVIRONMENT", "dev"),
         # Release tracking
-        release=f"synoptik-backend@{os.environ.get('VERSION', '1.0.0')}",
+        release=f"{PROJECT_NAME}-backend@{os.environ.get('VERSION', '1.0.0')}",
         # Additional options
         attach_stacktrace=True,  # Attach stack traces to messages
         send_default_pii=False,  # Don't send personally identifiable information

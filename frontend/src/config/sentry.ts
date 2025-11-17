@@ -30,7 +30,7 @@ export const initSentry = () => {
       environment: import.meta.env.MODE,
       
       // Release tracking
-      release: `synoptik-dashboard@${import.meta.env.VITE_APP_VERSION || '1.0.0'}`,
+      release: `${import.meta.env.VITE_PROJECT_NAME}-dashboard@${import.meta.env.VITE_APP_VERSION || '1.0.0'}`,
       
       // Ignore common non-critical errors
       ignoreErrors: [
@@ -61,7 +61,7 @@ export const initSentry = () => {
       // Add custom tags
       initialScope: {
         tags: {
-          'app.name': 'synoptik-dashboard',
+          'app.name': `${import.meta.env.VITE_PROJECT_NAME}-dashboard`,
           'app.component': 'frontend',
         },
       },
