@@ -22,38 +22,3 @@ export interface PipelineStatus {
     coldPath: number
   }
 }
-
-// Real-Time Metrics Types
-export interface TrendingRepository {
-  id: number
-  fullName: string
-  description: string
-  language: string
-  stargazersCount: number
-  forksCount: number
-  starsLast24h: number
-}
-
-export interface LanguageDistribution {
-  language: string
-  count: number
-  percentage: number
-}
-
-export interface RepositoryCreationTrend {
-  date: string
-  count: number
-}
-
-export interface RealTimeMetrics {
-  trendingRepositories: TrendingRepository[]
-  languageDistribution: LanguageDistribution[]
-  creationTrends: RepositoryCreationTrend[]
-}
-
-export interface MetricsFilters {
-  language?: string
-  license?: string
-  dateFrom?: string
-  dateTo?: string
-}

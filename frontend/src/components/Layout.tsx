@@ -27,7 +27,6 @@ interface LayoutProps {
 
 const menuItems = [
   { text: 'Pipeline Status', icon: <DashboardIcon />, path: '/pipeline-status' },
-  { text: 'Real-Time Metrics', icon: <TrendingUpIcon />, path: '/real-time-metrics' },
 ]
 
 export default function Layout({ children }: LayoutProps) {

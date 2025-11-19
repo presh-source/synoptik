@@ -33,11 +33,19 @@ variable "stage_name" {
   default     = "v1"
 }
 
-variable "api_resources" {
-  description = "Map of API resources to create"
+variable "root_resources" {
+  description = "Map of API root resources to create"
+  type = map(object({
+    path_part = string
+  }))
+  default = {}
+}
+
+variable "child_resources" {
+  description = "Map of API child resources to create"
   type = map(object({
     path_part   = string
-    parent_path = string # Empty string for root, or key of parent resource
+    parent_path = string
   }))
   default = {}
 }

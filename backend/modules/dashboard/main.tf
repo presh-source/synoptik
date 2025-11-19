@@ -60,52 +60,6 @@ resource "aws_iam_role_policy" "pipeline_status_lambda_policy" {
   })
 }
 
-# IAM role for realtime metrics Lambda
-resource "aws_iam_role" "realtime_metrics_lambda" {
-  name = "${var.environment}-${var.project_name}-realtime-metrics-lambda"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
-      }
-    ]
-  })
-
-  tags = var.tags
-}
-
-# Attach basic Lambda execution policy
-resource "aws_iam_role_policy_attachment" "realtime_metrics_lambda_basic" {
-  role       = aws_iam_role.realtime_metrics_lambda.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-}
-
-# IAM policy for realtime metrics Lambda (OpenSearch access)
-resource "aws_iam_role_policy" "realtime_metrics_lambda_policy" {
-  name = "${var.environment}-${var.project_name}-realtime-metrics-lambda-policy"
-  role = aws_iam_role.realtime_metrics_lambda.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "es:ESHttpGet",
-          "es:ESHttpPost"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
-}
-
 # IAM role for CloudWatch metrics Lambda
 resource "aws_iam_role" "cloudwatch_metrics_lambda" {
   name = "${var.environment}-${var.project_name}-cloudwatch-metrics-lambda"
@@ -218,39 +172,6 @@ resource "aws_lambda_function" "pipeline_status" {
 # CloudWatch Log Group for pipeline status Lambda
 resource "aws_cloudwatch_log_group" "pipeline_status_lambda" {
   name              = "/aws/lambda/${aws_lambda_function.pipeline_status.function_name}"
-  retention_in_days = 30
-
-  tags = var.tags
-}
-
-# Realtime Metrics Lambda
-resource "aws_lambda_function" "realtime_metrics" {
-  filename         = data.archive_file.lambda_functions.output_path
-  function_name    = "${var.environment}-${var.project_name}-realtime-metrics"
-  role             = aws_iam_role.realtime_metrics_lambda.arn
-  handler          = "realtime_metrics.lambda_handler"
-  source_code_hash = data.archive_file.lambda_functions.output_base64sha256
-  runtime          = "python3.11"
-  timeout          = 30
-  memory_size      = 256
-  layers           = [aws_lambda_layer_version.dashboard_dependencies.arn]
-
-  environment {
-    variables = {
-      OPENSEARCH_ENDPOINT = var.opensearch_endpoint
-      NEPTUNE_ENDPOINT    = var.neptune_endpoint
-      ENVIRONMENT         = var.environment
-      PROJECT_NAME        = var.project_name
-      SENTRY_DSN          = var.sentry_dsn_backend
-    }
-  }
-
-  tags = var.tags
-}
-
-# CloudWatch Log Group for realtime metrics Lambda
-resource "aws_cloudwatch_log_group" "realtime_metrics_lambda" {
-  name              = "/aws/lambda/${aws_lambda_function.realtime_metrics.function_name}"
   retention_in_days = 30
 
   tags = var.tags

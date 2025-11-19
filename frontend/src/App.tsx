@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Box } from '@mui/material'
 import Layout from './components/Layout'
 import PipelineStatusPage from './pages/PipelineStatusPage'
-import RealTimeMetricsPage from './pages/RealTimeMetricsPage'
 
 function App() {
   return (
@@ -12,7 +11,6 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/pipeline-status" replace />} />
             <Route path="/pipeline-status" element={<PipelineStatusPage />} />
-            <Route path="/real-time-metrics" element={<RealTimeMetricsPage />} />
           </Routes>
         </Layout>
       </Box>

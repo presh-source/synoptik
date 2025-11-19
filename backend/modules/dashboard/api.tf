@@ -33,23 +33,16 @@ module "dashboard_api" {
   api_description = "Observability Dashboard API for ${var.project_name}"
 
   # Define API resources (URL paths)
-  api_resources = {
+  root_resources = {
     "pipeline-status" = {
-      path_part   = "pipeline-status"
-      parent_path = ""
+      path_part = "pipeline-status"
     }
     "metrics" = {
-      path_part   = "metrics"
-      parent_path = ""
+      path_part = "metrics"
     }
-    "metrics-realtime" = {
-      path_part   = "realtime"
-      parent_path = "metrics"
-    }
-    "metrics-trending" = {
-      path_part   = "trending"
-      parent_path = "metrics"
-    }
+  }
+
+  child_resources = {
     "metrics-cloudwatch" = {
       path_part   = "cloudwatch"
       parent_path = "metrics"
@@ -60,18 +53,6 @@ module "dashboard_api" {
   api_methods = {
     "pipeline-status-get" = {
       resource_path      = "pipeline-status"
-      http_method        = "GET"
-      authorization      = "NONE"
-      request_parameters = {}
-    }
-    "metrics-realtime-get" = {
-      resource_path      = "metrics-realtime"
-      http_method        = "GET"
-      authorization      = "NONE"
-      request_parameters = {}
-    }
-    "metrics-trending-get" = {
-      resource_path      = "metrics-trending"
       http_method        = "GET"
       authorization      = "NONE"
       request_parameters = {}
@@ -91,16 +72,7 @@ module "dashboard_api" {
       lambda_invoke_arn    = aws_lambda_function.pipeline_status.invoke_arn
       lambda_function_name = aws_lambda_function.pipeline_status.function_name
     }
-    "metrics-realtime-get" = {
-      resource_path        = "metrics-realtime"
-      lambda_invoke_arn    = aws_lambda_function.realtime_metrics.invoke_arn
-      lambda_function_name = aws_lambda_function.realtime_metrics.function_name
-    }
-    "metrics-trending-get" = {
-      resource_path        = "metrics-trending"
-      lambda_invoke_arn    = aws_lambda_function.realtime_metrics.invoke_arn
-      lambda_function_name = aws_lambda_function.realtime_metrics.function_name
-    }
+    
     "metrics-cloudwatch-get" = {
       resource_path        = "metrics-cloudwatch"
       lambda_invoke_arn    = aws_lambda_function.cloudwatch_metrics.invoke_arn

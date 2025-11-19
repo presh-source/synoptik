@@ -20,12 +20,27 @@ resource "aws_api_gateway_rest_api" "api" {
 # API Gateway Resources (URL paths)
 # ============================================================================
 
-resource "aws_api_gateway_resource" "resources" {
-  for_each = var.api_resources
+resource "aws_api_gateway_resource" "root_resources" {
+  for_each = var.root_resources
 
   rest_api_id = aws_api_gateway_rest_api.api.id
-  parent_id   = each.value.parent_path == "" ? aws_api_gateway_rest_api.api.root_resource_id : aws_api_gateway_resource.resources[each.value.parent_path].id
+  parent_id   = aws_api_gateway_rest_api.api.root_resource_id
   path_part   = each.value.path_part
+}
+
+resource "aws_api_gateway_resource" "child_resources" {
+  for_each = var.child_resources
+
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_resource.root_resources[each.value.parent_path].id
+  path_part   = each.value.path_part
+}
+
+locals {
+  all_resources = merge(
+    aws_api_gateway_resource.root_resources,
+    aws_api_gateway_resource.child_resources
+  )
 }
 
 # ============================================================================
@@ -36,7 +51,7 @@ resource "aws_api_gateway_method" "methods" {
   for_each = var.api_methods
 
   rest_api_id   = aws_api_gateway_rest_api.api.id
-  resource_id   = aws_api_gateway_resource.resources[each.value.resource_path].id
+  resource_id   = local.all_resources[each.value.resource_path].id
   http_method   = each.value.http_method
   authorization = each.value.authorization
 
@@ -51,7 +66,7 @@ resource "aws_api_gateway_integration" "lambda_integrations" {
   for_each = var.lambda_integrations
 
   rest_api_id             = aws_api_gateway_rest_api.api.id
-  resource_id             = aws_api_gateway_resource.resources[each.value.resource_path].id
+  resource_id             = local.all_resources[each.value.resource_path].id
   http_method             = aws_api_gateway_method.methods[each.key].http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
@@ -74,19 +89,19 @@ resource "aws_lambda_permission" "api_gateway" {
 # ============================================================================
 
 resource "aws_api_gateway_method" "options" {
-  for_each = var.enable_cors ? var.api_resources : {}
+  for_each = var.enable_cors ? local.all_resources : {}
 
   rest_api_id   = aws_api_gateway_rest_api.api.id
-  resource_id   = aws_api_gateway_resource.resources[each.key].id
+  resource_id   = each.value.id
   http_method   = "OPTIONS"
   authorization = "NONE"
 }
 
 resource "aws_api_gateway_integration" "options" {
-  for_each = var.enable_cors ? var.api_resources : {}
+  for_each = var.enable_cors ? local.all_resources : {}
 
   rest_api_id = aws_api_gateway_rest_api.api.id
-  resource_id = aws_api_gateway_resource.resources[each.key].id
+  resource_id = each.value.id
   http_method = aws_api_gateway_method.options[each.key].http_method
   type        = "MOCK"
 
@@ -96,10 +111,10 @@ resource "aws_api_gateway_integration" "options" {
 }
 
 resource "aws_api_gateway_method_response" "options" {
-  for_each = var.enable_cors ? var.api_resources : {}
+  for_each = var.enable_cors ? local.all_resources : {}
 
   rest_api_id = aws_api_gateway_rest_api.api.id
-  resource_id = aws_api_gateway_resource.resources[each.key].id
+  resource_id = each.value.id
   http_method = aws_api_gateway_method.options[each.key].http_method
   status_code = "200"
 
@@ -115,10 +130,10 @@ resource "aws_api_gateway_method_response" "options" {
 }
 
 resource "aws_api_gateway_integration_response" "options" {
-  for_each = var.enable_cors ? var.api_resources : {}
+  for_each = var.enable_cors ? local.all_resources : {}
 
   rest_api_id = aws_api_gateway_rest_api.api.id
-  resource_id = aws_api_gateway_resource.resources[each.key].id
+  resource_id = each.value.id
   http_method = aws_api_gateway_method.options[each.key].http_method
   status_code = aws_api_gateway_method_response.options[each.key].status_code
 
@@ -139,7 +154,7 @@ resource "aws_api_gateway_deployment" "api" {
   triggers = {
     redeployment = sha1(jsonencode([
       aws_api_gateway_rest_api.api.body,
-      aws_api_gateway_resource.resources,
+      local.all_resources,
       aws_api_gateway_method.methods,
       aws_api_gateway_integration.lambda_integrations,
     ]))

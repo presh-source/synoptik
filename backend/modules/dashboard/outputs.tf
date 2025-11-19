@@ -22,11 +22,6 @@ output "pipeline_status_lambda_arn" {
   value       = aws_lambda_function.pipeline_status.arn
 }
 
-output "realtime_metrics_lambda_arn" {
-  description = "ARN of the realtime metrics Lambda function"
-  value       = aws_lambda_function.realtime_metrics.arn
-}
-
 output "cloudwatch_metrics_lambda_arn" {
   description = "ARN of the CloudWatch metrics Lambda function"
   value       = aws_lambda_function.cloudwatch_metrics.arn
