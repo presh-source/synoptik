@@ -440,28 +440,28 @@ resource "aws_cloudwatch_log_group" "user_crawler_lambda" {
   tags = var.tags
 }
 
-# # EventBridge rule to trigger Lambda every 15 minutes
-# resource "aws_cloudwatch_event_rule" "user_crawler_schedule" {
-#   name                = "${var.environment}-${var.project_name}-user-crawler-schedule"
-#   description         = "Trigger ${var.project_name} user crawler Lambda every 15 minutes"
-#   schedule_expression = "rate(15 minutes)"
+# EventBridge rule to trigger Lambda every 15 minutes
+resource "aws_cloudwatch_event_rule" "user_crawler_schedule" {
+  name                = "${var.environment}-${var.project_name}-user-crawler-schedule"
+  description         = "Trigger ${var.project_name} user crawler Lambda every 15 minutes"
+  schedule_expression = "rate(15 minutes)"
 
-#   tags = var.tags
-# }
+  tags = var.tags
+}
 
-# # EventBridge target - Lambda function
-# resource "aws_cloudwatch_event_target" "user_crawler_lambda" {
-#   rule      = aws_cloudwatch_event_rule.user_crawler_schedule.name
-#   target_id = "UserCrawlerLambdaTarget"
-#   arn       = aws_lambda_function.user_crawler.arn
-# }
+# EventBridge target - Lambda function
+resource "aws_cloudwatch_event_target" "user_crawler_lambda" {
+  rule      = aws_cloudwatch_event_rule.user_crawler_schedule.name
+  target_id = "UserCrawlerLambdaTarget"
+  arn       = aws_lambda_function.user_crawler.arn
+}
 
-# # Lambda permission for EventBridge to invoke
-# resource "aws_lambda_permission" "allow_eventbridge_user_crawler" {
-#   statement_id  = "AllowExecutionFromEventBridgeUser"
-#   action        = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.user_crawler.function_name
-#   principal     = "events.amazonaws.com"
-#   source_arn    = aws_cloudwatch_event_rule.user_crawler_schedule.arn
-# }
+# Lambda permission for EventBridge to invoke
+resource "aws_lambda_permission" "allow_eventbridge_user_crawler" {
+  statement_id  = "AllowExecutionFromEventBridgeUser"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.user_crawler.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.user_crawler_schedule.arn
+}
 
