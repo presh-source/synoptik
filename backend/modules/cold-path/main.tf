@@ -52,9 +52,9 @@ resource "aws_dynamodb_table_item" "initial_bookmark" {
   }
 }
 
-# IAM role for CrawlerLambda
-resource "aws_iam_role" "crawler_lambda" {
-  name = "${var.environment}-${var.project_name}-crawler-lambda"
+# IAM role for RepoCrawlerLambda
+resource "aws_iam_role" "repo_crawler_lambda" {
+  name = "${var.environment}-${var.project_name}-repo-crawler-lambda"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -73,15 +73,15 @@ resource "aws_iam_role" "crawler_lambda" {
 }
 
 # Attach basic Lambda execution policy
-resource "aws_iam_role_policy_attachment" "crawler_lambda_basic" {
-  role       = aws_iam_role.crawler_lambda.name
+resource "aws_iam_role_policy_attachment" "repo_crawler_lambda_basic" {
+  role       = aws_iam_role.repo_crawler_lambda.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-# IAM policy for CrawlerLambda
-resource "aws_iam_role_policy" "crawler_lambda_policy" {
-  name = "${var.environment}-${var.project_name}-crawler-lambda-policy"
-  role = aws_iam_role.crawler_lambda.id
+# IAM policy for RepoCrawlerLambda
+resource "aws_iam_role_policy" "repo_crawler_lambda_policy" {
+  name = "${var.environment}-${var.project_name}-repo-crawler-lambda-policy"
+  role = aws_iam_role.repo_crawler_lambda.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -117,18 +117,18 @@ resource "aws_iam_role_policy" "crawler_lambda_policy" {
 
 # Install Lambda dependencies locally using an external data source to ensure it runs before archiving
 data "external" "pip_install" {
-  program = ["/bin/bash", "${path.module}/install_deps.sh", path.module]
+  program = ["/bin/bash", "${path.module}/lambda_deps_build/install_deps.sh", "${path.module}/lambda_deps_build"]
 
   # Re-run when requirements.txt changes
   query = {
-    requirements_md5 = filemd5("${path.module}/lambda/requirements.txt")
+    requirements_md5 = filemd5("${path.module}/lambda_deps_build/requirements.txt")
   }
 }
 
 # Package Lambda dependencies as a layer
 data "archive_file" "crawler_lambda_layer" {
   type        = "zip"
-  source_dir  = "${path.module}/lambda_build"
+  source_dir  = "${path.module}/lambda_deps_build"
   output_path = "${path.module}/lambda_layer.zip"
 
   # This creates the dependency: archive runs after pip_install completes
@@ -146,20 +146,20 @@ resource "aws_lambda_layer_version" "crawler_dependencies" {
 }
 
 # Package Lambda function code (without dependencies)
-data "archive_file" "crawler_lambda" {
+data "archive_file" "repo_crawler_lambda" {
   type        = "zip"
   source_dir  = "${path.module}/lambda"
-  output_path = "${path.module}/lambda_package.zip"
-  excludes    = ["requirements.txt", "__pycache__", "*.pyc"]
+  output_path = "${path.module}/repo_lambda_package.zip"
+  excludes    = ["requirements.txt", "__pycache__", "*.pyc", "user_crawler.py"]
 }
 
 # Lambda function
-resource "aws_lambda_function" "crawler" {
-  filename         = data.archive_file.crawler_lambda.output_path
-  function_name    = "${var.environment}-${var.project_name}-crawler"
-  role             = aws_iam_role.crawler_lambda.arn
-  handler          = "crawler.lambda_handler"
-  source_code_hash = data.archive_file.crawler_lambda.output_base64sha256
+resource "aws_lambda_function" "repo_crawler" {
+  filename         = data.archive_file.repo_crawler_lambda.output_path
+  function_name    = "${var.environment}-${var.project_name}-repo-crawler"
+  role             = aws_iam_role.repo_crawler_lambda.arn
+  handler          = "repo_crawler.lambda_handler"
+  source_code_hash = data.archive_file.repo_crawler_lambda.output_base64sha256
   runtime          = "python3.11"
   timeout          = var.lambda_timeout
   memory_size      = var.lambda_memory
@@ -183,48 +183,47 @@ resource "aws_lambda_function" "crawler" {
 }
 
 # CloudWatch Log Group for Lambda
-resource "aws_cloudwatch_log_group" "crawler_lambda" {
-  name              = "/aws/lambda/${aws_lambda_function.crawler.function_name}"
+resource "aws_cloudwatch_log_group" "repo_crawler_lambda" {
+  name              = "/aws/lambda/${aws_lambda_function.repo_crawler.function_name}"
   retention_in_days = 30
 
   tags = var.tags
 }
 
 # EventBridge rule to trigger Lambda every 15 minutes
-resource "aws_cloudwatch_event_rule" "crawler_schedule" {
-  name                = "${var.environment}-${var.project_name}-crawler-schedule"
-  description         = "Trigger ${var.project_name} crawler Lambda every 15 minutes"
+resource "aws_cloudwatch_event_rule" "repo_crawler_schedule" {
+  name                = "${var.environment}-${var.project_name}-repo-crawler-schedule"
+  description         = "Trigger ${var.project_name} repo crawler Lambda every 15 minutes"
   schedule_expression = "rate(15 minutes)"
 
   tags = var.tags
 }
 
 # EventBridge target - Lambda function
-resource "aws_cloudwatch_event_target" "crawler_lambda" {
-  rule      = aws_cloudwatch_event_rule.crawler_schedule.name
-  target_id = "CrawlerLambdaTarget"
-  arn       = aws_lambda_function.crawler.arn
+resource "aws_cloudwatch_event_target" "repo_crawler_lambda" {
+  rule      = aws_cloudwatch_event_rule.repo_crawler_schedule.name
+  target_id = "RepoCrawlerLambdaTarget"
+  arn       = aws_lambda_function.repo_crawler.arn
 }
 
 # Lambda permission for EventBridge to invoke
-resource "aws_lambda_permission" "allow_eventbridge" {
-  statement_id  = "AllowExecutionFromEventBridge"
+resource "aws_lambda_permission" "allow_eventbridge_repo_crawler" {
+  statement_id  = "AllowExecutionFromEventBridgeRepo"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.crawler.function_name
+  function_name = aws_lambda_function.repo_crawler.function_name
   principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.crawler_schedule.arn
+  source_arn    = aws_cloudwatch_event_rule.repo_crawler_schedule.arn
 }
 
 # SNS topic for critical alerts
-resource "aws_sns_topic" "crawler_alerts" {
-  name = "${var.environment}-${var.project_name}-crawler-alerts"
-
+resource "aws_sns_topic" "repo_crawler_alerts" {
+  name = "${var.environment}-${var.project_name}-repo-crawler-alerts"
   tags = var.tags
 }
 
 # CloudWatch alarm for Lambda errors
-resource "aws_cloudwatch_metric_alarm" "crawler_errors" {
-  alarm_name          = "${var.environment}-${var.project_name}-crawler-errors"
+resource "aws_cloudwatch_metric_alarm" "repo_crawler_errors" {
+  alarm_name          = "${var.environment}-${var.project_name}-repo-crawler-errors"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
   metric_name         = "Errors"
@@ -232,21 +231,21 @@ resource "aws_cloudwatch_metric_alarm" "crawler_errors" {
   period              = 900 # 15 minutes
   statistic           = "Sum"
   threshold           = 3
-  alarm_description   = "Alert when crawler Lambda has more than 3 errors in 30 minutes"
+  alarm_description   = "Alert when repo crawler Lambda has more than 3 errors in 30 minutes"
   treat_missing_data  = "notBreaching"
 
   dimensions = {
-    FunctionName = aws_lambda_function.crawler.function_name
+    FunctionName = aws_lambda_function.repo_crawler.function_name
   }
 
-  alarm_actions = [aws_sns_topic.crawler_alerts.arn]
+  alarm_actions = [aws_sns_topic.repo_crawler_alerts.arn]
 
   tags = var.tags
 }
 
 # CloudWatch alarm for Lambda throttling
-resource "aws_cloudwatch_metric_alarm" "crawler_throttles" {
-  alarm_name          = "${var.environment}-${var.project_name}-crawler-throttles"
+resource "aws_cloudwatch_metric_alarm" "repo_crawler_throttles" {
+  alarm_name          = "${var.environment}-${var.project_name}-repo-crawler-throttles"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   metric_name         = "Throttles"
@@ -254,26 +253,26 @@ resource "aws_cloudwatch_metric_alarm" "crawler_throttles" {
   period              = 900 # 15 minutes
   statistic           = "Sum"
   threshold           = 0
-  alarm_description   = "Alert when crawler Lambda is throttled"
+  alarm_description   = "Alert when repo crawler Lambda is throttled"
   treat_missing_data  = "notBreaching"
 
   dimensions = {
-    FunctionName = aws_lambda_function.crawler.function_name
+    FunctionName = aws_lambda_function.repo_crawler.function_name
   }
 
-  alarm_actions = [aws_sns_topic.crawler_alerts.arn]
+  alarm_actions = [aws_sns_topic.repo_crawler_alerts.arn]
 
   tags = var.tags
 }
 
 # Custom CloudWatch metric for crawler progress
-resource "aws_cloudwatch_log_metric_filter" "crawler_progress" {
-  name           = "${var.environment}-crawler-progress"
-  log_group_name = aws_cloudwatch_log_group.crawler_lambda.name
+resource "aws_cloudwatch_log_metric_filter" "repo_crawler_progress" {
+  name           = "${var.environment}-repo-crawler-progress"
+  log_group_name = aws_cloudwatch_log_group.repo_crawler_lambda.name
   pattern        = "[time, request_id, level=INFO, msg=\"Crawl complete:\", ...]"
 
   metric_transformation {
-    name      = "CrawlerProgress"
+    name      = "RepoCrawlerProgress"
     namespace = "${title(var.project_name)}/ColdPath"
     value     = "1"
     unit      = "Count"
@@ -283,7 +282,7 @@ resource "aws_cloudwatch_log_metric_filter" "crawler_progress" {
 # Custom CloudWatch metric for repositories processed
 resource "aws_cloudwatch_log_metric_filter" "repositories_processed" {
   name           = "${var.environment}-repositories-processed"
-  log_group_name = aws_cloudwatch_log_group.crawler_lambda.name
+  log_group_name = aws_cloudwatch_log_group.repo_crawler_lambda.name
   pattern        = "[time, request_id, level=INFO, msg=\"Saved\", count, repositories=repositories, ...]"
 
   metric_transformation {
@@ -295,19 +294,174 @@ resource "aws_cloudwatch_log_metric_filter" "repositories_processed" {
 }
 
 # CloudWatch alarm for stalled crawler (no progress in 30 minutes)
-resource "aws_cloudwatch_metric_alarm" "crawler_stalled" {
-  alarm_name          = "${var.environment}-${var.project_name}-crawler-stalled"
+resource "aws_cloudwatch_metric_alarm" "repo_crawler_stalled" {
+  alarm_name          = "${var.environment}-${var.project_name}-repo-crawler-stalled"
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = 2
-  metric_name         = "CrawlerProgress"
+  metric_name         = "RepoCrawlerProgress"
   namespace           = "${title(var.project_name)}/ColdPath"
   period              = 900 # 15 minutes
   statistic           = "Sum"
   threshold           = 1
-  alarm_description   = "Alert when crawler has made no progress in 30 minutes"
+  alarm_description   = "Alert when repo crawler has made no progress in 30 minutes"
   treat_missing_data  = "breaching"
 
-  alarm_actions = [aws_sns_topic.crawler_alerts.arn]
+  alarm_actions = [aws_sns_topic.repo_crawler_alerts.arn]
 
   tags = var.tags
 }
+
+# --------------------------------------------------------------------------------------------------
+# User Crawler Resources
+# --------------------------------------------------------------------------------------------------
+
+# Initialize the bookmark with last_processed_id = 0
+resource "aws_dynamodb_table_item" "initial_user_bookmark" {
+  table_name = aws_dynamodb_table.crawl_state.name
+  hash_key   = aws_dynamodb_table.crawl_state.hash_key
+
+  item = jsonencode({
+    state_key = {
+      S = "user_bookmark"
+    }
+    last_processed_id = {
+      N = "0"
+    }
+    total_processed = {
+      N = "0"
+    }
+    updated_at = {
+      S = timestamp()
+    }
+  })
+
+  lifecycle {
+    ignore_changes = [item] # Don't overwrite on subsequent applies
+  }
+}
+
+# IAM role for UserCrawlerLambda
+resource "aws_iam_role" "user_crawler_lambda" {
+  name = "${var.environment}-${var.project_name}-user-crawler-lambda"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = var.tags
+}
+
+# Attach basic Lambda execution policy
+resource "aws_iam_role_policy_attachment" "user_crawler_lambda_basic" {
+  role       = aws_iam_role.user_crawler_lambda.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+# IAM policy for UserCrawlerLambda
+resource "aws_iam_role_policy" "user_crawler_lambda_policy" {
+  name = "${var.environment}-${var.project_name}-user-crawler-lambda-policy"
+  role = aws_iam_role.user_crawler_lambda.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:UpdateItem"
+        ]
+        Resource = aws_dynamodb_table.crawl_state.arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:PutObjectAcl"
+        ]
+        Resource = "arn:aws:s3:::${var.data_lake_bucket_name}/user-path/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "arn:aws:logs:*:*:*"
+      }
+    ]
+  })
+}
+
+# Lambda function
+resource "aws_lambda_function" "user_crawler" {
+  filename         = data.archive_file.repo_crawler_lambda.output_path
+  function_name    = "${var.environment}-${var.project_name}-user-crawler"
+  role             = aws_iam_role.user_crawler_lambda.arn
+  handler          = "user_crawler.lambda_handler"
+  source_code_hash = data.archive_file.repo_crawler_lambda.output_base64sha256
+  runtime          = "python3.11"
+  timeout          = var.lambda_timeout
+  memory_size      = var.lambda_memory
+  layers = [
+    aws_lambda_layer_version.crawler_dependencies.arn,
+    "arn:aws:lambda:${data.aws_region.current.name}:336392948345:layer:AWSSDKPandas-Python311:${var.aws_sdk_pandas_layer_version}"
+  ]
+
+  environment {
+    variables = {
+      DYNAMODB_TABLE_NAME    = aws_dynamodb_table.crawl_state.name
+      S3_BUCKET_NAME         = var.data_lake_bucket_name
+      GITHUB_TOKEN           = var.github_token
+      REQUESTS_PER_EXECUTION = var.requests_per_execution
+      SLEEP_INTERVAL         = var.sleep_interval
+      PROJECT_NAME           = var.project_name
+    }
+  }
+
+  tags = var.tags
+}
+
+# CloudWatch Log Group for Lambda
+resource "aws_cloudwatch_log_group" "user_crawler_lambda" {
+  name              = "/aws/lambda/${aws_lambda_function.user_crawler.function_name}"
+  retention_in_days = 30
+
+  tags = var.tags
+}
+
+# # EventBridge rule to trigger Lambda every 15 minutes
+# resource "aws_cloudwatch_event_rule" "user_crawler_schedule" {
+#   name                = "${var.environment}-${var.project_name}-user-crawler-schedule"
+#   description         = "Trigger ${var.project_name} user crawler Lambda every 15 minutes"
+#   schedule_expression = "rate(15 minutes)"
+
+#   tags = var.tags
+# }
+
+# # EventBridge target - Lambda function
+# resource "aws_cloudwatch_event_target" "user_crawler_lambda" {
+#   rule      = aws_cloudwatch_event_rule.user_crawler_schedule.name
+#   target_id = "UserCrawlerLambdaTarget"
+#   arn       = aws_lambda_function.user_crawler.arn
+# }
+
+# # Lambda permission for EventBridge to invoke
+# resource "aws_lambda_permission" "allow_eventbridge_user_crawler" {
+#   statement_id  = "AllowExecutionFromEventBridgeUser"
+#   action        = "lambda:InvokeFunction"
+#   function_name = aws_lambda_function.user_crawler.function_name
+#   principal     = "events.amazonaws.com"
+#   source_arn    = aws_cloudwatch_event_rule.user_crawler_schedule.arn
+# }
+

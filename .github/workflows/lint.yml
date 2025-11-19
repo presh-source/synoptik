@@ -1,0 +1,100 @@
+name: Lint
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+      - release/**
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+  ruff:
+    name: Ruff (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Ruff
+        run: pip install ruff
+
+      - name: Run Ruff Linter
+        run: |
+          echo "### 🔍 Ruff Linting" >> $GITHUB_STEP_SUMMARY
+          ruff check backend/ --output-format=github || {
+            echo "❌ Linting failed" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          }
+          echo "✅ Linting passed" >> $GITHUB_STEP_SUMMARY
+
+      - name: Run Ruff Formatter Check
+        run: |
+          echo "### 🎨 Ruff Format Check" >> $GITHUB_STEP_SUMMARY
+          ruff format --check backend/ || {
+            echo "❌ Format check failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Run \`ruff format backend/\` to fix formatting issues" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          }
+          echo "✅ Format check passed" >> $GITHUB_STEP_SUMMARY
+
+  terraform:
+    name: Terraform Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.5.0'
+
+      - name: Terraform Format Check
+        working-directory: backend
+        run: |
+          echo "### 🔧 Terraform Format Check" >> $GITHUB_STEP_SUMMARY
+          terraform fmt -check -recursive || {
+            echo "❌ Terraform format check failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Run \`terraform fmt -recursive\` in the backend directory to fix formatting" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          }
+          echo "✅ Terraform format check passed" >> $GITHUB_STEP_SUMMARY
+
+  eslint:
+    name: ESLint (Frontend)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: frontend
+        run: |
+          echo "### 🔍 ESLint Check" >> $GITHUB_STEP_SUMMARY
+          npm run lint || {
+            echo "❌ ESLint check failed" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          }
+          echo "✅ ESLint check passed" >> $GITHUB_STEP_SUMMARY

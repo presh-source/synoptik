@@ -1,9 +1,8 @@
 import { Box, Typography, Grid, CircularProgress, Alert, Card, CardContent } from '@mui/material'
 import { usePipelineStatus } from '@/hooks/usePipelineStatus'
 import ColdPathStatusCard from '@/components/ColdPathStatus'
-import HotPathStatusCard from '@/components/HotPathStatus'
-import ScrubberPathStatusCard from '@/components/ScrubberPathStatus'
 import ErrorRateIndicator from '@/components/ErrorRateIndicator'
+import CrawlerMetricsCard from '@/components/CrawlerMetrics'
 
 export default function PipelineStatusPage() {
   const { data, isLoading, error, isError } = usePipelineStatus(30000)
@@ -46,7 +45,7 @@ export default function PipelineStatusPage() {
         Pipeline Status
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Real-time monitoring of all three data pipelines. Auto-refreshes every 30 seconds.
+        Real-time monitoring of the Cold Path data pipeline. Auto-refreshes every 30 seconds.
       </Typography>
 
       <Grid container spacing={3}>
@@ -58,7 +57,7 @@ export default function PipelineStatusPage() {
           )}
         </Grid>
 
-        <Grid item xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6}>
           {data.coldPath ? (
             <ColdPathStatusCard data={data.coldPath} />
           ) : (
@@ -73,28 +72,16 @@ export default function PipelineStatusPage() {
           )}
         </Grid>
 
-        <Grid item xs={12} md={6} lg={4}>
-          {data.hotPath ? (
-            <HotPathStatusCard data={data.hotPath} />
+        <Grid item xs={12} md={6}>
+          {data.coldPath ? (
+            <CrawlerMetricsCard
+              repoCrawler={data.coldPath.repoCrawler}
+              userCrawler={data.coldPath.userCrawler}
+            />
           ) : (
             <Card>
               <CardContent>
-                <Typography variant="h6">Hot Path Status</Typography>
-                <Alert severity="info" sx={{ mt: 2 }}>
-                  Data not available.
-                </Alert>
-              </CardContent>
-            </Card>
-          )}
-        </Grid>
-
-        <Grid item xs={12} md={6} lg={4}>
-          {data.scrubberPath ? (
-            <ScrubberPathStatusCard data={data.scrubberPath} />
-          ) : (
-            <Card>
-              <CardContent>
-                <Typography variant="h6">Scrubber Path Status</Typography>
+                <Typography variant="h6">Crawler Metrics</Typography>
                 <Alert severity="info" sx={{ mt: 2 }}>
                   Data not available.
                 </Alert>

@@ -5,9 +5,8 @@ Returns status of Cold Path, Hot Path, and Scrubber Path pipelines
 
 import json
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import boto3
-from botocore.exceptions import ClientError
 from utils.sentry_config import (
     init_sentry,
     capture_lambda_error,
@@ -19,22 +18,110 @@ init_sentry()
 
 # Environment variables
 DYNAMODB_TABLE_NAME = os.environ.get("DYNAMODB_TABLE_NAME")
-KINESIS_STREAM_NAME = os.environ.get("KINESIS_STREAM_NAME")
-SQS_QUEUE_URL = os.environ.get("SQS_QUEUE_URL")
 PROJECT_NAME = os.environ.get("PROJECT_NAME")
 ENVIRONMENT = os.environ.get("ENVIRONMENT")
 
 # AWS Clients
 dynamodb = boto3.resource("dynamodb")
 cloudwatch = boto3.client("cloudwatch")
-sqs = boto3.client("sqs")
 
-# Constants - Approx. total public repos on GitHub as of late 2023
-TOTAL_REPOS_TO_CRAWL = 430_000_000
+
+def get_crawler_metrics_from_cloudwatch(crawler_type: str, time_period_hours: int = 1):
+    """
+    Get crawler metrics from CloudWatch for a specific crawler type.
+
+    Args:
+        crawler_type: Either "repo" or "user"
+        time_period_hours: Number of hours to look back (default 1)
+
+    Returns:
+        Dictionary with crawler metrics
+    """
+    try:
+        namespace = f"{PROJECT_NAME.title()}/ColdPath"
+        dimensions = [{"Name": "CrawlerType", "Value": crawler_type}]
+        end_time = datetime.utcnow()
+        start_time = end_time - timedelta(hours=time_period_hours)
+        period = time_period_hours * 3600
+
+        # Get items crawled
+        items_response = cloudwatch.get_metric_statistics(
+            Namespace=namespace,
+            MetricName="ItemsCrawled",
+            Dimensions=dimensions,
+            StartTime=start_time,
+            EndTime=end_time,
+            Period=period,
+            Statistics=["Sum"],
+        )
+        items_crawled = (
+            items_response["Datapoints"][0]["Sum"]
+            if items_response["Datapoints"]
+            else 0
+        )
+
+        # Get request count
+        requests_response = cloudwatch.get_metric_statistics(
+            Namespace=namespace,
+            MetricName="APIRequests",
+            Dimensions=dimensions,
+            StartTime=start_time,
+            EndTime=end_time,
+            Period=period,
+            Statistics=["Sum"],
+        )
+        request_count = (
+            requests_response["Datapoints"][0]["Sum"]
+            if requests_response["Datapoints"]
+            else 0
+        )
+
+        # Get run count
+        runs_response = cloudwatch.get_metric_statistics(
+            Namespace=namespace,
+            MetricName="CrawlerRuns",
+            Dimensions=dimensions,
+            StartTime=start_time,
+            EndTime=end_time,
+            Period=period,
+            Statistics=["Sum"],
+        )
+        run_count = (
+            runs_response["Datapoints"][0]["Sum"] if runs_response["Datapoints"] else 0
+        )
+
+        # Calculate rates
+        hours = time_period_hours
+        minutes = hours * 60
+        seconds = minutes * 60
+
+        return {
+            "totalCrawled": int(items_crawled),
+            "ratePerHour": round(items_crawled / hours, 2) if hours > 0 else 0.0,
+            "ratePerMinute": round(items_crawled / minutes, 2) if minutes > 0 else 0.0,
+            "ratePerSecond": round(items_crawled / seconds, 4) if seconds > 0 else 0.0,
+            "requestCount": int(request_count),
+            "runCount": int(run_count),
+        }
+
+    except Exception as e:
+        add_breadcrumb(
+            f"Failed to get {crawler_type} crawler metrics",
+            level="error",
+            data={"error": str(e)},
+        )
+        return {
+            "totalCrawled": 0,
+            "ratePerHour": 0.0,
+            "ratePerMinute": 0.0,
+            "ratePerSecond": 0.0,
+            "requestCount": 0,
+            "runCount": 0,
+        }
 
 
 def get_cold_path_status():
-    """Fetches the status of the cold path historical ingestion."""
+    """Fetches the status of the cold path historical ingestion including crawler metrics."""
     if not DYNAMODB_TABLE_NAME:
         add_breadcrumb("DYNAMODB_TABLE_NAME not set", level="warning")
         return None
@@ -45,113 +132,59 @@ def get_cold_path_status():
         item = response.get("Item")
 
         if not item:
-            return {
+            base_status = {
                 "lastProcessedId": 0,
                 "totalProcessed": 0,
-                "progressPercentage": 0,
                 "updatedAt": datetime.utcnow().isoformat(),
             }
+        else:
+            base_status = {
+                "lastProcessedId": int(item.get("last_processed_id", 0)),
+                "totalProcessed": int(item.get("total_processed", 0)),
+                "updatedAt": item.get("updated_at", datetime.utcnow().isoformat()),
+            }
 
-        total_processed = int(item.get("total_processed", 0))
-        progress = (total_processed / TOTAL_REPOS_TO_CRAWL) * 100
+        # Add crawler-specific metrics
+        base_status["repoCrawler"] = get_crawler_metrics_from_cloudwatch("repo")
+        base_status["userCrawler"] = get_crawler_metrics_from_cloudwatch("user")
 
-        return {
-            "lastProcessedId": int(item.get("last_processed_id", 0)),
-            "totalProcessed": total_processed,
-            "progressPercentage": progress,
-            "updatedAt": item.get("updated_at", datetime.utcnow().isoformat()),
-        }
+        return base_status
+
     except Exception as e:
-        add_breadcrumb("Failed to get cold path status", level="error", data={"error": str(e)})
-        return None
-
-
-def get_hot_path_status():
-    """Fetches the status of the hot path real-time event processing."""
-    if not KINESIS_STREAM_NAME:
-        add_breadcrumb("KINESIS_STREAM_NAME not set", level="warning")
-        return None
-    try:
-        # Get iterator age from Kinesis consumer (assumes a metric is set up)
-        # This is a placeholder as it requires knowing the consumer Lambda name
-        lag_ms = 0
-        
-        # Get event rate from IncomingRecords metric
-        response = cloudwatch.get_metric_statistics(
-            Namespace='AWS/Kinesis',
-            MetricName='IncomingRecords',
-            Dimensions=[{'Name': 'StreamName', 'Value': KINESIS_STREAM_NAME}],
-            StartTime=datetime.utcnow() - timedelta(minutes=5),
-            EndTime=datetime.utcnow(),
-            Period=300,
-            Statistics=['Sum']
+        add_breadcrumb(
+            "Failed to get cold path status", level="error", data={"error": str(e)}
         )
-        
-        event_rate_per_5min = response['Datapoints'][0]['Sum'] if response['Datapoints'] else 0
-        event_rate_per_min = event_rate_per_5min / 5
-
-        return {
-            "eventRate": round(event_rate_per_min),
-            "kinesisLag": lag_ms,
-            "lastEventTime": datetime.utcnow().isoformat(), # Placeholder
-            "processedLast24h": 0, # Placeholder
-        }
-    except Exception as e:
-        add_breadcrumb("Failed to get hot path status", level="error", data={"error": str(e)})
-        return None
-
-
-def get_scrubber_path_status():
-    """Fetches the status of the scrubber path for deletion detection."""
-    if not SQS_QUEUE_URL:
-        add_breadcrumb("SQS_QUEUE_URL not set", level="warning")
-        return None
-    try:
-        response = sqs.get_queue_attributes(
-            QueueUrl=SQS_QUEUE_URL,
-            AttributeNames=['ApproximateNumberOfMessages']
-        )
-        queue_depth = int(response['Attributes']['ApproximateNumberOfMessages'])
-
-        return {
-            "queueDepth": queue_depth,
-            "validationRate": 0,  # Placeholder
-            "deletedRepositories": 0,  # Placeholder
-            "lastRunTime": datetime.utcnow().isoformat(),  # Placeholder
-        }
-    except Exception as e:
-        add_breadcrumb("Failed to get scrubber path status", level="error", data={"error": str(e)})
         return None
 
 
 def get_error_rates():
-    """Fetches error rates for the pipelines from CloudWatch."""
+    """Fetches error rates for the Cold Path pipeline from CloudWatch."""
     # This is a placeholder. A real implementation would query CloudWatch
-    # metrics for the 'Errors' metric on each relevant Lambda function.
+    # metrics for the 'Errors' metric on the Cold Path Lambda function.
     try:
         return {
             "coldPath": 0.1,
-            "hotPath": 0.05,
-            "scrubberPath": 0.01,
         }
     except Exception as e:
-        add_breadcrumb("Failed to get error rates", level="error", data={"error": str(e)})
+        add_breadcrumb(
+            "Failed to get error rates", level="error", data={"error": str(e)}
+        )
         return None
 
 
 def get_pipeline_status():
     """
-    Get status of all pipelines, handling partial failures.
+    Get status of Cold Path pipeline, handling partial failures.
     """
-    add_breadcrumb(message="Fetching all pipeline statuses", category="lambda", level="info")
-    
+    add_breadcrumb(
+        message="Fetching Cold Path pipeline status", category="lambda", level="info"
+    )
+
     status = {
         "coldPath": get_cold_path_status(),
-        "hotPath": get_hot_path_status(),
-        "scrubberPath": get_scrubber_path_status(),
         "errorRates": get_error_rates(),
     }
-    
+
     return status
 
 

@@ -34,15 +34,6 @@ variable "project_name" {
   default     = "synoptik"
 }
 
-variable "localstack_config" {
-  description = "LocalStack configuration for local development"
-  type        = map(string)
-  default = {
-    enabled  = "false"
-    endpoint = "http://localhost:4566"
-  }
-}
-
 variable "sentry_dsn_frontend" {
   description = "Sentry DSN for frontend (React dashboard)"
   type        = string

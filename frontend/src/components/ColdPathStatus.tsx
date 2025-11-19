@@ -1,4 +1,4 @@
-import { Card, CardContent, Typography, Box, LinearProgress, Chip } from '@mui/material'
+import { Card, CardContent, Typography, Box, Chip } from '@mui/material'
 import { Storage as StorageIcon } from '@mui/icons-material'
 import type { ColdPathStatus } from '@/types'
 
@@ -19,23 +19,7 @@ export default function ColdPathStatusCard({ data }: ColdPathStatusProps) {
           <Typography variant="h6">Cold Path - Historical Ingestion</Typography>
         </Box>
 
-        <Box sx={{ mb: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              Progress
-            </Typography>
-            <Typography variant="body2" fontWeight="bold">
-              {data.progressPercentage.toFixed(2)}%
-            </Typography>
-          </Box>
-          <LinearProgress
-            variant="determinate"
-            value={data.progressPercentage}
-            sx={{ height: 8, borderRadius: 1 }}
-          />
-        </Box>
-
-        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
           <Box>
             <Typography variant="body2" color="text.secondary">
               Last Processed ID

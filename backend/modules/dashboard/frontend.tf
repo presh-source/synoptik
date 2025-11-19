@@ -7,7 +7,6 @@ resource "aws_s3_bucket" "dashboard" {
 
 # Block public access to the S3 bucket (CloudFront will access it)
 resource "aws_s3_bucket_public_access_block" "dashboard" {
-  count  = var.use_localstack ? 0 : 1
   bucket = aws_s3_bucket.dashboard.id
 
   block_public_acls       = true
@@ -27,13 +26,12 @@ resource "aws_s3_bucket_versioning" "dashboard" {
 
 # CloudFront Origin Access Identity
 resource "aws_cloudfront_origin_access_identity" "dashboard" {
-  count   = var.use_localstack ? 0 : 1
   comment = "OAI for ${var.project_name} dashboard"
 }
 
 # S3 bucket policy to allow CloudFront access
 resource "aws_s3_bucket_policy" "dashboard" {
-  count  = var.use_localstack ? 0 : 1
+
   bucket = aws_s3_bucket.dashboard.id
 
   policy = jsonencode({
@@ -43,7 +41,7 @@ resource "aws_s3_bucket_policy" "dashboard" {
         Sid    = "AllowCloudFrontAccess"
         Effect = "Allow"
         Principal = {
-          AWS = aws_cloudfront_origin_access_identity.dashboard[0].iam_arn
+          AWS = aws_cloudfront_origin_access_identity.dashboard.iam_arn
         }
         Action   = "s3:GetObject"
         Resource = "${aws_s3_bucket.dashboard.arn}/*"
@@ -61,7 +59,6 @@ resource "aws_s3_bucket_policy" "dashboard" {
 
 # CloudFront distribution
 resource "aws_cloudfront_distribution" "dashboard" {
-  count               = var.use_localstack ? 0 : 1
   enabled             = true
   is_ipv6_enabled     = true
   comment             = "${var.project_name} Dashboard"
@@ -73,11 +70,8 @@ resource "aws_cloudfront_distribution" "dashboard" {
     domain_name = aws_s3_bucket.dashboard.bucket_regional_domain_name
     origin_id   = "S3-${aws_s3_bucket.dashboard.id}"
 
-    dynamic "s3_origin_config" {
-      for_each = var.use_localstack ? [] : [1]
-      content {
-        origin_access_identity = aws_cloudfront_origin_access_identity.dashboard[0].cloudfront_access_identity_path
-      }
+    s3_origin_config {
+      origin_access_identity = aws_cloudfront_origin_access_identity.dashboard.cloudfront_access_identity_path
     }
   }
 
@@ -122,7 +116,7 @@ resource "aws_cloudfront_distribution" "dashboard" {
 
   viewer_certificate {
     cloudfront_default_certificate = var.domain_name == ""
-    acm_certificate_arn            = var.acm_certificate_arn != "" ? var.acm_certificate_arn : (var.domain_name != "" ? aws_acm_certificate.dashboard[0].arn : null)
+    acm_certificate_arn            = var.acm_certificate_arn != "" ? var.acm_certificate_arn : (length(module.frontend_certificate) > 0 ? module.frontend_certificate[0].certificate_arn : null)
     ssl_support_method             = var.domain_name != "" ? "sni-only" : null
     minimum_protocol_version       = var.domain_name != "" ? "TLSv1.2_2021" : null
   }
@@ -130,12 +124,11 @@ resource "aws_cloudfront_distribution" "dashboard" {
   tags = var.tags
 
   # Ensure certificate is validated before creating CloudFront distribution
-  depends_on = [aws_acm_certificate_validation.dashboard]
+  depends_on = [module.frontend_certificate]
 }
 
 # CloudWatch log group for CloudFront access logs (optional)
 resource "aws_cloudwatch_log_group" "cloudfront_logs" {
-  count             = var.use_localstack ? 0 : 1
   name              = "/aws/cloudfront/${var.project_name}-dashboard"
   retention_in_days = 7
 

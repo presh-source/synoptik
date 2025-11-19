@@ -1,33 +1,25 @@
 // Pipeline Status Types
+export interface CrawlerMetrics {
+  totalCrawled: number
+  ratePerHour: number
+  ratePerMinute: number
+  ratePerSecond: number
+  requestCount: number
+  runCount: number
+}
+
 export interface ColdPathStatus {
   lastProcessedId: number
   totalProcessed: number
-  progressPercentage: number
   updatedAt: string
-}
-
-export interface HotPathStatus {
-  eventRate: number
-  kinesisLag: number
-  lastEventTime: string
-  processedLast24h: number
-}
-
-export interface ScrubberPathStatus {
-  queueDepth: number
-  validationRate: number
-  deletedRepositories: number
-  lastRunTime: string
+  repoCrawler?: CrawlerMetrics
+  userCrawler?: CrawlerMetrics
 }
 
 export interface PipelineStatus {
   coldPath: ColdPathStatus
-  hotPath: HotPathStatus
-  scrubberPath: ScrubberPathStatus
   errorRates: {
     coldPath: number
-    hotPath: number
-    scrubberPath: number
   }
 }
 

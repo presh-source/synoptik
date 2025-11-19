@@ -8,35 +8,21 @@ variable "environment" {
   type        = string
 }
 
-variable "use_localstack" {
-  description = "Whether to use LocalStack"
-  type        = bool
-  default     = false
-}
-
-variable "opensearch_endpoint" {
-  description = "The endpoint of the OpenSearch cluster"
-  type        = string
-}
-
-variable "neptune_endpoint" {
-  description = "The endpoint of the Neptune cluster"
-  type        = string
-}
-
 variable "cold_path_dynamodb_table" {
   description = "The name of the DynamoDB table for the cold path"
   type        = string
 }
 
-variable "kinesis_stream_name" {
-  description = "The name of the Kinesis stream for the hot path"
+variable "opensearch_endpoint" {
+  description = "The endpoint of the OpenSearch cluster"
   type        = string
+  default     = "http://localhost:4566"
 }
 
-variable "scrubber_queue_url" {
-  description = "The URL of the SQS queue for the scrubber path"
+variable "neptune_endpoint" {
+  description = "The endpoint of the Neptune cluster"
   type        = string
+  default     = "localhost:8182"
 }
 
 variable "sentry_dsn_backend" {

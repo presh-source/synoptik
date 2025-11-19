@@ -31,11 +31,6 @@ lambda_client = boto3.client("lambda")
 # Lambda function names by pipeline
 LAMBDA_FUNCTIONS = {
     "cold_path": f"{ENVIRONMENT}-{PROJECT_NAME}-crawler",
-    "hot_path": [
-        f"{ENVIRONMENT}-{PROJECT_NAME}-events-poller",
-        f"{ENVIRONMENT}-{PROJECT_NAME}-graph-updater",
-    ],
-    "scrubber_path": f"{ENVIRONMENT}-{PROJECT_NAME}-pinger",
 }
 
 
@@ -176,9 +171,90 @@ def get_lambda_metrics(function_name: str) -> Dict[str, Any]:
         }
 
 
+def get_crawler_metrics(crawler_type: str, time_period: int = 3600) -> Dict[str, Any]:
+    """
+    Get metrics for a specific crawler type (repo or user)
+
+    Args:
+        crawler_type: Either "repo" or "user"
+        time_period: Time period in seconds (default 3600 = 1 hour)
+
+    Returns:
+        Dictionary with crawler metrics including rates and counts
+    """
+    try:
+        namespace = f"{PROJECT_NAME.title()}/ColdPath"
+        dimensions = [{"Name": "CrawlerType", "Value": crawler_type}]
+
+        # Get total items crawled in the time period
+        items_crawled = (
+            get_metric_statistics(
+                namespace,
+                "ItemsCrawled",
+                dimensions,
+                period=time_period,
+                statistic="Sum",
+            )
+            or 0.0
+        )
+
+        # Get request count
+        request_count = (
+            get_metric_statistics(
+                namespace,
+                "APIRequests",
+                dimensions,
+                period=time_period,
+                statistic="Sum",
+            )
+            or 0.0
+        )
+
+        # Get run count
+        run_count = (
+            get_metric_statistics(
+                namespace,
+                "CrawlerRuns",
+                dimensions,
+                period=time_period,
+                statistic="Sum",
+            )
+            or 0.0
+        )
+
+        # Calculate rates
+        hours = time_period / 3600
+        minutes = time_period / 60
+        seconds = time_period
+
+        rate_per_hour = items_crawled / hours if hours > 0 else 0.0
+        rate_per_minute = items_crawled / minutes if minutes > 0 else 0.0
+        rate_per_second = items_crawled / seconds if seconds > 0 else 0.0
+
+        return {
+            "total_crawled": int(items_crawled),
+            "rate_per_hour": round(rate_per_hour, 2),
+            "rate_per_minute": round(rate_per_minute, 2),
+            "rate_per_second": round(rate_per_second, 4),
+            "request_count": int(request_count),
+            "run_count": int(run_count),
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting {crawler_type} crawler metrics: {e}")
+        return {
+            "total_crawled": 0,
+            "rate_per_hour": 0.0,
+            "rate_per_minute": 0.0,
+            "rate_per_second": 0.0,
+            "request_count": 0,
+            "run_count": 0,
+        }
+
+
 def get_cold_path_metrics() -> Dict[str, Any]:
     """
-    Get CloudWatch metrics for Cold Path pipeline
+    Get CloudWatch metrics for Cold Path pipeline including crawler-specific metrics
     """
     try:
         function_name = LAMBDA_FUNCTIONS["cold_path"]
@@ -206,6 +282,10 @@ def get_cold_path_metrics() -> Dict[str, Any]:
             or 0.0
         )
 
+        # Get crawler-specific metrics
+        repo_crawler_metrics = get_crawler_metrics("repo")
+        user_crawler_metrics = get_crawler_metrics("user")
+
         return {
             "error_rate": lambda_metrics["error_rate"],
             "api_request_rate": round(api_request_rate, 2),
@@ -214,6 +294,8 @@ def get_cold_path_metrics() -> Dict[str, Any]:
             "lambda_throttles": lambda_metrics["throttles"],
             "lambda_invocations": lambda_metrics["invocations"],
             "lambda_errors": lambda_metrics["errors"],
+            "repo_crawler": repo_crawler_metrics,
+            "user_crawler": user_crawler_metrics,
         }
 
     except Exception as e:
@@ -224,145 +306,22 @@ def get_cold_path_metrics() -> Dict[str, Any]:
             "repositories_processed": 0,
             "lambda_duration_ms": 0,
             "lambda_throttles": 0,
-        }
-
-
-def get_hot_path_metrics() -> Dict[str, Any]:
-    """
-    Get CloudWatch metrics for Hot Path pipeline
-    """
-    try:
-        # Get metrics for both Hot Path Lambda functions
-        poller_metrics = get_lambda_metrics(LAMBDA_FUNCTIONS["hot_path"][0])
-        updater_metrics = get_lambda_metrics(LAMBDA_FUNCTIONS["hot_path"][1])
-
-        # Get Kinesis metrics
-        kinesis_incoming = (
-            get_metric_statistics(
-                "AWS/Kinesis",
-                [
-                    {
-                        "Name": "StreamName",
-                        "Value": f"{ENVIRONMENT}-{PROJECT_NAME}-events-stream",
-                    }
-                ],
-                statistic="Sum",
-            )
-            or 0.0
-        )
-
-        kinesis_iterator_age = (
-            get_metric_statistics(
-                "AWS/Kinesis",
-                "GetRecords.IteratorAgeMilliseconds",
-                [
-                    {
-                        "Name": "StreamName",
-                        "Value": f"{ENVIRONMENT}-{PROJECT_NAME}-events-stream",
-                    }
-                ],
-                statistic="Maximum",
-            )
-            or 0.0
-        )
-
-        # Calculate average error rate across both functions
-        avg_error_rate = (
-            poller_metrics["error_rate"] + updater_metrics["error_rate"]
-        ) / 2
-
-        # Event processing rate (events per minute)
-        event_processing_rate = kinesis_incoming / 60  # Convert to per minute
-
-        return {
-            "error_rate": round(avg_error_rate, 2),
-            "event_processing_rate": round(event_processing_rate, 2),
-            "kinesis_incoming_records": kinesis_incoming,
-            "kinesis_iterator_age_ms": round(kinesis_iterator_age, 2),
-            "poller_lambda": {
-                "duration_ms": poller_metrics["duration_ms"],
-                "throttles": poller_metrics["throttles"],
-                "invocations": poller_metrics["invocations"],
-                "errors": poller_metrics["errors"],
+            "repo_crawler": {
+                "total_crawled": 0,
+                "rate_per_hour": 0.0,
+                "rate_per_minute": 0.0,
+                "rate_per_second": 0.0,
+                "request_count": 0,
+                "run_count": 0,
             },
-            "updater_lambda": {
-                "duration_ms": updater_metrics["duration_ms"],
-                "throttles": updater_metrics["throttles"],
-                "invocations": updater_metrics["invocations"],
-                "errors": updater_metrics["errors"],
+            "user_crawler": {
+                "total_crawled": 0,
+                "rate_per_hour": 0.0,
+                "rate_per_minute": 0.0,
+                "rate_per_second": 0.0,
+                "request_count": 0,
+                "run_count": 0,
             },
-        }
-
-    except Exception as e:
-        logger.error(f"Error getting Hot Path metrics: {e}")
-        return {
-            "error_rate": 0.0,
-            "event_processing_rate": 0.0,
-            "kinesis_incoming_records": 0,
-            "kinesis_iterator_age_ms": 0,
-        }
-
-
-def get_scrubber_path_metrics() -> Dict[str, Any]:
-    """
-    Get CloudWatch metrics for Scrubber Path pipeline
-    """
-    try:
-        function_name = LAMBDA_FUNCTIONS["scrubber_path"]
-        lambda_metrics = get_lambda_metrics(function_name)
-
-        # Get SQS metrics
-        sqs_messages_sent = (
-            get_metric_statistics(
-                "AWS/SQS",
-                "NumberOfMessagesSent",
-                [
-                    {
-                        "Name": "QueueName",
-                        "Value": f"{ENVIRONMENT}-{PROJECT_NAME}-scrubber-queue",
-                    }
-                ],
-                statistic="Sum",
-            )
-            or 0.0
-        )
-
-        sqs_messages_deleted = (
-            get_metric_statistics(
-                "AWS/SQS",
-                "NumberOfMessagesDeleted",
-                [
-                    {
-                        "Name": "QueueName",
-                        "Value": f"{ENVIRONMENT}-{PROJECT_NAME}-scrubber-queue",
-                    }
-                ],
-                statistic="Sum",
-            )
-            or 0.0
-        )
-
-        # Validation rate is the number of Lambda invocations (each processes a batch)
-        validation_rate = lambda_metrics["invocations"]
-
-        return {
-            "error_rate": lambda_metrics["error_rate"],
-            "validation_rate": validation_rate,
-            "sqs_messages_sent": sqs_messages_sent,
-            "sqs_messages_deleted": sqs_messages_deleted,
-            "lambda_duration_ms": lambda_metrics["duration_ms"],
-            "lambda_throttles": lambda_metrics["throttles"],
-            "lambda_invocations": lambda_metrics["invocations"],
-            "lambda_errors": lambda_metrics["errors"],
-        }
-
-    except Exception as e:
-        logger.error(f"Error getting Scrubber Path metrics: {e}")
-        return {
-            "error_rate": 0.0,
-            "validation_rate": 0.0,
-            "lambda_duration_ms": 0,
-            "lambda_throttles": 0,
         }
 
 
@@ -423,16 +382,12 @@ def lambda_handler(event, context):
     Returns CloudWatch metrics for all pipelines
     """
     try:
-        # Get metrics for all pipelines
+        # Get metrics for Cold Path pipeline
         cold_path = get_cold_path_metrics()
-        hot_path = get_hot_path_metrics()
-        scrubber_path = get_scrubber_path_metrics()
         overall = get_overall_system_metrics()
 
         response = {
             "cold_path": cold_path,
-            "hot_path": hot_path,
-            "scrubber_path": scrubber_path,
             "overall": overall,
             "timestamp": datetime.utcnow().isoformat(),
             "period": "last_1_hour",

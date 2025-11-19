@@ -56,19 +56,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "data_lake" {
       storage_class = "GLACIER"
     }
   }
-
-  rule {
-    id     = "expire-hot-path-events"
-    status = "Enabled"
-
-    filter {
-      prefix = "hot-path/"
-    }
-
-    expiration {
-      days = 365
-    }
-  }
 }
 
 resource "aws_s3_bucket_public_access_block" "data_lake" {
@@ -82,7 +69,6 @@ resource "aws_s3_bucket_public_access_block" "data_lake" {
 
 # Glue Data Catalog Database for Athena queries
 resource "aws_glue_catalog_database" "glue_db" {
-  count       = var.use_localstack ? 0 : 1
   name        = "${var.environment}-${var.project_name}"
   description = "Glue Data Catalog for ${var.project_name} data lake"
 
@@ -91,9 +77,8 @@ resource "aws_glue_catalog_database" "glue_db" {
 
 # Glue Catalog Table for Cold Path repositories (Parquet format)
 resource "aws_glue_catalog_table" "repositories" {
-  count         = var.use_localstack ? 0 : 1
   name          = "repositories"
-  database_name = aws_glue_catalog_database.glue_db[0].name
+  database_name = aws_glue_catalog_database.glue_db.name
 
   table_type = "EXTERNAL_TABLE"
 
@@ -274,12 +259,262 @@ resource "aws_glue_catalog_table" "repositories" {
     }
 
     columns {
+      name = "has_discussions"
+      type = "boolean"
+    }
+
+    columns {
       name = "license_name"
       type = "string"
     }
 
     columns {
       name = "license_key"
+      type = "string"
+    }
+
+    columns {
+      name = "license_node_id"
+      type = "string"
+    }
+
+    columns {
+      name = "allow_forking"
+      type = "boolean"
+    }
+
+    columns {
+      name = "is_template"
+      type = "boolean"
+    }
+
+    columns {
+      name = "web_commit_signoff_required"
+      type = "boolean"
+    }
+
+    columns {
+      name = "topics"
+      type = "string" # Storing as string, assuming JSON string or comma-separated
+    }
+
+    columns {
+      name = "visibility"
+      type = "string"
+    }
+
+    columns {
+      name = "forks"
+      type = "int"
+    }
+
+    columns {
+      name = "open_issues"
+      type = "int"
+    }
+
+    columns {
+      name = "watchers"
+      type = "int"
+    }
+
+    columns {
+      name = "temp_clone_token"
+      type = "string"
+    }
+
+    columns {
+      name = "parent_id"
+      type = "bigint"
+    }
+
+    columns {
+      name = "parent_node_id"
+      type = "string"
+    }
+
+    columns {
+      name = "network_count"
+      type = "int"
+    }
+
+    columns {
+      name = "subscribers_count"
+      type = "int"
+    }
+  }
+
+  partition_keys {
+    name = "year"
+    type = "int"
+  }
+
+  partition_keys {
+    name = "month"
+    type = "int"
+  }
+
+  partition_keys {
+    name = "day"
+    type = "int"
+  }
+}
+
+# Glue Catalog Table for Cold Path users (Parquet format)
+resource "aws_glue_catalog_table" "users" {
+  name          = "users"
+  database_name = aws_glue_catalog_database.glue_db.name
+
+  table_type = "EXTERNAL_TABLE"
+
+  parameters = {
+    "classification"            = "parquet"
+    "compressionType"           = "snappy"
+    "typeOfData"                = "file"
+    "EXTERNAL"                  = "TRUE"
+    "projection.enabled"        = "true"
+    "projection.year.type"      = "integer"
+    "projection.year.range"     = "2020,2030"
+    "projection.month.type"     = "integer"
+    "projection.month.range"    = "1,12"
+    "projection.month.digits"   = "2"
+    "projection.day.type"       = "integer"
+    "projection.day.range"      = "1,31"
+    "projection.day.digits"     = "2"
+    "storage.location.template" = "s3://${aws_s3_bucket.data_lake.id}/cold-path/users/year=$${year}/month=$${month}/day=$${day}"
+    "parquet.compression"       = "SNAPPY"
+  }
+
+  storage_descriptor {
+    location      = "s3://${aws_s3_bucket.data_lake.id}/cold-path/users/"
+    input_format  = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"
+    output_format = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
+
+    ser_de_info {
+      serialization_library = "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
+
+      parameters = {
+        "serialization.format" = "1"
+      }
+    }
+
+    columns {
+      name = "id"
+      type = "bigint"
+    }
+
+    columns {
+      name = "login"
+      type = "string"
+    }
+
+    columns {
+      name = "node_id"
+      type = "string"
+    }
+
+    columns {
+      name = "avatar_url"
+      type = "string"
+    }
+
+    columns {
+      name = "gravatar_id"
+      type = "string"
+    }
+
+    columns {
+      name = "url"
+      type = "string"
+    }
+
+    columns {
+      name = "html_url"
+      type = "string"
+    }
+
+    columns {
+      name = "type"
+      type = "string"
+    }
+
+    columns {
+      name = "site_admin"
+      type = "boolean"
+    }
+
+    columns {
+      name = "user_view_type"
+      type = "string"
+    }
+
+    columns {
+      name = "name"
+      type = "string"
+    }
+
+    columns {
+      name = "company"
+      type = "string"
+    }
+
+    columns {
+      name = "blog"
+      type = "string"
+    }
+
+    columns {
+      name = "location"
+      type = "string"
+    }
+
+    columns {
+      name = "email"
+      type = "string"
+    }
+
+    columns {
+      name = "hireable"
+      type = "boolean"
+    }
+
+    columns {
+      name = "bio"
+      type = "string"
+    }
+
+    columns {
+      name = "twitter_username"
+      type = "string"
+    }
+
+    columns {
+      name = "public_repos"
+      type = "int"
+    }
+
+    columns {
+      name = "public_gists"
+      type = "int"
+    }
+
+    columns {
+      name = "followers"
+      type = "int"
+    }
+
+    columns {
+      name = "following"
+      type = "int"
+    }
+
+    columns {
+      name = "created_at"
+      type = "string"
+    }
+
+    columns {
+      name = "updated_at"
       type = "string"
     }
   }

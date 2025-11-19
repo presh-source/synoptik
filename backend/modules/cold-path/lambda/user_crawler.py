@@ -1,6 +1,6 @@
 """
-GitHub Repository Crawler Lambda Function
-Crawls GitHub repositories using the /repositories
+GitHub User Crawler Lambda Function
+Crawls GitHub users using the /users
 endpoint and stores raw data in S3 as Parquet files
 Uses AWS Lambda Powertools for observability
 """
@@ -24,13 +24,14 @@ PROJECT_NAME = os.environ["PROJECT_NAME"]
 DYNAMODB_TABLE_NAME = os.environ["DYNAMODB_TABLE_NAME"]
 S3_BUCKET_NAME = os.environ["S3_BUCKET_NAME"]
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
-REQUESTS_PER_EXECUTION = int(os.environ.get("REQUESTS_PER_EXECUTION", "1000"))
-SLEEP_INTERVAL = float(os.environ.get("SLEEP_INTERVAL", "01"))
+REQUESTS_PER_EXECUTION = int(os.environ.get("REQUESTS_PER_EXECUTION", "700"))
+SLEEP_INTERVAL = float(os.environ.get("SLEEP_INTERVAL", "0.1"))
 
 # Initialize Powertools
-logger = Logger(service=f"{PROJECT_NAME}-crawler")
-tracer = Tracer(service=f"{PROJECT_NAME}-crawler")
-metrics = Metrics(namespace=f"{PROJECT_NAME.title()}/ColdPath", service="crawler")
+logger = Logger(service=f"{PROJECT_NAME}-user-crawler")
+tracer = Tracer(service=f"{PROJECT_NAME}-user-crawler")
+metrics = Metrics(namespace=f"{PROJECT_NAME.title()}/ColdPath", service="user-crawler")
+
 
 # AWS clients
 dynamodb = boto3.resource("dynamodb")
@@ -38,15 +39,17 @@ s3_client = boto3.client("s3")
 
 # GitHub API configuration
 GITHUB_API_BASE = "https://api.github.com"
-REPOSITORIES_ENDPOINT = f"{GITHUB_API_BASE}/repositories"
+USERS_ENDPOINT = f"{GITHUB_API_BASE}/users"
 
 
 @tracer.capture_method
 def get_last_processed_id() -> int:
-    """Read the last processed repository ID from DynamoDB"""
+    """Read the last processed user ID from DynamoDB"""
     try:
         table = dynamodb.Table(DYNAMODB_TABLE_NAME)
-        response = table.get_item(Key={"state_key": "bookmark"}, ConsistentRead=True)
+        response = table.get_item(
+            Key={"state_key": "user_bookmark"}, ConsistentRead=True
+        )
 
         if "Item" in response:
             last_id = int(response["Item"].get("last_processed_id", 0))
@@ -70,7 +73,7 @@ def update_bookmark(last_id: int, total_processed: int) -> None:
     try:
         table = dynamodb.Table(DYNAMODB_TABLE_NAME)
         table.update_item(
-            Key={"state_key": "bookmark"},
+            Key={"state_key": "user_bookmark"},
             UpdateExpression="SET last_processed_id = :lid, total_processed = :tp, updated_at = :ua",
             ExpressionAttributeValues={
                 ":lid": last_id,
@@ -90,7 +93,7 @@ def update_bookmark(last_id: int, total_processed: int) -> None:
 
 
 @tracer.capture_method
-def save_to_s3_parquet(repositories: List[Dict], start_id: int, end_id: int) -> None:
+def save_to_s3_parquet(users: List[Dict], start_id: int, end_id: int) -> None:
     """Save data to S3 as Parquet with partitioning"""
     now = datetime.now(timezone.utc)
     year = now.year
@@ -98,53 +101,51 @@ def save_to_s3_parquet(repositories: List[Dict], start_id: int, end_id: int) -> 
     day = f"{now.day:02d}"
 
     # Create S3 key with partitioning
-    s3_key = f"cold-path/year={year}/month={month}/day={day}/repos_{start_id:012d}_{end_id:012d}.parquet"
+    s3_key = f"cold-path/users/year={year}/month={month}/day={day}/users_{start_id:012d}_{end_id:012d}.parquet"
 
     try:
         # Flatten nested structures for Parquet
-        flattened_repos = []
-        for repo in repositories:
-            flat_repo = {
-                "id": repo.get("id"),
-                "node_id": repo.get("node_id"),
-                "name": repo.get("name"),
-                "full_name": repo.get("full_name"),
-                "private": repo.get("private"),
-                "owner_id": repo.get("owner", {}).get("id"),
-                "owner_login": repo.get("owner", {}).get("login"),
-                "owner_type": repo.get("owner", {}).get("type"),
-                "html_url": repo.get("html_url"),
-                "description": repo.get("description"),
-                "fork": repo.get("fork"),
-                "url": repo.get("url"),
-                "created_at": repo.get("created_at"),
-                "updated_at": repo.get("updated_at"),
-                "pushed_at": repo.get("pushed_at"),
-                "homepage": repo.get("homepage"),
-                "size": repo.get("size"),
-                "stargazers_count": repo.get("stargazers_count"),
-                "watchers_count": repo.get("watchers_count"),
-                "language": repo.get("language"),
-                "forks_count": repo.get("forks_count"),
-                "open_issues_count": repo.get("open_issues_count"),
-                "default_branch": repo.get("default_branch"),
-                "score": repo.get("score"),
-                "has_issues": repo.get("has_issues"),
-                "has_projects": repo.get("has_projects"),
-                "has_downloads": repo.get("has_downloads"),
-                "has_wiki": repo.get("has_wiki"),
-                "has_pages": repo.get("has_pages"),
-                "license_name": repo.get("license", {}).get("name")
-                if repo.get("license")
-                else None,
-                "license_key": repo.get("license", {}).get("key")
-                if repo.get("license")
-                else None,
+        flattened_users = []
+        for user in users:
+            flat_user = {
+                "id": user.get("id"),
+                "login": user.get("login"),
+                "node_id": user.get("node_id"),
+                "avatar_url": user.get("avatar_url"),
+                "gravatar_id": user.get("gravatar_id"),
+                "url": user.get("url"),
+                "html_url": user.get("html_url"),
+                "followers_url": user.get("followers_url"),
+                "following_url": user.get("following_url"),
+                "gists_url": user.get("gists_url"),
+                "starred_url": user.get("starred_url"),
+                "subscriptions_url": user.get("subscriptions_url"),
+                "organizations_url": user.get("organizations_url"),
+                "repos_url": user.get("repos_url"),
+                "events_url": user.get("events_url"),
+                "received_events_url": user.get("received_events_url"),
+                "type": user.get("type"),
+                "site_admin": user.get("site_admin"),
+                "user_view_type": user.get("user_view_type"),
+                "name": user.get("name"),
+                "company": user.get("company"),
+                "blog": user.get("blog"),
+                "location": user.get("location"),
+                "email": user.get("email"),
+                "hireable": user.get("hireable"),
+                "bio": user.get("bio"),
+                "twitter_username": user.get("twitter_username"),
+                "public_repos": user.get("public_repos"),
+                "public_gists": user.get("public_gists"),
+                "followers": user.get("followers"),
+                "following": user.get("following"),
+                "created_at": user.get("created_at"),
+                "updated_at": user.get("updated_at"),
             }
-            flattened_repos.append(flat_repo)
+            flattened_users.append(flat_user)
 
         # Convert to DataFrame
-        df = pd.DataFrame(flattened_repos)
+        df = pd.DataFrame(flattened_users)
 
         # Convert to Parquet in memory
         parquet_buffer = BytesIO()
@@ -165,23 +166,21 @@ def save_to_s3_parquet(repositories: List[Dict], start_id: int, end_id: int) -> 
             Metadata={
                 "start_id": str(start_id),
                 "end_id": str(end_id),
-                "count": str(len(repositories)),
+                "count": str(len(users)),
                 "format": "parquet",
                 "compression": "snappy",
             },
         )
 
         logger.info(
-            "Saved repositories to S3",
+            "Saved users to S3",
             extra={
-                "count": len(repositories),
+                "count": len(users),
                 "s3_key": s3_key,
                 "size_bytes": len(parquet_buffer.getvalue()),
             },
         )
-        metrics.add_metric(
-            name="RepositoriesSaved", unit=MetricUnit.Count, value=len(repositories)
-        )
+        metrics.add_metric(name="UsersSaved", unit=MetricUnit.Count, value=len(users))
         metrics.add_metric(
             name="ParquetFileSize",
             unit=MetricUnit.Bytes,
@@ -195,12 +194,12 @@ def save_to_s3_parquet(repositories: List[Dict], start_id: int, end_id: int) -> 
 
 
 @tracer.capture_method
-def fetch_repositories(
+def fetch_users(
     since_id: int, github_token: str, retry_count: int = 0, max_retries: int = 3
 ) -> Optional[List[Dict]]:
     """
-    Fetch repositories from GitHub API with exponential backoff retry
-    Returns list of repositories or None on error
+    Fetch users from GitHub API with exponential backoff retry
+    Returns list of users or None on error
     """
     headers = {
         "Authorization": f"token {github_token}",
@@ -208,7 +207,7 @@ def fetch_repositories(
         "User-Agent": f"{PROJECT_NAME}-Crawler",
     }
 
-    url = f"{REPOSITORIES_ENDPOINT}?since={since_id}&per_page=100"
+    url = f"{USERS_ENDPOINT}?since={since_id}&per_page=100"
 
     try:
         response = requests.get(url, headers=headers, timeout=30)
@@ -248,9 +247,7 @@ def fetch_repositories(
                     extra={"backoff_seconds": backoff_time, "attempt": retry_count + 1},
                 )
                 time.sleep(backoff_time)
-                return fetch_repositories(
-                    since_id, github_token, retry_count + 1, max_retries
-                )
+                return fetch_users(since_id, github_token, retry_count + 1, max_retries)
             return None
         elif response.status_code >= 500:
             logger.warning(
@@ -265,9 +262,7 @@ def fetch_repositories(
                     extra={"backoff_seconds": backoff_time, "attempt": retry_count + 1},
                 )
                 time.sleep(backoff_time)
-                return fetch_repositories(
-                    since_id, github_token, retry_count + 1, max_retries
-                )
+                return fetch_users(since_id, github_token, retry_count + 1, max_retries)
             return None
         else:
             logger.error(
@@ -291,9 +286,7 @@ def fetch_repositories(
                 extra={"backoff_seconds": backoff_time, "attempt": retry_count + 1},
             )
             time.sleep(backoff_time)
-            return fetch_repositories(
-                since_id, github_token, retry_count + 1, max_retries
-            )
+            return fetch_users(since_id, github_token, retry_count + 1, max_retries)
         return None
     except requests.exceptions.RequestException as e:
         logger.error("Request failed", extra={"error": str(e)})
@@ -306,23 +299,21 @@ def fetch_repositories(
                 extra={"backoff_seconds": backoff_time, "attempt": retry_count + 1},
             )
             time.sleep(backoff_time)
-            return fetch_repositories(
-                since_id, github_token, retry_count + 1, max_retries
-            )
+            return fetch_users(since_id, github_token, retry_count + 1, max_retries)
         return None
 
 
 @tracer.capture_method
-def crawl_repositories(
+def crawl_users(
     start_id: int, num_requests: int, github_token: str, context
 ) -> tuple[int, int]:
     """
     Execute the crawl loop with pacing
-    Returns (last_processed_id, total_repos_fetched)
+    Returns (last_processed_id, total_users_fetched)
     """
     current_id = start_id
-    total_repos = 0
-    batch_repos = []
+    total_users = 0
+    batch_users = []
     batch_start_id = start_id
 
     for i in range(num_requests):
@@ -338,55 +329,53 @@ def crawl_repositories(
             )
             break
 
-        # Fetch repositories
-        repos = fetch_repositories(current_id, github_token)
+        # Fetch users
+        users = fetch_users(current_id, github_token)
 
-        if repos is None:
-            logger.warning(
-                "Failed to fetch repositories", extra={"current_id": current_id}
-            )
+        if users is None:
+            logger.warning("Failed to fetch users", extra={"current_id": current_id})
             time.sleep(SLEEP_INTERVAL)
             continue
 
-        if len(repos) == 0:
-            logger.info("No more repositories returned, reached end of dataset")
+        if len(users) == 0:
+            logger.info("No more users returned, reached end of dataset")
             metrics.add_metric(name="DatasetEndReached", unit=MetricUnit.Count, value=1)
             break
 
         # Add to batch
-        batch_repos.extend(repos)
-        total_repos += len(repos)
+        batch_users.extend(users)
+        total_users += len(users)
 
-        # Update current_id to the last repo ID in this batch
-        last_repo_id = repos[-1]["id"]
-        current_id = last_repo_id
+        # Update current_id to the last user ID in this batch
+        last_user_id = users[-1]["id"]
+        current_id = last_user_id
 
         logger.debug(
             "Fetched batch",
             extra={
                 "request_number": i + 1,
-                "repos_count": len(repos),
-                "last_id": last_repo_id,
+                "users_count": len(users),
+                "last_id": last_user_id,
             },
         )
 
-        # Save batch to S3 every 10 requests (approximately 1000 repos)
-        if (i + 1) % 10 == 0 and batch_repos:
-            save_to_s3_parquet(batch_repos, batch_start_id, current_id)
-            batch_repos = []
+        # Save batch to S3 every 10 requests (approximately 1000 users)
+        if (i + 1) % 10 == 0 and batch_users:
+            save_to_s3_parquet(batch_users, batch_start_id, current_id)
+            batch_users = []
             batch_start_id = current_id + 1
 
         # Pace requests
         time.sleep(SLEEP_INTERVAL)
 
-    # Save any remaining repos in the batch
-    if batch_repos:
-        save_to_s3_parquet(batch_repos, batch_start_id, current_id)
+    # Save any remaining users in the batch
+    if batch_users:
+        save_to_s3_parquet(batch_users, batch_start_id, current_id)
 
     metrics.add_metric(
-        name="TotalRepositoriesFetched", unit=MetricUnit.Count, value=total_repos
+        name="TotalUsersFetched", unit=MetricUnit.Count, value=total_users
     )
-    return current_id, total_repos
+    return current_id, total_users
 
 
 @logger.inject_lambda_context(log_event=True)
@@ -397,7 +386,7 @@ def lambda_handler(event, context):
     Main Lambda handler
     """
     logger.info(
-        "Starting GitHub repository crawler",
+        "Starting GitHub user crawler",
         extra={
             "requests_per_execution": REQUESTS_PER_EXECUTION,
             "sleep_interval": SLEEP_INTERVAL,
@@ -413,7 +402,7 @@ def lambda_handler(event, context):
         start_id = get_last_processed_id()
 
         # Execute crawl
-        last_id, total_fetched = crawl_repositories(
+        last_id, total_fetched = crawl_users(
             start_id, REQUESTS_PER_EXECUTION, GITHUB_TOKEN, context
         )
 
@@ -421,7 +410,7 @@ def lambda_handler(event, context):
         if last_id > start_id:
             # Get current total from DynamoDB
             table = dynamodb.Table(DYNAMODB_TABLE_NAME)
-            response = table.get_item(Key={"state_key": "bookmark"})
+            response = table.get_item(Key={"state_key": "user_bookmark"})
             current_total = int(response.get("Item", {}).get("total_processed", 0))
             new_total = current_total + total_fetched
 
@@ -432,7 +421,7 @@ def lambda_handler(event, context):
                 extra={
                     "start_id": start_id,
                     "end_id": last_id,
-                    "repositories_fetched": total_fetched,
+                    "users_fetched": total_fetched,
                     "total_processed": new_total,
                 },
             )
@@ -443,7 +432,7 @@ def lambda_handler(event, context):
                     "message": "Crawl completed successfully",
                     "start_id": start_id,
                     "end_id": last_id,
-                    "repositories_fetched": total_fetched,
+                    "users_fetched": total_fetched,
                     "total_processed": new_total,
                 },
             }

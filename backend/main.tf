@@ -23,14 +23,28 @@ terraform {
   }
 
   # Backend configuration for AWS
-  # For LocalStack: use `terraform init -backend=false`
   # For AWS: use `terraform init -backend-config=environments/{env}/backend.tfvars`
   backend "s3" {}
 }
 
-# Provider configuration is in localstack-provider.tf
+# ============================================================================
+# Providers
+# ============================================================================
 
+# Default provider (uses region from variables or AWS config)
+provider "aws" {
+  region = var.aws_region
+}
+
+# Provider for us-east-1 (required for CloudFront ACM certificates)
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}
+
+# ============================================================================
 # Data sources
+# ============================================================================
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
@@ -55,11 +69,10 @@ module "iam" {
 
 # Data Lake (S3)
 module "data_lake" {
-  source         = "./modules/data-lake"
-  project_name   = var.project_name
-  environment    = var.environment
-  use_localstack = local.use_localstack
-  tags           = local.merged_tags
+  source       = "./modules/data-lake"
+  project_name = var.project_name
+  environment  = var.environment
+  tags         = local.merged_tags
 }
 
 # ============================================================================
@@ -75,55 +88,14 @@ module "cold_path" {
   data_lake_bucket_name  = module.data_lake.bucket_name
   tags                   = local.merged_tags
   lambda_timeout         = 900
-  lambda_memory          = 256
-  requests_per_execution = 1000
+  lambda_memory          = 1024
+  requests_per_execution = 700
   sleep_interval         = 1
 
   depends_on = [module.data_lake]
 }
 
-# Hot Path Pipeline
-module "hot_path" {
-  source       = "./modules/hot-path"
-  project_name = var.project_name
-  environment  = var.environment
-  tags         = local.merged_tags
-}
 
-# Scrubber Path Pipeline
-# module "scrubber_path" {
-#   source = "./modules/scrubber-path"
-#   project_name          = var.project_name
-#   environment           = var.environment
-#   github_token          = var.github_token
-#   data_lake_bucket_name = module.data_lake.bucket_name
-#
-#   depends_on = []
-# }
-
-# ============================================================================
-# Infrastructure Modules (Uncomment as implemented)
-# ============================================================================
-
-# Networking (VPC, Subnets, Security Groups)
-# module "networking" {
-#   source = "./modules/networking"
-#   project_name          = var.project_name
-#   environment = var.environment
-#   vpc_cidr    = var.vpc_cidr
-# }
-
-# Data Stores (OpenSearch, Neptune, Athena)
-# module "data_stores" {
-#   source = "./modules/data-stores"
-#   project_name          = var.project_name
-#   environment           = var.environment
-#   data_lake_bucket_name = module.data_lake.bucket_name
-#   vpc_id                = module.networking.vpc_id
-#   private_subnet_ids    = module.networking.private_subnet_ids
-#
-#   depends_on = [module.networking]
-# }
 
 # ============================================================================
 # Dashboard Module
@@ -131,15 +103,17 @@ module "hot_path" {
 
 # Dashboard (API Gateway, Lambda, Frontend)
 module "dashboard" {
-  source                          = "./modules/dashboard"
+  source = "./modules/dashboard"
+
+  providers = {
+    aws.us_east_1 = aws.us_east_1
+  }
+
   project_name                    = var.project_name
   environment                     = var.environment
-  use_localstack                  = local.use_localstack
-  opensearch_endpoint             = "http://localhost:4566" # Mock
-  neptune_endpoint                = "localhost:8182"        # Mock
   cold_path_dynamodb_table        = module.cold_path.dynamodb_table_name
-  kinesis_stream_name             = module.hot_path.kinesis_stream_name
-  scrubber_queue_url              = "http://localhost:4566/000000000000/scrubber-queue" # Mock
+  opensearch_endpoint             = "http://localhost:4566"
+  neptune_endpoint                = "localhost:8182"
   sentry_dsn_backend              = var.sentry_dsn_backend
   app_version                     = var.app_version
   domain_name                     = var.domain_name
@@ -150,22 +124,3 @@ module "dashboard" {
 
   depends_on = [module.cold_path]
 }
-
-# ============================================================================
-# Monitoring Module (Uncomment as implemented)
-# ============================================================================
-
-# Monitoring and Alerting
-# module "monitoring" {
-#   source = "./modules/monitoring"
-#   project_name          = var.project_name
-#   environment            = var.environment
-#   cold_path_lambda_name  = module.cold_path.crawler_lambda_name
-#   hot_path_lambda_names  = module.hot_path.lambda_names
-#   scrubber_lambda_name   = module.scrubber_path.pinger_lambda_name
-#   kinesis_stream_name    = module.hot_path.kinesis_stream_name
-#   opensearch_domain_name = module.data_stores.opensearch_domain_name
-#   neptune_cluster_id     = module.data_stores.neptune_cluster_id
-#
-#   depends_on = [module.cold_path, module.hot_path, module.scrubber_path, module.data_stores]
-# }

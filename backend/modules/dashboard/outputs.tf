@@ -1,15 +1,22 @@
 # Dashboard Module Outputs
 
+# API Gateway outputs (from api-gateway module)
 output "api_gateway_id" {
   description = "ID of the API Gateway REST API"
-  value       = aws_api_gateway_rest_api.dashboard.id
+  value       = module.dashboard_api.rest_api_id
 }
 
 output "api_gateway_url" {
   description = "URL of the API Gateway"
-  value       = aws_api_gateway_stage.dashboard.invoke_url
+  value       = module.dashboard_api.invoke_url
 }
 
+output "api_url" {
+  description = "Full URL of the API (custom domain or invoke URL)"
+  value       = module.dashboard_api.api_url
+}
+
+# Lambda outputs
 output "pipeline_status_lambda_arn" {
   description = "ARN of the pipeline status Lambda function"
   value       = aws_lambda_function.pipeline_status.arn
@@ -38,24 +45,20 @@ output "dashboard_bucket_arn" {
 
 output "cloudfront_distribution_id" {
   description = "ID of the CloudFront distribution"
-  value       = var.use_localstack ? null : aws_cloudfront_distribution.dashboard[0].id
+  value       = aws_cloudfront_distribution.dashboard.id
 }
 
 output "cloudfront_domain_name" {
   description = "Domain name of the CloudFront distribution"
-  value       = var.use_localstack ? null : aws_cloudfront_distribution.dashboard[0].domain_name
+  value       = aws_cloudfront_distribution.dashboard.domain_name
 }
 
 output "dashboard_url" {
   description = "URL of the dashboard"
-  value       = var.use_localstack ? null : (var.domain_name != "" ? "https://${var.domain_name}" : "https://${aws_cloudfront_distribution.dashboard[0].domain_name}")
+  value       = var.domain_name != "" ? "https://${var.domain_name}" : "https://${aws_cloudfront_distribution.dashboard.domain_name}"
 }
 
-output "api_url" {
-  description = "URL of the API"
-  value       = var.api_domain_name != "" ? "https://${var.api_domain_name}" : aws_api_gateway_stage.dashboard.invoke_url
-}
-
+# Domain and certificate outputs
 output "domain_name" {
   description = "Custom domain name for the frontend"
   value       = var.domain_name != "" ? var.domain_name : null
@@ -68,5 +71,5 @@ output "api_domain_name" {
 
 output "acm_certificate_arn" {
   description = "ARN of the ACM certificate"
-  value       = var.acm_certificate_arn != "" ? var.acm_certificate_arn : ((var.domain_name != "" || var.api_domain_name != "") ? aws_acm_certificate.dashboard[0].arn : null)
+  value       = var.acm_certificate_arn != "" ? var.acm_certificate_arn : (length(module.frontend_certificate) > 0 ? module.frontend_certificate[0].certificate_arn : null)
 }
