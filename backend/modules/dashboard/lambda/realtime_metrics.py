@@ -5,7 +5,8 @@ Returns trending repositories, language distribution, and creation trends
 
 import json
 from datetime import datetime, timedelta
-from utils.sentry_config import init_sentry, capture_lambda_error, add_breadcrumb
+
+from utils.sentry_config import add_breadcrumb, capture_lambda_error, init_sentry
 
 # Initialize Sentry
 init_sentry()
@@ -109,7 +110,7 @@ def get_realtime_metrics(filters):
     # Mock data for now - replace with actual OpenSearch queries
     # In production, this would query OpenSearch for real data
 
-    metrics = {
+    return {
         "trendingRepositories": [
             {
                 "id": 1,
@@ -150,8 +151,6 @@ def get_realtime_metrics(filters):
         "creationTrends": generate_creation_trends(),
     }
 
-    return metrics
-
 
 def generate_creation_trends():
     """
@@ -161,7 +160,7 @@ def generate_creation_trends():
         list: Daily creation counts
     """
     trends = []
-    base_date = datetime.utcnow() - timedelta(days=30)
+    base_date = datetime.now(datetime.UTC) - timedelta(days=30)
 
     for i in range(30):
         date = base_date + timedelta(days=i)

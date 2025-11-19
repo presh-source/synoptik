@@ -6,11 +6,12 @@ Returns status of Cold Path, Hot Path, and Scrubber Path pipelines
 import json
 import os
 from datetime import datetime, timedelta
+
 import boto3
 from utils.sentry_config import (
-    init_sentry,
-    capture_lambda_error,
     add_breadcrumb,
+    capture_lambda_error,
+    init_sentry,
 )
 
 # Initialize Sentry
@@ -40,7 +41,7 @@ def get_crawler_metrics_from_cloudwatch(crawler_type: str, time_period_hours: in
     try:
         namespace = f"{PROJECT_NAME.title()}/ColdPath"
         dimensions = [{"Name": "CrawlerType", "Value": crawler_type}]
-        end_time = datetime.utcnow()
+        end_time = datetime.now(datetime.UTC)
         start_time = end_time - timedelta(hours=time_period_hours)
         period = time_period_hours * 3600
 
@@ -135,13 +136,15 @@ def get_cold_path_status():
             base_status = {
                 "lastProcessedId": 0,
                 "totalProcessed": 0,
-                "updatedAt": datetime.utcnow().isoformat(),
+                "updatedAt": datetime.now(datetime.UTC).isoformat(),
             }
         else:
             base_status = {
                 "lastProcessedId": int(item.get("last_processed_id", 0)),
                 "totalProcessed": int(item.get("total_processed", 0)),
-                "updatedAt": item.get("updated_at", datetime.utcnow().isoformat()),
+                "updatedAt": item.get(
+                    "updated_at", datetime.now(datetime.UTC).isoformat()
+                ),
             }
 
         # Add crawler-specific metrics
@@ -180,12 +183,10 @@ def get_pipeline_status():
         message="Fetching Cold Path pipeline status", category="lambda", level="info"
     )
 
-    status = {
+    return {
         "coldPath": get_cold_path_status(),
         "errorRates": get_error_rates(),
     }
-
-    return status
 
 
 def lambda_handler(event, context):

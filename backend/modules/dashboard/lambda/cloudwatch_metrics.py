@@ -6,12 +6,13 @@ Fetches CloudWatch metrics for all pipelines
 import json
 import os
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
+from typing import Any
+
 import boto3
-from botocore.exceptions import ClientError
 
 # AWS Lambda Powertools
-from aws_lambda_powertools import Logger, Tracer, Metrics
+from aws_lambda_powertools import Logger, Metrics, Tracer
+from botocore.exceptions import ClientError
 
 # Environment variables
 PROJECT_NAME = os.environ["PROJECT_NAME"]
@@ -37,15 +38,15 @@ LAMBDA_FUNCTIONS = {
 def get_metric_statistics(
     namespace: str,
     metric_name: str,
-    dimensions: List[Dict[str, str]],
+    dimensions: list[dict[str, str]],
     period: int = 3600,
     statistic: str = "Average",
-) -> Optional[float]:
+) -> float | None:
     """
     Helper function to get CloudWatch metric statistics
     """
     try:
-        end_time = datetime.utcnow()
+        end_time = datetime.now(datetime.UTC)
         start_time = end_time - timedelta(hours=1)
 
         response = cloudwatch.get_metric_statistics(
@@ -102,7 +103,7 @@ def calculate_error_rate(function_name: str) -> float:
         return 0.0
 
 
-def get_lambda_metrics(function_name: str) -> Dict[str, Any]:
+def get_lambda_metrics(function_name: str) -> dict[str, Any]:
     """
     Get comprehensive metrics for a Lambda function
     """
@@ -171,7 +172,7 @@ def get_lambda_metrics(function_name: str) -> Dict[str, Any]:
         }
 
 
-def get_crawler_metrics(crawler_type: str, time_period: int = 3600) -> Dict[str, Any]:
+def get_crawler_metrics(crawler_type: str, time_period: int = 3600) -> dict[str, Any]:
     """
     Get metrics for a specific crawler type (repo or user)
 
@@ -252,7 +253,7 @@ def get_crawler_metrics(crawler_type: str, time_period: int = 3600) -> Dict[str,
         }
 
 
-def get_cold_path_metrics() -> Dict[str, Any]:
+def get_cold_path_metrics() -> dict[str, Any]:
     """
     Get CloudWatch metrics for Cold Path pipeline including crawler-specific metrics
     """
@@ -325,7 +326,7 @@ def get_cold_path_metrics() -> Dict[str, Any]:
         }
 
 
-def get_overall_system_metrics() -> Dict[str, Any]:
+def get_overall_system_metrics() -> dict[str, Any]:
     """
     Get overall system-wide metrics
     """
@@ -376,7 +377,7 @@ def get_overall_system_metrics() -> Dict[str, Any]:
 @logger.inject_lambda_context(log_event=True)
 @tracer.capture_lambda_handler
 @metrics.log_metrics(capture_cold_start_metric=True)
-def lambda_handler(event, context):
+def lambda_handler(_event, _context):
     """
     API Gateway handler for /api/metrics/cloudwatch endpoint
     Returns CloudWatch metrics for all pipelines
@@ -389,7 +390,7 @@ def lambda_handler(event, context):
         response = {
             "cold_path": cold_path,
             "overall": overall,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(datetime.UTC).isoformat(),
             "period": "last_1_hour",
         }
 
