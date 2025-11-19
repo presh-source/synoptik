@@ -121,6 +121,4 @@ module "dashboard" {
   acm_certificate_arn             = var.acm_certificate_arn
   api_gateway_cloudwatch_role_arn = module.iam.api_gateway_cloudwatch_role_arn
   tags                            = local.merged_tags
-
-  depends_on = [module.cold_path]
 }
