@@ -153,6 +153,13 @@ data "archive_file" "repo_crawler_lambda" {
   excludes    = ["requirements.txt", "__pycache__", "*.pyc", "user_crawler.py"]
 }
 
+data "archive_file" "user_crawler_lambda" {
+  type        = "zip"
+  source_dir  = "${path.module}/lambda"
+  output_path = "${path.module}/user_lambda_package.zip"
+  excludes    = ["requirements.txt", "__pycache__", "*.pyc", "repo_crawler.py"]
+}
+
 # Lambda function
 resource "aws_lambda_function" "repo_crawler" {
   filename         = data.archive_file.repo_crawler_lambda.output_path
@@ -405,11 +412,11 @@ resource "aws_iam_role_policy" "user_crawler_lambda_policy" {
 
 # Lambda function
 resource "aws_lambda_function" "user_crawler" {
-  filename         = data.archive_file.repo_crawler_lambda.output_path
+  filename         = data.archive_file.user_crawler_lambda.output_path
   function_name    = "${var.environment}-${var.project_name}-user-crawler"
   role             = aws_iam_role.user_crawler_lambda.arn
   handler          = "user_crawler.lambda_handler"
-  source_code_hash = data.archive_file.repo_crawler_lambda.output_base64sha256
+  source_code_hash = data.archive_file.user_crawler_lambda.output_base64sha256
   runtime          = "python3.11"
   timeout          = var.lambda_timeout
   memory_size      = var.lambda_memory
