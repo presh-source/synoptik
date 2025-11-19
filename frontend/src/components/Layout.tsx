@@ -15,7 +15,6 @@ import {
 import {
   Menu as MenuIcon,
   Dashboard as DashboardIcon,
-  TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material'
 import { useNavigate, useLocation } from 'react-router-dom'
 
