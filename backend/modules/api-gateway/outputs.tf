@@ -73,7 +73,7 @@ output "log_group_arn" {
 output "resources" {
   description = "Map of created API Gateway resources"
   value = {
-    for k, v in aws_api_gateway_resource.resources : k => {
+    for k, v in local.all_resources : k => {
       id   = v.id
       path = v.path
     }
