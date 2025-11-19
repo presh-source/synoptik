@@ -72,7 +72,7 @@ module "dashboard_api" {
       lambda_invoke_arn    = aws_lambda_function.pipeline_status.invoke_arn
       lambda_function_name = aws_lambda_function.pipeline_status.function_name
     }
-    
+
     "metrics-cloudwatch-get" = {
       resource_path        = "metrics-cloudwatch"
       lambda_invoke_arn    = aws_lambda_function.cloudwatch_metrics.invoke_arn
