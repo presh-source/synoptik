@@ -16,9 +16,9 @@ data "aws_route53_zone" "main" {
 # ============================================================================
 
 resource "aws_acm_certificate" "cert" {
-  count       = var.domain_name != "" && var.create_certificate ? 1 : 0
-  provider    = aws.us_east_1 # CloudFront requires certificates in us-east-1
-  domain_name = var.domain_name
+  count                     = var.domain_name != "" && var.create_certificate ? 1 : 0
+  provider                  = aws.us_east_1 # CloudFront requires certificates in us-east-1
+  domain_name               = var.domain_name
   subject_alternative_names = var.subject_alternative_names
 
   validation_method = var.validation_method

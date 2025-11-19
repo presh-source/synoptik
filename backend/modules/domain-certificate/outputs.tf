@@ -35,7 +35,7 @@ output "dns_record_fqdn" {
   value = var.domain_name != "" && var.create_dns_records ? (
     var.use_cname ? (
       length(aws_route53_record.cname) > 0 ? aws_route53_record.cname[0].fqdn : null
-    ) : (
+      ) : (
       length(aws_route53_record.a) > 0 ? aws_route53_record.a[0].fqdn : null
     )
   ) : null
