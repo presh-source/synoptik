@@ -1,5 +1,5 @@
 import { Card, CardContent, Typography, Box, Alert, AlertTitle } from '@mui/material'
-import { Error as ErrorIcon, CheckCircle as CheckIcon } from '@mui/icons-material'
+import { Error as ErrorIcon, CheckCircle as CheckIcon, Warning as WarningIcon } from '@mui/icons-material'
 
 interface ErrorRateIndicatorProps {
   errorRates: {
@@ -8,41 +8,61 @@ interface ErrorRateIndicatorProps {
 }
 
 export default function ErrorRateIndicator({ errorRates }: ErrorRateIndicatorProps) {
-  const hasErrors = errorRates.coldPath > 5
-  const hasWarnings = errorRates.coldPath > 1 && errorRates.coldPath <= 5
+  const errorRate = errorRates.coldPath
+  
+  // Requirements 5.3, 5.4, 5.5: Thresholds for indicators
+  const isError = errorRate > 10  // > 10% = error (red)
+  const isWarning = errorRate >= 5 && errorRate <= 10  // 5-10% = warning (yellow)
+  // < 5% = success (green) - handled in else branch
 
   const getSeverity = () => {
-    if (hasErrors) return 'error'
-    if (hasWarnings) return 'warning'
+    if (isError) return 'error'
+    if (isWarning) return 'warning'
     return 'success'
   }
 
   const getTitle = () => {
-    if (hasErrors) return 'High Error Rate Detected'
-    if (hasWarnings) return 'Elevated Error Rate'
+    if (isError) return 'High Error Rate Detected'
+    if (isWarning) return 'Elevated Error Rate'
     return 'System Operational'
   }
 
   const getIcon = () => {
-    if (hasErrors || hasWarnings) return <ErrorIcon />
+    if (isError) return <ErrorIcon />
+    if (isWarning) return <WarningIcon />
     return <CheckIcon />
   }
 
   return (
     <Card>
-      <CardContent>
-        <Alert severity={getSeverity()} icon={getIcon()}>
-          <AlertTitle>{getTitle()}</AlertTitle>
+      <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+        <Alert 
+          severity={getSeverity()} 
+          icon={getIcon()}
+          sx={{
+            '& .MuiAlert-message': {
+              width: '100%'
+            }
+          }}
+        >
+          <AlertTitle sx={{ fontSize: { xs: '0.95rem', sm: '1rem' } }}>
+            {getTitle()}
+          </AlertTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
             <Box>
-              <Typography variant="body2" fontWeight="bold">
+              <Typography 
+                variant="body2" 
+                fontWeight="bold"
+                sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}
+              >
                 Cold Path Error Rate
               </Typography>
               <Typography
                 variant="h6"
-                color={errorRates.coldPath > 5 ? 'error.main' : 'text.primary'}
+                color={isError ? 'error.main' : 'text.primary'}
+                sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}
               >
-                {errorRates.coldPath.toFixed(2)}%
+                {errorRate.toFixed(1)}%
               </Typography>
             </Box>
           </Box>

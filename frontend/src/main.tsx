@@ -4,6 +4,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { CssBaseline, ThemeProvider } from '@mui/material'
 import App from './App'
 import theme from './theme'
+import { initSentry } from './config/sentry'
+
+// Initialize Sentry for error tracking in production
+initSentry()
 
 const queryClient = new QueryClient({
   defaultOptions: {

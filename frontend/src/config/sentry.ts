@@ -46,8 +46,7 @@ export const initSentry = () => {
       ],
       
       // Filter events before sending
-      // @ts-ignore
-      beforeSend(event, hint) {
+      beforeSend(event) {
         // Don't send events in development
         if (import.meta.env.DEV) {
           console.log('Sentry event (dev mode):', event);
@@ -79,7 +78,7 @@ export const captureException = (
   context?: {
     component?: string;
     action?: string;
-    extra?: Record<string, any>;
+    extra?: Record<string, unknown>;
   }
 ) => {
   Sentry.captureException(error, {
@@ -96,7 +95,7 @@ export const addBreadcrumb = (
   message: string,
   category: string = 'user-action',
   level: Sentry.SeverityLevel = 'info',
-  data?: Record<string, any>
+  data?: Record<string, unknown>
 ) => {
   Sentry.addBreadcrumb({
     message,
