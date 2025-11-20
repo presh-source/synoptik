@@ -119,8 +119,7 @@ jobs:
           terraform init \
             -backend-config=environments/${{ env.DEPLOY_ENV }}/backend.tfvars \
             -lock=false \
-            -reconfigure \
-            -reset-on-delete
+            -reconfigure
 
       - name: Terraform Validate
         working-directory: backend
