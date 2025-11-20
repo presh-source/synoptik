@@ -102,7 +102,7 @@ jobs:
         id: targets
         working-directory: backend
         run: |
-          terraform init 
+          terraform init \
           -backend-config=environments/${{ env.DEPLOY_ENV }}/backend.tfvars \
           -lock=false
           
