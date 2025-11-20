@@ -30,10 +30,7 @@ SLEEP_INTERVAL = float(os.environ.get("SLEEP_INTERVAL", "0.1"))
 # Initialize Powertools
 logger = Logger(service=f"{PROJECT_NAME}-user-crawler")
 tracer = Tracer(service=f"{PROJECT_NAME}-user-crawler")
-metrics = Metrics(
-    namespace=f"{PROJECT_NAME.title()}/ColdPath",
-    service="user-crawler"
-)
+metrics = Metrics(namespace=f"{PROJECT_NAME.title()}/ColdPath", service="user-crawler")
 metrics.add_dimension(name="CrawlerType", value="user")
 
 
