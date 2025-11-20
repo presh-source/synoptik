@@ -89,7 +89,7 @@ module "dashboard_api" {
   enable_xray_tracing = false
   log_retention_days  = 30
   stage_name          = "v1"
-  endpoint_type       = "REGIONAL"
+  endpoint_type       = "EDGE"
 
   tags = var.tags
 
