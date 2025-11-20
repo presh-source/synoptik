@@ -130,11 +130,25 @@ resource "aws_lambda_layer_version" "dashboard_dependencies" {
   description = "Shared dependencies for dashboard Lambda functions"
 }
 
+# Install dependencies before archiving
+resource "null_resource" "install_dashboard_dependencies" {
+  triggers = {
+    requirements = filesha256("${path.module}/lambda_deps_build/requirements.txt")
+  }
+
+  provisioner "local-exec" {
+    command = "bash ${path.module}/lambda_deps_build/install_deps.sh ${path.module}/lambda_deps_build"
+  }
+}
+
 # Archive Lambda layer dependencies
 data "archive_file" "lambda_layer" {
   type        = "zip"
   source_dir  = "${path.module}/lambda_deps_build"
   output_path = "${path.module}/.terraform/lambda_layer.zip"
+  excludes    = ["requirements.txt", "install_deps.sh", ".gitkeep"]
+
+  depends_on = [null_resource.install_dashboard_dependencies]
 }
 
 # ============================================================================

@@ -16,7 +16,7 @@ fi
 cd "$MODULE_PATH"
 
 # Define paths relative to the module directory
-REQUIREMENTS_FILE="python/requirements.txt"
+REQUIREMENTS_FILE="requirements.txt"
 TARGET_DIR="python"
 
 # Clean and create the target directory
