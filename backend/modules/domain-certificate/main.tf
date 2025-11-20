@@ -74,7 +74,7 @@ resource "aws_acm_certificate_validation" "cert" {
 
 # A record (IPv4)
 resource "aws_route53_record" "a" {
-  count   = var.domain_name != "" && var.create_dns_records && var.target_domain_name != "" ? 1 : 0
+  count   = var.domain_name != "" && var.create_dns_records ? 1 : 0
   zone_id = data.aws_route53_zone.main[0].zone_id
   name    = var.domain_name
   type    = "A"
@@ -88,7 +88,7 @@ resource "aws_route53_record" "a" {
 
 # AAAA record (IPv6)
 resource "aws_route53_record" "aaaa" {
-  count   = var.domain_name != "" && var.create_dns_records && var.enable_ipv6 && var.target_domain_name != "" ? 1 : 0
+  count   = var.domain_name != "" && var.create_dns_records && var.enable_ipv6 ? 1 : 0
   zone_id = data.aws_route53_zone.main[0].zone_id
   name    = var.domain_name
   type    = "AAAA"
@@ -102,7 +102,7 @@ resource "aws_route53_record" "aaaa" {
 
 # CNAME record (alternative to alias)
 resource "aws_route53_record" "cname" {
-  count   = var.domain_name != "" && var.create_dns_records && var.use_cname && var.target_domain_name != "" ? 1 : 0
+  count   = var.domain_name != "" && var.create_dns_records && var.use_cname ? 1 : 0
   zone_id = data.aws_route53_zone.main[0].zone_id
   name    = var.domain_name
   type    = "CNAME"
