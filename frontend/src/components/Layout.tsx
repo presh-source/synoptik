@@ -83,7 +83,7 @@ export default function Layout({ children }: LayoutProps) {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap>
-            ${import.meta.env.VITE_PROJECT_NAME} Dashboard
+            {import.meta.env.VITE_PROJECT_NAME?.charAt(0).toUpperCase() + import.meta.env.VITE_PROJECT_NAME?.slice(1)} Dashboard
           </Typography>
         </Toolbar>
       </AppBar>

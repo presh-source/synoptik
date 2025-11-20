@@ -125,40 +125,6 @@ jobs:
         working-directory: backend
         run: terraform validate
 
-      - name: Cleanup Old API Gateway Domain
-        continue-on-error: true
-        run: |
-          echo "=== Checking for existing API Gateway custom domains ==="
-          aws apigateway get-domain-names --region ${{ secrets.AWS_REGION }} || echo "Failed to list domains"
-          
-          echo ""
-          echo "=== Attempting to delete api.${{ env.DEPLOY_ENV }}.synoptik.dev ==="
-          if aws apigateway get-domain-name --domain-name api.${{ env.DEPLOY_ENV }}.synoptik.dev --region ${{ secrets.AWS_REGION }} 2>/dev/null; then
-            echo "Domain exists, deleting..."
-            aws apigateway delete-domain-name \
-              --domain-name api.${{ env.DEPLOY_ENV }}.synoptik.dev \
-              --region ${{ secrets.AWS_REGION }} && echo "✅ Domain deleted successfully" || echo "❌ Failed to delete domain"
-          else
-            echo "✅ Domain does not exist (this is good)"
-          fi
-          
-          echo ""
-          echo "=== Cleaning up Lambda permissions ==="
-          for func in pipeline-status cloudwatch-metrics; do
-            FUNCTION_NAME="${{ env.DEPLOY_ENV }}-${{ env.PROJECT_NAME }}-${func}"
-            STATEMENT_ID="AllowAPIGatewayInvoke-${func//-/_}-get"
-            echo "Checking $FUNCTION_NAME permission $STATEMENT_ID..."
-            aws lambda remove-permission \
-              --function-name "$FUNCTION_NAME" \
-              --statement-id "$STATEMENT_ID" \
-              --region ${{ secrets.AWS_REGION }} 2>/dev/null && echo "✅ Removed" || echo "⚠️  Not found"
-          done
-          
-          echo ""
-          echo "=== Waiting 10 seconds for AWS propagation ==="
-          sleep 10
-          echo "✅ Cleanup complete"
-
       - name: Terraform Plan
         working-directory: backend
         run: |
