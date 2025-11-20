@@ -893,7 +893,7 @@ def lambda_handler(event, context):
         "Lambda invocation started",
         extra={
             "operation": "lambda_handler",
-            "request_id": context.request_id if context else "unknown",
+            "request_id": context.aws_request_id if context else "unknown",
             "function_name": context.function_name if context else "unknown",
             "http_method": event.get("httpMethod", "unknown"),
             "path": event.get("path", "unknown"),
@@ -914,7 +914,7 @@ def lambda_handler(event, context):
             "Pipeline status retrieved successfully",
             extra={
                 "operation": "lambda_handler_success",
-                "request_id": context.request_id if context else "unknown",
+                "request_id": context.aws_request_id if context else "unknown",
                 "status_code": 200,
             },
         )
@@ -944,7 +944,7 @@ def lambda_handler(event, context):
             "Lambda handler error",
             extra={
                 "operation": "lambda_handler_error",
-                "request_id": context.request_id if context else "unknown",
+                "request_id": context.aws_request_id if context else "unknown",
                 "error": str(e),
                 "error_type": type(e).__name__,
                 "status_code": 500,
