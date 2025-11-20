@@ -133,7 +133,7 @@ data "external" "pip_install" {
 # Package Lambda dependencies as a layer
 data "archive_file" "dashboard_lambda_layer" {
   type        = "zip"
-  source_dir  = "${path.module}/lambda_deps_build/python"
+  source_dir  = "${path.module}/lambda_deps_build"
   output_path = "${path.module}/lambda_layer.zip"
 
   # This creates the dependency: archive runs after pip_install completes
