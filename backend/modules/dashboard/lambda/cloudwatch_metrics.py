@@ -5,7 +5,7 @@ Fetches CloudWatch metrics for all pipelines
 
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import boto3
@@ -46,7 +46,7 @@ def get_metric_statistics(
     Helper function to get CloudWatch metric statistics
     """
     try:
-        end_time = datetime.now(datetime.UTC)
+        end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(hours=1)
 
         response = cloudwatch.get_metric_statistics(
@@ -390,7 +390,7 @@ def lambda_handler(_event, _context):
         response = {
             "cold_path": cold_path,
             "overall": overall,
-            "timestamp": datetime.now(datetime.UTC).isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "period": "last_1_hour",
         }
 

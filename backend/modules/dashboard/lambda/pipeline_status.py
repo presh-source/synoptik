@@ -5,7 +5,7 @@ Returns status of Cold Path, Hot Path, and Scrubber Path pipelines
 
 import json
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import boto3
 from utils.sentry_config import (
@@ -41,7 +41,7 @@ def get_crawler_metrics_from_cloudwatch(crawler_type: str, time_period_hours: in
     try:
         namespace = f"{PROJECT_NAME.title()}/ColdPath"
         dimensions = [{"Name": "CrawlerType", "Value": crawler_type}]
-        end_time = datetime.now(datetime.UTC)
+        end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(hours=time_period_hours)
         period = time_period_hours * 3600
 
@@ -136,14 +136,14 @@ def get_cold_path_status():
             base_status = {
                 "lastProcessedId": 0,
                 "totalProcessed": 0,
-                "updatedAt": datetime.now(datetime.UTC).isoformat(),
+                "updatedAt": datetime.now(timezone.utc).isoformat(),
             }
         else:
             base_status = {
                 "lastProcessedId": int(item.get("last_processed_id", 0)),
                 "totalProcessed": int(item.get("total_processed", 0)),
                 "updatedAt": item.get(
-                    "updated_at", datetime.now(datetime.UTC).isoformat()
+                    "updated_at", datetime.now(timezone.utc).isoformat()
                 ),
             }
 
