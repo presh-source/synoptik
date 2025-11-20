@@ -143,7 +143,7 @@ data "external" "install_dashboard_dependencies" {
 # Archive Lambda layer dependencies
 data "archive_file" "lambda_layer" {
   type        = "zip"
-  source_dir  = "${path.module}/lambda_deps_build/python"
+  source_dir  = "${path.module}/lambda_deps_build"
   output_path = "${path.module}/lambda_layer.zip"
 }
 
