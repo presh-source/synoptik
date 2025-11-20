@@ -7,7 +7,7 @@ Uses AWS Lambda Powertools for observability
 
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from io import BytesIO
 
 import boto3
@@ -79,7 +79,7 @@ def update_bookmark(last_id: int, total_processed: int) -> None:
             ExpressionAttributeValues={
                 ":lid": last_id,
                 ":tp": total_processed,
-                ":ua": datetime.now(datetime.UTC).isoformat(),
+                ":ua": datetime.now(timezone.utc).isoformat(),
             },
         )
         logger.info(
@@ -96,7 +96,7 @@ def update_bookmark(last_id: int, total_processed: int) -> None:
 @tracer.capture_method
 def save_to_s3_parquet(users: list[dict], start_id: int, end_id: int) -> None:
     """Save data to S3 as Parquet with partitioning"""
-    now = datetime.now(datetime.UTC)
+    now = datetime.now(timezone.utc)
     year = now.year
     month = f"{now.month:02d}"
     day = f"{now.day:02d}"
