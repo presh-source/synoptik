@@ -54,6 +54,12 @@ variable "api_domain_name" {
   default     = ""
 }
 
+variable "hosted_zone_name" {
+  description = "The name of the Route 53 hosted zone (e.g. example.com)"
+  type        = string
+  default     = ""
+}
+
 variable "acm_certificate_arn" {
   description = "ARN of the ACM certificate for the custom domain (must be in us-east-1 region)"
   type        = string

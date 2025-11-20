@@ -15,6 +15,7 @@ module "api_certificate" {
   project_name       = var.project_name
   certificate_name   = "api"
   domain_name        = var.api_domain_name
+  hosted_zone_name   = var.hosted_zone_name
   create_dns_records = false # DNS created separately after API Gateway
 
   tags = var.tags
@@ -110,6 +111,7 @@ module "api_dns" {
   project_name       = var.project_name
   certificate_name   = "api-dns"
   domain_name        = var.api_domain_name
+  hosted_zone_name   = var.hosted_zone_name
   create_certificate = false # Certificate already created above
 
   # Point to API Gateway custom domain

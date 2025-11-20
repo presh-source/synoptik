@@ -118,6 +118,7 @@ module "dashboard" {
   app_version                     = var.app_version
   domain_name                     = var.domain_name
   api_domain_name                 = var.api_domain_name
+  hosted_zone_name                = var.hosted_zone_name
   acm_certificate_arn             = var.acm_certificate_arn
   api_gateway_cloudwatch_role_arn = module.iam.api_gateway_cloudwatch_role_arn
   tags                            = local.merged_tags

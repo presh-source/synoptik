@@ -15,6 +15,7 @@ module "frontend_certificate" {
   project_name     = var.project_name
   certificate_name = "frontend"
   domain_name      = var.domain_name
+  hosted_zone_name = var.hosted_zone_name
 
   # Include API domain as SAN if both are provided
   subject_alternative_names = var.api_domain_name != "" ? [var.api_domain_name] : []
@@ -40,6 +41,7 @@ module "frontend_dns" {
   project_name     = var.project_name
   certificate_name = "frontend-dns"
   domain_name      = var.domain_name
+  hosted_zone_name = var.hosted_zone_name
 
   # Don't create certificate, only DNS records
   create_certificate = false
