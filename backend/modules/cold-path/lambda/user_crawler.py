@@ -32,9 +32,9 @@ logger = Logger(service=f"{PROJECT_NAME}-user-crawler")
 tracer = Tracer(service=f"{PROJECT_NAME}-user-crawler")
 metrics = Metrics(
     namespace=f"{PROJECT_NAME.title()}/ColdPath",
-    service="user-crawler",
-    dimensions={"CrawlerType": "user"},
+    service="user-crawler"
 )
+metrics.add_dimension(name="CrawlerType", value="user")
 
 
 # AWS clients

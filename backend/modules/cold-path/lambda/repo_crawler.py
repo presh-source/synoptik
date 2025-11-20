@@ -32,9 +32,9 @@ logger = Logger(service=f"{PROJECT_NAME}-crawler")
 tracer = Tracer(service=f"{PROJECT_NAME}-crawler")
 metrics = Metrics(
     namespace=f"{PROJECT_NAME.title()}/ColdPath",
-    service="crawler",
-    dimensions={"CrawlerType": "repo"},
+    service="crawler"
 )
+metrics.add_dimension(name="CrawlerType", value="repo")
 
 # AWS clients
 dynamodb = boto3.resource("dynamodb")
