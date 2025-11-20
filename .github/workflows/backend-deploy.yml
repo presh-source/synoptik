@@ -127,48 +127,7 @@ jobs:
 
       - name: Terraform Plan
         working-directory: backend
-        continue-on-error: true
-        id: plan
         run: |
-          terraform plan \
-            -var-file=environments/${{ env.DEPLOY_ENV }}/terraform.tfvars \
-            -var="project_name=${{ env.PROJECT_NAME }}" \
-            -var="aws_region=${{ secrets.AWS_REGION }}" \
-            -var="github_token=${{ secrets.GH_TOKEN_SECRET }}" \
-            -var="sentry_dsn_frontend=${{ secrets.SENTRY_DSN_FRONTEND }}" \
-            -var="sentry_dsn_backend=${{ secrets.SENTRY_DSN_BACKEND }}" \
-            -var="app_version=${{ github.sha }}" \
-            -out=tfplan
-
-      - name: Terraform Plan (Targeted - Stage 1)
-        if: steps.plan.outcome == 'failure'
-        working-directory: backend
-        run: |
-          echo "Full plan failed, attempting staged deployment..."
-          terraform plan \
-            -var-file=environments/${{ env.DEPLOY_ENV }}/terraform.tfvars \
-            -var="project_name=${{ env.PROJECT_NAME }}" \
-            -var="aws_region=${{ secrets.AWS_REGION }}" \
-            -var="github_token=${{ secrets.GH_TOKEN_SECRET }}" \
-            -var="sentry_dsn_frontend=${{ secrets.SENTRY_DSN_FRONTEND }}" \
-            -var="sentry_dsn_backend=${{ secrets.SENTRY_DSN_BACKEND }}" \
-            -var="app_version=${{ github.sha }}" \
-            -target=module.iam \
-            -target=module.data_lake \
-            -target=module.cold_path \
-            -out=tfplan-stage1
-
-      - name: Terraform Apply (Stage 1)
-        if: steps.plan.outcome == 'failure' && (github.event_name == 'push' || github.event.inputs.action == 'apply')
-        working-directory: backend
-        run: |
-          terraform apply -input=false -auto-approve tfplan-stage1
-
-      - name: Terraform Plan (Targeted - Stage 2)
-        if: steps.plan.outcome == 'failure'
-        working-directory: backend
-        run: |
-          echo "Applying dashboard module..."
           terraform plan \
             -var-file=environments/${{ env.DEPLOY_ENV }}/terraform.tfvars \
             -var="project_name=${{ env.PROJECT_NAME }}" \
