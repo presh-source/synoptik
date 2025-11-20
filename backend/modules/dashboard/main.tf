@@ -128,6 +128,10 @@ resource "aws_lambda_layer_version" "dashboard_dependencies" {
   source_code_hash    = data.archive_file.lambda_layer.output_base64sha256
 
   description = "Shared dependencies for dashboard Lambda functions"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Install dependencies before archiving
