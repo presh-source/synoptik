@@ -139,6 +139,7 @@ jobs:
             -out=tfplan
 
       - name: Terraform Apply
+        if: github.event_name == 'push' || github.event.inputs.action == 'apply'
         working-directory: backend
         run: |
           if [ ! -f tfplan ]; then
