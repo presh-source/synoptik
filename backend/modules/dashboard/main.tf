@@ -2,6 +2,9 @@
 # API Gateway configuration moved to api.tf (using api-gateway module)
 # Domain/Certificate configuration moved to domains.tf (using domain-certificate module)
 
+# Get current AWS region
+data "aws_region" "current" {}
+
 # ============================================================================
 # IAM Roles for Lambda Functions
 # ============================================================================
@@ -155,7 +158,10 @@ resource "aws_lambda_function" "pipeline_status" {
   runtime          = "python3.11"
   timeout          = 30
   memory_size      = 256
-  layers           = [aws_lambda_layer_version.dashboard_dependencies.arn]
+  layers = [
+    aws_lambda_layer_version.dashboard_dependencies.arn,
+    "arn:aws:lambda:${data.aws_region.current.name}:017000801446:layer:AWSLambdaPowertoolsPythonV2:68"
+  ]
 
   environment {
     variables = {
@@ -187,7 +193,10 @@ resource "aws_lambda_function" "cloudwatch_metrics" {
   runtime          = "python3.11"
   timeout          = 30
   memory_size      = 512
-  layers           = [aws_lambda_layer_version.dashboard_dependencies.arn]
+  layers = [
+    aws_lambda_layer_version.dashboard_dependencies.arn,
+    "arn:aws:lambda:${data.aws_region.current.name}:017000801446:layer:AWSLambdaPowertoolsPythonV2:68"
+  ]
 
   environment {
     variables = {

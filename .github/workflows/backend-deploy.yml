@@ -133,7 +133,6 @@ jobs:
             -var="project_name=${{ env.PROJECT_NAME }}" \
             -var="aws_region=${{ secrets.AWS_REGION }}" \
             -var="github_token=${{ secrets.GH_TOKEN_SECRET }}" \
-            -var="sentry_dsn_frontend=${{ secrets.SENTRY_DSN_FRONTEND }}" \
             -var="sentry_dsn_backend=${{ secrets.SENTRY_DSN_BACKEND }}" \
             -var="app_version=${{ github.sha }}" \
             -out=tfplan

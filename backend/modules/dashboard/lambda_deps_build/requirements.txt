@@ -1,17 +1,9 @@
 # Lambda function dependencies
 requests==2.31.0
-aws-lambda-powertools==2.31.0
 aws-xray-sdk==2.12.0
 
 # Sentry SDK for error tracking
 sentry-sdk==1.40.0
-
-# AWS SDK
-boto3==1.34.0
-botocore==1.34.0
-
-# HTTP requests
-requests==2.31.0
 
 # JSON handling
 python-json-logger==2.0.7
