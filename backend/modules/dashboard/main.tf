@@ -121,7 +121,7 @@ resource "aws_iam_role_policy" "cloudwatch_metrics_lambda_policy" {
 # ============================================================================
 
 # Lambda layer for shared dependencies
-resource "aws_lambda_layer_version" "dashboard_dependencies" {
+resource "aws_lambda_layer_version" "dashboard_dependencies_v2" {
   filename            = data.archive_file.lambda_layer.output_path
   layer_name          = "${var.environment}-${var.project_name}-dashboard-deps"
   compatible_runtimes = ["python3.11"]
@@ -129,9 +129,7 @@ resource "aws_lambda_layer_version" "dashboard_dependencies" {
 
   description = "Shared dependencies for dashboard Lambda functions"
 
-  lifecycle {
-    create_before_destroy = true
-  }
+
 }
 
 # Install dependencies before archiving
@@ -149,6 +147,7 @@ data "archive_file" "lambda_layer" {
   type        = "zip"
   source_dir  = "${path.module}/lambda_deps_build"
   output_path = "${path.module}/lambda_layer.zip"
+  depends_on  = [data.external.install_dashboard_dependencies]
 }
 
 # ============================================================================
@@ -173,7 +172,7 @@ resource "aws_lambda_function" "pipeline_status" {
   timeout          = 30
   memory_size      = 256
   layers = [
-    aws_lambda_layer_version.dashboard_dependencies.arn,
+    aws_lambda_layer_version.dashboard_dependencies_v2.arn,
     "arn:aws:lambda:${data.aws_region.current.name}:017000801446:layer:AWSLambdaPowertoolsPythonV2:68"
   ]
 
@@ -208,7 +207,7 @@ resource "aws_lambda_function" "cloudwatch_metrics" {
   timeout          = 30
   memory_size      = 512
   layers = [
-    aws_lambda_layer_version.dashboard_dependencies.arn,
+    aws_lambda_layer_version.dashboard_dependencies_v2.arn,
     "arn:aws:lambda:${data.aws_region.current.name}:017000801446:layer:AWSLambdaPowertoolsPythonV2:68"
   ]
 
