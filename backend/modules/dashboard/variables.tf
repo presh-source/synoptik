@@ -13,18 +13,6 @@ variable "cold_path_dynamodb_table" {
   type        = string
 }
 
-variable "opensearch_endpoint" {
-  description = "The endpoint of the OpenSearch cluster"
-  type        = string
-  default     = "http://localhost:4566"
-}
-
-variable "neptune_endpoint" {
-  description = "The endpoint of the Neptune cluster"
-  type        = string
-  default     = "localhost:8182"
-}
-
 variable "sentry_dsn_backend" {
   description = "The Sentry DSN for the backend"
   type        = string

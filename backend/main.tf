@@ -112,8 +112,6 @@ module "dashboard" {
   project_name                    = var.project_name
   environment                     = var.environment
   cold_path_dynamodb_table        = module.cold_path.dynamodb_table_name
-  opensearch_endpoint             = "http://localhost:4566"
-  neptune_endpoint                = "localhost:8182"
   sentry_dsn_backend              = var.sentry_dsn_backend
   app_version                     = var.app_version
   domain_name                     = var.domain_name
