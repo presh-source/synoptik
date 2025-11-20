@@ -191,7 +191,7 @@ resource "aws_lambda_function" "repo_crawler" {
 
 # CloudWatch Log Group for Lambda
 resource "aws_cloudwatch_log_group" "repo_crawler_lambda" {
-  name              = "/aws/lambda/${aws_lambda_function.repo_crawler.function_name}"
+  name              = "/aws/lambda/${var.environment}-${var.project_name}-repo-crawler"
   retention_in_days = 30
 
   tags = var.tags
@@ -441,7 +441,7 @@ resource "aws_lambda_function" "user_crawler" {
 
 # CloudWatch Log Group for Lambda
 resource "aws_cloudwatch_log_group" "user_crawler_lambda" {
-  name              = "/aws/lambda/${aws_lambda_function.user_crawler.function_name}"
+  name              = "/aws/lambda/${var.environment}-${var.project_name}-user-crawler"
   retention_in_days = 30
 
   tags = var.tags
