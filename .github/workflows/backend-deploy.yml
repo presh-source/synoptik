@@ -125,6 +125,28 @@ jobs:
         working-directory: backend
         run: terraform validate
 
+      - name: Cleanup Old API Gateway Domain
+        continue-on-error: true
+        run: |
+          echo "Attempting to delete old API Gateway domain if it exists..."
+          aws apigateway delete-domain-name \
+            --domain-name api.${{ env.DEPLOY_ENV }}.synoptik.dev \
+            --region ${{ secrets.AWS_REGION }} 2>/dev/null || echo "Domain not found or already deleted"
+          
+          # Also remove old Lambda permissions that might conflict
+          aws lambda remove-permission \
+            --function-name ${{ env.DEPLOY_ENV }}-${{ env.PROJECT_NAME }}-pipeline-status \
+            --statement-id AllowAPIGatewayInvoke-pipeline-status-get \
+            --region ${{ secrets.AWS_REGION }} 2>/dev/null || echo "Permission not found"
+          
+          aws lambda remove-permission \
+            --function-name ${{ env.DEPLOY_ENV }}-${{ env.PROJECT_NAME }}-cloudwatch-metrics \
+            --statement-id AllowAPIGatewayInvoke-metrics-cloudwatch-get \
+            --region ${{ secrets.AWS_REGION }} 2>/dev/null || echo "Permission not found"
+          
+          echo "Cleanup complete, waiting 5 seconds for AWS to propagate..."
+          sleep 5
+
       - name: Terraform Plan
         working-directory: backend
         run: |
