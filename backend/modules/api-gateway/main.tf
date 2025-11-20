@@ -218,6 +218,7 @@ resource "aws_cloudwatch_log_group" "api_gateway" {
 resource "aws_api_gateway_account" "api" {
   count               = var.cloudwatch_role_arn != "" ? 1 : 0
   cloudwatch_role_arn = var.cloudwatch_role_arn
+  reset_on_delete     = true
 }
 
 # ============================================================================
