@@ -120,34 +120,35 @@ resource "aws_iam_role_policy" "cloudwatch_metrics_lambda_policy" {
 # Lambda Layer for Dependencies
 # ============================================================================
 
-# Lambda layer for shared dependencies
-resource "aws_lambda_layer_version" "dashboard_dependencies" {
-  filename            = data.archive_file.lambda_layer.output_path
-  layer_name          = "${var.environment}-${var.project_name}-dashboard-deps"
-  compatible_runtimes = ["python3.11"]
-  source_code_hash    = data.archive_file.lambda_layer.output_base64sha256
+# Install Lambda dependencies locally using an external data source to ensure it runs before archiving
+data "external" "pip_install" {
+  program = ["/bin/bash", "${path.module}/lambda_deps_build/install_deps.sh", "${path.module}/lambda_deps_build"]
 
-  description = "Shared dependencies for dashboard Lambda functions"
-
-
-}
-
-# Install dependencies before archiving
-data "external" "install_dashboard_dependencies" {
-  program = ["bash", "${path.module}/lambda_deps_build/install_deps.sh", "${path.module}/lambda_deps_build"]
-
-  # This is a trick to re-run the script if requirements change.
+  # Re-run when requirements.txt changes
   query = {
-    requirements_sha = filesha256("${path.module}/lambda_deps_build/requirements.txt")
+    requirements_md5 = filemd5("${path.module}/lambda_deps_build/requirements.txt")
   }
 }
 
-# Archive Lambda layer dependencies
-data "archive_file" "lambda_layer" {
+# Package Lambda dependencies as a layer
+data "archive_file" "dashboard_lambda_layer" {
   type        = "zip"
   source_dir  = "${path.module}/lambda_deps_build/python"
   output_path = "${path.module}/lambda_layer.zip"
-  depends_on  = [data.external.install_dashboard_dependencies]
+
+  # This creates the dependency: archive runs after pip_install completes
+  depends_on = [data.external.pip_install]
+}
+
+# Lambda layer for shared dependencies
+resource "aws_lambda_layer_version" "dashboard_dependencies" {
+  filename            = data.archive_file.dashboard_lambda_layer.output_path
+  layer_name          = "${var.environment}-${var.project_name}-dashboard-deps"
+  compatible_runtimes = ["python3.11"]
+  source_code_hash    = data.archive_file.dashboard_lambda_layer.output_base64sha256
+  description         = "Shared dependencies for dashboard Lambda functions"
+
+  depends_on = [data.archive_file.dashboard_lambda_layer]
 }
 
 # ============================================================================
@@ -155,19 +156,27 @@ data "archive_file" "lambda_layer" {
 # ============================================================================
 
 # Archive Lambda functions
-data "archive_file" "lambda_functions" {
+data "archive_file" "pipeline_status_lambda" {
   type        = "zip"
   source_dir  = "${path.module}/lambda"
-  output_path = "${path.module}/.terraform/lambda_functions.zip"
+  output_path = "${path.module}/pipeline_status_lambda.zip"
+  excludes    = ["cloudwatch_metrics.py", "requirements.txt", "__pycache__", "*.pyc"]
+}
+
+data "archive_file" "cloudwatch_metrics_lambda" {
+  type        = "zip"
+  source_dir  = "${path.module}/lambda"
+  output_path = "${path.module}/cloudwatch_metrics_lambda.zip"
+  excludes    = ["pipeline_status.py", "requirements.txt", "__pycache__", "*.pyc"]
 }
 
 # Pipeline Status Lambda
 resource "aws_lambda_function" "pipeline_status" {
-  filename         = data.archive_file.lambda_functions.output_path
+  filename         = data.archive_file.pipeline_status_lambda.output_path
   function_name    = "${var.environment}-${var.project_name}-pipeline-status"
   role             = aws_iam_role.pipeline_status_lambda.arn
   handler          = "pipeline_status.lambda_handler"
-  source_code_hash = data.archive_file.lambda_functions.output_base64sha256
+  source_code_hash = data.archive_file.pipeline_status_lambda.output_base64sha256
   runtime          = "python3.11"
   timeout          = 30
   memory_size      = 256
@@ -198,11 +207,11 @@ resource "aws_cloudwatch_log_group" "pipeline_status_lambda" {
 
 # CloudWatch Metrics Lambda
 resource "aws_lambda_function" "cloudwatch_metrics" {
-  filename         = data.archive_file.lambda_functions.output_path
+  filename         = data.archive_file.cloudwatch_metrics_lambda.output_path
   function_name    = "${var.environment}-${var.project_name}-cloudwatch-metrics"
   role             = aws_iam_role.cloudwatch_metrics_lambda.arn
   handler          = "cloudwatch_metrics.lambda_handler"
-  source_code_hash = data.archive_file.lambda_functions.output_base64sha256
+  source_code_hash = data.archive_file.cloudwatch_metrics_lambda.output_base64sha256
   runtime          = "python3.11"
   timeout          = 30
   memory_size      = 512
