@@ -871,7 +871,5 @@ def lambda_handler(event, context):
                 "Content-Type": "application/json",
                 "Access-Control-Allow-Origin": "*",
             },
-            "body": json.dumps(
-                {"error": "Internal Server Error", "message": str(e)}
-            ),
+            "body": json.dumps({"error": "Internal Server Error", "message": str(e)}),
         }

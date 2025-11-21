@@ -10,7 +10,6 @@ retry logic, and error handling.
 import json
 import os
 import time
-from typing import Optional
 
 import boto3
 import requests

@@ -13,12 +13,12 @@ from io import BytesIO
 import boto3
 import pandas as pd
 import requests
-from aws_lambda_powertools import Logger, Metrics, Tracer
-from aws_lambda_powertools.metrics import MetricUnit
-from botocore.exceptions import ClientError
 
 # AppSync client for publishing completion events
 from appsync_client import publish_crawler_completed
+from aws_lambda_powertools import Logger, Metrics, Tracer
+from aws_lambda_powertools.metrics import MetricUnit
+from botocore.exceptions import ClientError
 
 # Environment variables
 PROJECT_NAME = os.environ["PROJECT_NAME"]

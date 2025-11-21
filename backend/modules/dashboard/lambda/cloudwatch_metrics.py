@@ -497,6 +497,7 @@ def lambda_handler(event, _context):
                 "Access-Control-Allow-Methods": "GET,OPTIONS",
             },
             "body": json.dumps(response),
+        }
 
     except Exception as e:
         logger.error(f"Unexpected error: {e}", exc_info=True)
@@ -515,7 +516,5 @@ def lambda_handler(event, _context):
                 "Access-Control-Allow-Headers": "Content-Type",
                 "Access-Control-Allow-Methods": "GET,OPTIONS",
             },
-            "body": json.dumps(
-                {"error": "Internal server error", "message": str(e)}
-            ),
+            "body": json.dumps({"error": "Internal server error", "message": str(e)}),
         }
