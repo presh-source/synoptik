@@ -100,8 +100,8 @@ module "appsync_dns" {
   create_certificate = false
 
   # AppSync domain details
-  target_domain_name = var.appsync_domain_name
-  target_zone_id     = var.hosted_zone_name
+  target_domain_name = var.appsync_target_domain_name
+  target_zone_id     = var.appsync_target_zone_id
 
   enable_ipv6 = false # AppSync doesn't support IPv6
   tags        = var.tags

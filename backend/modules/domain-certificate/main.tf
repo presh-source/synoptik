@@ -7,7 +7,7 @@
 
 data "aws_route53_zone" "main" {
   count        = var.domain_name != "" ? 1 : 0
-  name         = var.hosted_zone_name != "" ? var.hosted_zone_name : var.domain_name
+  name         = var.hosted_zone_name
   private_zone = false
 }
 

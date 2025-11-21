@@ -113,5 +113,7 @@ module "dashboard" {
   hosted_zone_name                = var.hosted_zone_name
   acm_certificate_arn             = var.acm_certificate_arn
   api_gateway_cloudwatch_role_arn = module.iam.api_gateway_cloudwatch_role_arn
+  appsync_target_domain_name      = module.appsync.appsync_domain_name
+  appsync_target_zone_id          = module.appsync.appsync_hosted_zone_id
   tags                            = local.merged_tags
 }
