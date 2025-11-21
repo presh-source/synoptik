@@ -72,7 +72,7 @@ module "appsync" {
   environment              = var.environment
   cold_path_dynamodb_table = "${var.environment}-${var.project_name}-crawler-state"
   appsync_domain_name      = var.appsync_domain_name
-  acm_certificate_arn      = var.acm_certificate_arn
+  acm_certificate_arn      = var.acm_certificate_arn != "" ? var.acm_certificate_arn : module.dashboard.graphql_certificate_arn
   tags                     = local.merged_tags
 }
 

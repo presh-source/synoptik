@@ -73,3 +73,8 @@ output "appsync_custom_domain_url" {
   description = "The custom domain URL for the AppSync GraphQL API"
   value       = var.appsync_domain_name != "" ? "https://{var.appsync_domain_name}/graphql" : null
 }
+
+output "graphql_certificate_arn" {
+  description = "ARN of the ACM certificate for the GraphQL API"
+  value       = length(module.graphql_certificate) > 0 ? module.graphql_certificate[0].certificate_arn : null
+}
