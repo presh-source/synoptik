@@ -205,7 +205,7 @@ resource "aws_lambda_function" "repo_crawler" {
       REQUESTS_PER_EXECUTION = var.requests_per_execution
       SLEEP_INTERVAL         = var.sleep_interval
       PROJECT_NAME           = var.project_name
-      appsync_api_url        = var.appsync_api_url
+      APPSYNC_API_URL        = var.appsync_api_url
     }
   }
 

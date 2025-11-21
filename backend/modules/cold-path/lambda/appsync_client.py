@@ -18,7 +18,7 @@ from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 
 # Environment variables
-APPSYNC_ENDPOINT = os.environ.get("appsync_api_url")
+APPSYNC_ENDPOINT = os.environ.get("APPSYNC_API_URL")
 AWS_REGION = os.environ.get("AWS_REGION", "us-east-1")
 
 # Initialize logger
