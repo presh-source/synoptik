@@ -14,21 +14,14 @@
 
 import { apolloClient } from '@/graphql/client'
 import { ON_CRAWLER_COMPLETED } from '@/graphql/subscriptions'
-
-interface CrawlerEvent {
-  crawlerType: string
-  startId: number
-  endId: number
-  itemsFetched: number
-  totalProcessed: number
-  completedAt: string
-  success: boolean
-  errorMessage?: string | null
-}
+import {
+  OnCrawlerCompletedSubscription,
+  CrawlerCompleted,
+} from '@/graphql/generated/types'
 
 class SubscriptionTester {
   private subscription: any = null
-  private events: CrawlerEvent[] = []
+  private events: CrawlerCompleted[] = []
   private startTime: number = 0
 
   /**
@@ -51,7 +44,7 @@ class SubscriptionTester {
     }
 
     this.subscription = apolloClient
-      .subscribe({
+      .subscribe<OnCrawlerCompletedSubscription>({
         query: ON_CRAWLER_COMPLETED,
         variables: crawlerType ? { crawlerType } : {},
       })
@@ -91,7 +84,7 @@ class SubscriptionTester {
   /**
    * Handle incoming subscription event
    */
-  private handleEvent(event: CrawlerEvent) {
+  private handleEvent(event: CrawlerCompleted) {
     const latency = Date.now() - this.startTime
     
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
@@ -149,7 +142,7 @@ class SubscriptionTester {
   /**
    * Get all received events
    */
-  getEvents(): CrawlerEvent[] {
+  getEvents(): CrawlerCompleted[] {
     return [...this.events]
   }
 
