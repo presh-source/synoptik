@@ -87,6 +87,8 @@ module "appsync" {
   project_name             = var.project_name
   environment              = var.environment
   cold_path_dynamodb_table = "${var.environment}-${var.project_name}-crawler-state"
+  graphql_domain_name      = var.graphql_domain_name
+  acm_certificate_arn      = var.acm_certificate_arn
   tags                     = local.merged_tags
 }
 
@@ -129,11 +131,15 @@ module "dashboard" {
   cold_path_dynamodb_table        = module.cold_path.dynamodb_table_name
   sentry_dsn_backend              = var.sentry_dsn_backend
   app_version                     = var.app_version
-  domain_name                     = var.domain_name
+  appsync_graphql_domain_name     = var.appsync_graphql_domain_name
   api_domain_name                 = var.api_domain_name
   graphql_domain_name             = var.graphql_domain_name
   hosted_zone_name                = var.hosted_zone_name
   acm_certificate_arn             = var.acm_certificate_arn
   api_gateway_cloudwatch_role_arn = module.iam.api_gateway_cloudwatch_role_arn
+  appsync_graphql_api_url         = try(module.appsync[0].appsync_graphql_endpoint, "")
+  appsync_api_key                 = try(module.appsync[0].appsync_api_key, "")
+  appsync_domain_name             = try(module.appsync[0].appsync_domain_name, "")
+  appsync_hosted_zone_id          = try(module.appsync[0].appsync_hosted_zone_id, "")
   tags                            = local.merged_tags
 }

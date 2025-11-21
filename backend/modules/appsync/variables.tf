@@ -1,24 +1,11 @@
-# Variables for AppSync Module
-
-variable "environment" {
-  description = "Environment name (e.g., dev, staging, prod)"
+variable "appsync_graphql_domain_name" {
+  description = "The custom domain name for the GraphQL API"
   type        = string
+  default     = ""
 }
 
-variable "project_name" {
-  description = "Project name"
+variable "acm_certificate_arn" {
+  description = "The ARN of the ACM certificate for the GraphQL API custom domain"
   type        = string
-}
-
-variable "cold_path_dynamodb_table" {
-  description = "Name of the DynamoDB table for cold path bookmarks"
-  type        = string
-}
-
-
-
-variable "tags" {
-  description = "Tags to apply to all resources"
-  type        = map(string)
-  default     = {}
+  default     = ""
 }

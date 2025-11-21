@@ -1,10 +1,10 @@
 # Development Environment Configuration
 
-environment         = "dev"
-domain_name         = "dev.synoptik.dev"
-api_domain_name     = "api.dev.synoptik.dev"
-graphql_domain_name = "graphql.dev.synoptik.dev"
-hosted_zone_name    = "synoptik.dev"
+environment                 = "dev"
+domain_name                 = "dev.synoptik.dev"
+api_domain_name             = "api.dev.synoptik.dev"
+appsync_graphql_domain_name = "graphql.dev.synoptik.dev"
+hosted_zone_name            = "synoptik.dev"
 
 # AppSync GraphQL endpoint for crawler event publishing
 # This should be set after the dashboard module is deployed

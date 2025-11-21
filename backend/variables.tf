@@ -75,7 +75,7 @@ variable "api_domain_name" {
   default     = ""
 }
 
-variable "graphql_domain_name" {
+variable "appsync_graphql_domain_name" {
   description = "Custom domain name for the GraphQL API (AppSync)"
   type        = string
   default     = ""

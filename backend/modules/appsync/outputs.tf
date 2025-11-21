@@ -85,3 +85,17 @@ output "appsync_api_key_secret_arn" {
   description = "ARN of the Secrets Manager secret containing the AppSync API key"
   value       = aws_secretsmanager_secret.appsync_api_key.arn
 }
+
+# ============================================================================
+# Custom Domain
+# ============================================================================
+
+output "appsync_domain_name" {
+  description = "The AppSync domain name (for DNS configuration)"
+  value       = length(aws_appsync_domain_name.main) > 0 ? aws_appsync_domain_name.main[0].appsync_domain_name : null
+}
+
+output "appsync_hosted_zone_id" {
+  description = "The hosted zone ID for the AppSync domain (for DNS configuration)"
+  value       = length(aws_appsync_domain_name.main) > 0 ? aws_appsync_domain_name.main[0].hosted_zone_id : null
+}

@@ -71,31 +71,31 @@ output "acm_certificate_arn" {
 
 output "appsync_graphql_api_url" {
   description = "The URL of the AppSync GraphQL API"
-  value       = aws_appsync_graphql_api.dashboard.uris["GRAPHQL"]
+  value       = var.appsync_graphql_api_url
 }
 
 output "appsync_api_key" {
   description = "The API Key for the AppSync GraphQL API"
-  value       = aws_appsync_api_key.dashboard.key
+  value       = var.appsync_api_key
   sensitive   = true
 }
 
 output "appsync_custom_domain_url" {
   description = "The custom domain URL for the AppSync GraphQL API"
-  value       = var.graphql_domain_name != "" ? "https://${var.graphql_domain_name}/graphql" : null
+  value       = var.appsync_graphql_domain_name != "" ? "https://{var.appsync_graphql_domain_name}/graphql" : null
 }
 
 output "appsync_domain_name" {
   description = "The AppSync domain name (for DNS configuration)"
-  value       = length(aws_appsync_domain_name.dashboard) > 0 ? aws_appsync_domain_name.dashboard[0].appsync_domain_name : null
+  value       = var.appsync_domain_name
 }
 
 output "appsync_hosted_zone_id" {
   description = "The hosted zone ID for the AppSync domain (for DNS configuration)"
-  value       = length(aws_appsync_domain_name.dashboard) > 0 ? aws_appsync_domain_name.dashboard[0].hosted_zone_id : null
+  value       = var.appsync_hosted_zone_id
 }
 
-output "graphql_domain_name" {
+output "appsync_graphql_domain_name" {
   description = "Custom domain name for the GraphQL API"
-  value       = var.graphql_domain_name != "" ? var.graphql_domain_name : null
+  value       = var.appsync_graphql_domain_name != "" ? var.appsync_graphql_domain_name : null
 }
