@@ -61,7 +61,7 @@ module "frontend_dns" {
 # ============================================================================
 
 module "graphql_certificate" {
-  count  = var.appsync_graphql_domain_name != "" && var.acm_certificate_arn == "" ? 1 : 0
+  count  = var.appsync_appsync_domain_name != "" && var.acm_certificate_arn == "" ? 1 : 0
   source = "../domain-certificate"
 
   providers = {
@@ -70,7 +70,7 @@ module "graphql_certificate" {
 
   project_name     = var.project_name
   certificate_name = "graphql"
-  domain_name      = var.appsync_graphql_domain_name
+  domain_name      = var.appsync_appsync_domain_name
   hosted_zone_name = var.hosted_zone_name
 
   # Create certificate only, DNS records created later
@@ -84,7 +84,7 @@ module "graphql_certificate" {
 # ============================================================================
 
 module "graphql_dns" {
-  count  = var.appsync_graphql_domain_name != "" ? 1 : 0
+  count  = var.appsync_appsync_domain_name != "" ? 1 : 0
   source = "../domain-certificate"
 
   providers = {
@@ -93,7 +93,7 @@ module "graphql_dns" {
 
   project_name     = var.project_name
   certificate_name = "graphql-dns"
-  domain_name      = var.appsync_graphql_domain_name
+  domain_name      = var.appsync_appsync_domain_name
   hosted_zone_name = var.hosted_zone_name
 
   # Don't create certificate, only DNS records

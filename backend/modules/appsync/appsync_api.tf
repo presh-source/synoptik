@@ -311,14 +311,14 @@ resource "aws_appsync_api_cache" "main" {
 # ============================================================================
 
 resource "aws_appsync_domain_name" "main" {
-  count = var.appsync_graphql_domain_name != "" ? 1 : 0
+  count = var.appsync_appsync_domain_name != "" ? 1 : 0
 
-  domain_name     = var.appsync_graphql_domain_name
+  domain_name     = var.appsync_appsync_domain_name
   certificate_arn = var.acm_certificate_arn
 }
 
 resource "aws_appsync_domain_name_api_association" "main" {
-  count = var.appsync_graphql_domain_name != "" ? 1 : 0
+  count = var.appsync_appsync_domain_name != "" ? 1 : 0
 
   api_id      = aws_appsync_graphql_api.main.id
   domain_name = aws_appsync_domain_name.main[0].domain_name

@@ -82,7 +82,7 @@ output "appsync_api_key" {
 
 output "appsync_custom_domain_url" {
   description = "The custom domain URL for the AppSync GraphQL API"
-  value       = var.appsync_graphql_domain_name != "" ? "https://{var.appsync_graphql_domain_name}/graphql" : null
+  value       = var.appsync_appsync_domain_name != "" ? "https://{var.appsync_appsync_domain_name}/graphql" : null
 }
 
 output "appsync_domain_name" {
@@ -95,7 +95,7 @@ output "appsync_hosted_zone_id" {
   value       = var.appsync_hosted_zone_id
 }
 
-output "appsync_graphql_domain_name" {
+output "appsync_appsync_domain_name" {
   description = "Custom domain name for the GraphQL API"
-  value       = var.appsync_graphql_domain_name != "" ? var.appsync_graphql_domain_name : null
+  value       = var.appsync_appsync_domain_name != "" ? var.appsync_appsync_domain_name : null
 }
