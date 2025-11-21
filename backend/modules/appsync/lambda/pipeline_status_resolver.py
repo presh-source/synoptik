@@ -42,13 +42,13 @@ def get_crawler_metrics_from_cloudwatch(crawler_type: str, time_period_hours: in
 
     try:
         namespace = f"{PROJECT_NAME.title()}/ColdPath"
-        
+
         # Map crawler type to service name used in Powertools Metrics
         service_name = "crawler" if crawler_type == "repo" else "user-crawler"
-        
+
         dimensions = [
             {"Name": "CrawlerType", "Value": crawler_type},
-            {"Name": "service", "Value": service_name}
+            {"Name": "service", "Value": service_name},
         ]
         end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(hours=time_period_hours)
@@ -163,7 +163,9 @@ def get_bookmark(key_name: str) -> dict:
     }
 
     if not DYNAMODB_TABLE_NAME:
-        logger.warning(f"DYNAMODB_TABLE_NAME not set, returning defaults for {key_name}")
+        logger.warning(
+            f"DYNAMODB_TABLE_NAME not set, returning defaults for {key_name}"
+        )
         return default_status
 
     try:
@@ -180,7 +182,7 @@ def get_bookmark(key_name: str) -> dict:
             "totalProcessed": int(item.get("total_processed", 0)),
             "updatedAt": item.get("updated_at", datetime.now(timezone.utc).isoformat()),
         }
-        
+
         logger.info(f"Retrieved bookmark for {key_name}: {status}")
         return status
 
@@ -325,10 +327,10 @@ def get_pipeline_status():
     }
 
 
-def lambda_handler(event, context):
+def lambda_handler(event, _context):
     """
     Handle AppSync resolver requests for pipeline status
-    
+
     Event structure from AppSync:
     {
         "field": "pipelineStatus",
@@ -336,20 +338,20 @@ def lambda_handler(event, context):
     }
     """
     logger.info(f"AppSync resolver invoked: {json.dumps(event)}")
-    
+
     try:
-        field = event.get('field')
-        
-        if field == 'pipelineStatus':
+        field = event.get("field")
+
+        if field == "pipelineStatus":
             # Reuse existing function
             result = get_pipeline_status()
             logger.info("Pipeline status retrieved successfully")
             return result
-        
+
         error_msg = f"Unknown field: {field}"
         logger.error(error_msg)
         return {"error": error_msg}
-        
+
     except Exception as e:
         logger.error(f"Lambda handler error: {e}", exc_info=True)
         raise

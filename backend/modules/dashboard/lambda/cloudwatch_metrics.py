@@ -185,13 +185,13 @@ def get_crawler_metrics(crawler_type: str, time_period: int = 3600) -> dict[str,
     """
     try:
         namespace = f"{PROJECT_NAME.title()}/ColdPath"
-        
+
         # Map crawler type to service name used in Powertools Metrics
         service_name = "crawler" if crawler_type == "repo" else "user-crawler"
-        
+
         dimensions = [
             {"Name": "CrawlerType", "Value": crawler_type},
-            {"Name": "service", "Value": service_name}
+            {"Name": "service", "Value": service_name},
         ]
 
         # Get total items crawled in the time period
@@ -381,14 +381,16 @@ def get_overall_system_metrics() -> dict[str, Any]:
         }
 
 
-def get_crawler_metrics_with_bookmark(crawler_type: str, time_period_hours: int = 1) -> dict[str, Any]:
+def get_crawler_metrics_with_bookmark(
+    crawler_type: str, time_period_hours: int = 1
+) -> dict[str, Any]:
     """
     Get crawler metrics enriched with bookmark data from DynamoDB
-    
+
     Args:
         crawler_type: Either "repo" or "user"
         time_period_hours: Time period in hours (default 1)
-    
+
     Returns:
         Dictionary with crawler metrics including bookmark data
     """
@@ -396,19 +398,19 @@ def get_crawler_metrics_with_bookmark(crawler_type: str, time_period_hours: int 
         # Get CloudWatch metrics
         time_period_seconds = time_period_hours * 3600
         metrics = get_crawler_metrics(crawler_type, time_period_seconds)
-        
+
         # Get bookmark data from DynamoDB
         dynamodb = boto3.resource("dynamodb")
         table_name = os.environ.get("DYNAMODB_TABLE_NAME")
-        
+
         if table_name:
             table = dynamodb.Table(table_name)
             bookmark_key = "bookmark" if crawler_type == "repo" else "user_bookmark"
-            
+
             try:
                 response = table.get_item(Key={"state_key": bookmark_key})
                 item = response.get("Item")
-                
+
                 if item:
                     metrics["lastProcessedId"] = int(item.get("last_processed_id", 0))
                     metrics["totalProcessed"] = int(item.get("total_processed", 0))
@@ -422,7 +424,7 @@ def get_crawler_metrics_with_bookmark(crawler_type: str, time_period_hours: int 
         else:
             metrics["lastProcessedId"] = 0
             metrics["totalProcessed"] = 0
-        
+
         # Rename keys to match GraphQL schema (camelCase)
         return {
             "lastProcessedId": metrics.get("lastProcessedId", 0),
@@ -434,9 +436,11 @@ def get_crawler_metrics_with_bookmark(crawler_type: str, time_period_hours: int 
             "requestCount": metrics["request_count"],
             "runCount": metrics["run_count"],
         }
-        
+
     except Exception as e:
-        logger.error(f"Error getting crawler metrics with bookmark for {crawler_type}: {e}")
+        logger.error(
+            f"Error getting crawler metrics with bookmark for {crawler_type}: {e}"
+        )
         return {
             "lastProcessedId": 0,
             "totalProcessed": 0,
@@ -459,61 +463,59 @@ def lambda_handler(event, _context):
     try:
         # Check if this is an AppSync resolver request
         field = event.get("field")
-        
+
         if field == "repoCrawler":
             # AppSync resolver request for Query.repoCrawler
             logger.info("Handling AppSync resolver request for repoCrawler")
             time_period_hours = event.get("timePeriodHours", 1)
-            metrics = get_crawler_metrics_with_bookmark("repo", time_period_hours)
-            return metrics
-        
-        elif field == "userCrawler":
+            return get_crawler_metrics_with_bookmark("repo", time_period_hours)
+
+        if field == "userCrawler":
             # AppSync resolver request for Query.userCrawler
             logger.info("Handling AppSync resolver request for userCrawler")
             time_period_hours = event.get("timePeriodHours", 1)
-            metrics = get_crawler_metrics_with_bookmark("user", time_period_hours)
-            return metrics
-        
-        else:
-            # API Gateway request (legacy REST endpoint)
-            # Get metrics for Cold Path pipeline
-            cold_path = get_cold_path_metrics()
-            overall = get_overall_system_metrics()
+            return get_crawler_metrics_with_bookmark("user", time_period_hours)
 
-            response = {
-                "cold_path": cold_path,
-                "overall": overall,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "period": "last_1_hour",
-            }
+        # API Gateway request (legacy REST endpoint)
+        # Get metrics for Cold Path pipeline
+        cold_path = get_cold_path_metrics()
+        overall = get_overall_system_metrics()
 
-            return {
-                "statusCode": 200,
-                "headers": {
-                    "Content-Type": "application/json",
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Headers": "Content-Type",
-                    "Access-Control-Allow-Methods": "GET,OPTIONS",
-                },
-                "body": json.dumps(response),
-            }
+        response = {
+            "cold_path": cold_path,
+            "overall": overall,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "period": "last_1_hour",
+        }
+
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Headers": "Content-Type",
+                "Access-Control-Allow-Methods": "GET,OPTIONS",
+            },
+            "body": json.dumps(response),
 
     except Exception as e:
         logger.error(f"Unexpected error: {e}", exc_info=True)
-        
+
         # Check if this is an AppSync request
         if event.get("field"):
             # For AppSync, return error object directly
             return {"error": str(e)}
-        else:
-            # For API Gateway, return HTTP response
-            return {
-                "statusCode": 500,
-                "headers": {
-                    "Content-Type": "application/json",
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Headers": "Content-Type",
-                    "Access-Control-Allow-Methods": "GET,OPTIONS",
-                },
-                "body": json.dumps({"error": "Internal server error", "message": str(e)}),
-            }
+
+        # For API Gateway, return HTTP response
+        return {
+            "statusCode": 500,
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Headers": "Content-Type",
+                "Access-Control-Allow-Methods": "GET,OPTIONS",
+            },
+            "body": json.dumps(
+                {"error": "Internal server error", "message": str(e)}
+            ),
+        }

@@ -102,10 +102,10 @@ def get_error_rates():
         }
 
 
-def lambda_handler(event, context):
+def lambda_handler(event, _context):
     """
     Handle AppSync resolver requests for error rates
-    
+
     Event structure from AppSync:
     {
         "field": "errorRates",
@@ -113,20 +113,20 @@ def lambda_handler(event, context):
     }
     """
     logger.info(f"AppSync resolver invoked: {json.dumps(event)}")
-    
+
     try:
-        field = event.get('field')
-        
-        if field == 'errorRates':
+        field = event.get("field")
+
+        if field == "errorRates":
             # Reuse existing function
             result = get_error_rates()
             logger.info("Error rates retrieved successfully")
             return result
-        
+
         error_msg = f"Unknown field: {field}"
         logger.error(error_msg)
         return {"error": error_msg}
-        
+
     except Exception as e:
         logger.error(f"Lambda handler error: {e}", exc_info=True)
         raise

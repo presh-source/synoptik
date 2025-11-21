@@ -13,8 +13,6 @@ from io import BytesIO
 import boto3
 import pandas as pd
 import requests
-
-# AWS Lambda Powertools
 from aws_lambda_powertools import Logger, Metrics, Tracer
 from aws_lambda_powertools.metrics import MetricUnit
 from botocore.exceptions import ClientError

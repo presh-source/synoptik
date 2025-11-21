@@ -49,7 +49,7 @@ def publish_crawler_completed(
     items_fetched: int,
     total_processed: int,
     success: bool = True,
-    error_message: Optional[str] = None,
+    error_message: str | None = None,
     max_retries: int = 3,
 ) -> dict:
     """
@@ -216,7 +216,7 @@ def publish_crawler_completed(
 
         # Exponential backoff before retry (except on last attempt)
         if attempt < max_retries:
-            backoff_time = 2 ** attempt  # 1s, 2s, 4s
+            backoff_time = 2**attempt  # 1s, 2s, 4s
             logger.info(
                 "Retrying AppSync request after backoff",
                 extra={
@@ -228,9 +228,7 @@ def publish_crawler_completed(
             time.sleep(backoff_time)
 
     # All retries exhausted
-    error_msg = (
-        f"Failed to publish to AppSync after {max_retries + 1} attempts"
-    )
+    error_msg = f"Failed to publish to AppSync after {max_retries + 1} attempts"
     logger.error(
         error_msg,
         extra={

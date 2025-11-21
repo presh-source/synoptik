@@ -64,13 +64,13 @@ def get_crawler_metrics_from_cloudwatch(crawler_type: str, time_period_hours: in
 
     try:
         namespace = f"{PROJECT_NAME.title()}/ColdPath"
-        
+
         # Map crawler type to service name used in Powertools Metrics
         service_name = "crawler" if crawler_type == "repo" else "user-crawler"
-        
+
         dimensions = [
             {"Name": "CrawlerType", "Value": crawler_type},
-            {"Name": "service", "Value": service_name}
+            {"Name": "service", "Value": service_name},
         ]
         end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(hours=time_period_hours)
@@ -428,7 +428,7 @@ def get_bookmark(key_name: str) -> dict:
             "totalProcessed": int(item.get("total_processed", 0)),
             "updatedAt": item.get("updated_at", datetime.now(timezone.utc).isoformat()),
         }
-        
+
         logger.info(
             f"Retrieved bookmark for {key_name}",
             extra={"state_key": key_name, "status": status},
@@ -803,78 +803,75 @@ def lambda_handler(event, context):
     try:
         # Check if this is an AppSync resolver request
         field = event.get("field")
-        
+
         if field == "pipelineStatus":
             # AppSync resolver request for Query.pipelineStatus
             logger.info("Handling AppSync resolver request for pipelineStatus")
-            status = get_pipeline_status()
-            return status
-        
-        elif field == "errorRates":
+            return get_pipeline_status()
+
+        if field == "errorRates":
             # AppSync resolver request for Query.errorRates
             logger.info("Handling AppSync resolver request for errorRates")
-            error_rates = get_error_rates()
-            return error_rates
-        
-        else:
-            # API Gateway request (legacy REST endpoint)
-            status = get_pipeline_status()
+            return get_error_rates()
 
-            logger.info(
-                "Pipeline status retrieved successfully",
-                extra={
-                    "operation": "lambda_handler_success",
-                    "request_id": context.aws_request_id if context else "unknown",
-                    "status_code": 200,
-                },
-            )
+        # API Gateway request (legacy REST endpoint)
+        status = get_pipeline_status()
 
-            add_breadcrumb(
-                message="Pipeline status retrieved successfully",
-                category="lambda",
-                level="info",
-            )
+        logger.info(
+            "Pipeline status retrieved successfully",
+            extra={
+                "operation": "lambda_handler_success",
+                "request_id": context.aws_request_id if context else "unknown",
+                "status_code": 200,
+            },
+        )
 
-            return {
-                "statusCode": 200,
-                "headers": {
-                    "Content-Type": "application/json",
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Headers": (
-                        "Content-Type,X-Amz-Date,Authorization,"
-                        "X-Api-Key,X-Amz-Security-Token"
-                    ),
-                    "Access-Control-Allow-Methods": "GET,OPTIONS",
-                },
-                "body": json.dumps(status),
-            }
+        add_breadcrumb(
+            message="Pipeline status retrieved successfully",
+            category="lambda",
+            level="info",
+        )
+
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Headers": (
+                    "Content-Type,X-Amz-Date,Authorization,"
+                    "X-Api-Key,X-Amz-Security-Token"
+                ),
+                "Access-Control-Allow-Methods": "GET,OPTIONS",
+            },
+            "body": json.dumps(status),
+        }
 
     except Exception as e:
         logger.error(
-            "Lambda handler error",
+            "Unexpected error in lambda_handler",
             extra={
                 "operation": "lambda_handler_error",
-                "request_id": context.aws_request_id if context else "unknown",
                 "error": str(e),
                 "error_type": type(e).__name__,
-                "status_code": 500,
             },
             exc_info=True,
         )
 
         capture_lambda_error(e, context, extra_context={"endpoint": "pipeline-status"})
-        
+
         # Check if this is an AppSync request
         if event.get("field"):
             # For AppSync, return error object directly
             return {"error": str(e)}
-        else:
-            # For API Gateway, return HTTP response
-            return {
-                "statusCode": 500,
-                "headers": {
-                    "Content-Type": "application/json",
-                    "Access-Control-Allow-Origin": "*",
-                },
-                "body": json.dumps({"error": "Internal Server Error", "message": str(e)}),
-            }
+
+        # For API Gateway, return HTTP response
+        return {
+            "statusCode": 500,
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+            },
+            "body": json.dumps(
+                {"error": "Internal Server Error", "message": str(e)}
+            ),
+        }
