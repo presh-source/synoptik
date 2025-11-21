@@ -94,16 +94,16 @@ module "appsync" {
 
 # Cold Path Pipeline
 module "cold_path" {
-  source                = "./modules/cold-path"
-  project_name          = var.project_name
-  environment           = var.environment
-  github_token          = var.github_token
-  data_lake_bucket_name = module.data_lake.bucket_name
-  tags                  = local.merged_tags
-  lambda_timeout        = 900
-  lambda_memory         = 1024
+  source                 = "./modules/cold-path"
+  project_name           = var.project_name
+  environment            = var.environment
+  github_token           = var.github_token
+  data_lake_bucket_name  = module.data_lake.bucket_name
+  tags                   = local.merged_tags
+  lambda_timeout         = 900
+  lambda_memory          = 1024
   requests_per_execution = 700
-  sleep_interval        = 1
+  sleep_interval         = 1
 
   # AppSync configuration - will be populated after AppSync module is created
   appsync_graphql_endpoint = try(module.appsync[0].appsync_graphql_endpoint, "")

@@ -9,10 +9,10 @@ resource "aws_secretsmanager_secret" "appsync_api_key" {
 }
 
 resource "aws_secretsmanager_secret_version" "appsync_api_key" {
-  secret_id     = aws_secretsmanager_secret.appsync_api_key.id
+  secret_id = aws_secretsmanager_secret.appsync_api_key.id
   secret_string = jsonencode({
-    api_key              = aws_appsync_api_key.main.key
-    graphql_endpoint     = aws_appsync_graphql_api.main.uris["GRAPHQL"]
-    realtime_endpoint    = aws_appsync_graphql_api.main.uris["REALTIME"]
+    api_key           = aws_appsync_api_key.main.key
+    graphql_endpoint  = aws_appsync_graphql_api.main.uris["GRAPHQL"]
+    realtime_endpoint = aws_appsync_graphql_api.main.uris["REALTIME"]
   })
 }
