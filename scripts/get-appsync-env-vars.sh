@@ -18,7 +18,7 @@ cd "$(dirname "$0")/../backend"
 
 # Get Terraform outputs
 echo "📡 Retrieving AppSync endpoints..."
-GRAPHQL_ENDPOINT=$(terraform output -raw appsync_graphql_endpoint 2>/dev/null || echo "")
+GRAPHQL_ENDPOINT=$(terraform output -raw appsync_api_url 2>/dev/null || echo "")
 REALTIME_ENDPOINT=$(terraform output -raw appsync_realtime_endpoint 2>/dev/null || echo "")
 API_KEY=$(terraform output -raw appsync_api_key 2>/dev/null || echo "")
 
@@ -37,7 +37,7 @@ echo "=========================================="
 echo ""
 echo "These are automatically configured in Terraform:"
 echo ""
-echo "APPSYNC_GRAPHQL_ENDPOINT=$GRAPHQL_ENDPOINT"
+echo "appsync_api_url=$GRAPHQL_ENDPOINT"
 echo ""
 
 echo "=========================================="
@@ -46,7 +46,7 @@ echo "=========================================="
 echo ""
 echo "Add these to frontend/.env.local:"
 echo ""
-echo "VITE_APPSYNC_GRAPHQL_ENDPOINT=$GRAPHQL_ENDPOINT"
+echo "VITE_appsync_api_url=$GRAPHQL_ENDPOINT"
 echo "VITE_APPSYNC_API_KEY=$API_KEY"
 echo "VITE_APPSYNC_REALTIME_ENDPOINT=$REALTIME_ENDPOINT"
 echo ""
@@ -77,9 +77,9 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
   fi
   
   # Update or add AppSync variables
-  if grep -q "VITE_APPSYNC_GRAPHQL_ENDPOINT" "$ENV_FILE" 2>/dev/null; then
+  if grep -q "VITE_appsync_api_url" "$ENV_FILE" 2>/dev/null; then
     # Update existing values
-    sed -i.tmp "s|VITE_APPSYNC_GRAPHQL_ENDPOINT=.*|VITE_APPSYNC_GRAPHQL_ENDPOINT=$GRAPHQL_ENDPOINT|" "$ENV_FILE"
+    sed -i.tmp "s|VITE_appsync_api_url=.*|VITE_appsync_api_url=$GRAPHQL_ENDPOINT|" "$ENV_FILE"
     sed -i.tmp "s|VITE_APPSYNC_API_KEY=.*|VITE_APPSYNC_API_KEY=$API_KEY|" "$ENV_FILE"
     sed -i.tmp "s|VITE_APPSYNC_REALTIME_ENDPOINT=.*|VITE_APPSYNC_REALTIME_ENDPOINT=$REALTIME_ENDPOINT|" "$ENV_FILE"
     rm -f "$ENV_FILE.tmp"
@@ -87,7 +87,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     # Append new values
     echo "" >> "$ENV_FILE"
     echo "# AppSync GraphQL API Configuration" >> "$ENV_FILE"
-    echo "VITE_APPSYNC_GRAPHQL_ENDPOINT=$GRAPHQL_ENDPOINT" >> "$ENV_FILE"
+    echo "VITE_appsync_api_url=$GRAPHQL_ENDPOINT" >> "$ENV_FILE"
     echo "VITE_APPSYNC_API_KEY=$API_KEY" >> "$ENV_FILE"
     echo "VITE_APPSYNC_REALTIME_ENDPOINT=$REALTIME_ENDPOINT" >> "$ENV_FILE"
   fi
@@ -100,10 +100,10 @@ echo "=========================================="
 echo "Next Steps"
 echo "=========================================="
 echo ""
-echo "1. Verify crawler Lambdas have the APPSYNC_GRAPHQL_ENDPOINT:"
+echo "1. Verify crawler Lambdas have the appsync_api_url:"
 echo "   aws lambda get-function-configuration \\"
 echo "     --function-name $ENVIRONMENT-$PROJECT_NAME-repo-crawler \\"
-echo "     --query 'Environment.Variables.APPSYNC_GRAPHQL_ENDPOINT'"
+echo "     --query 'Environment.Variables.appsync_api_url'"
 echo ""
 echo "2. Test the GraphQL endpoint:"
 echo "   curl -X POST \\"

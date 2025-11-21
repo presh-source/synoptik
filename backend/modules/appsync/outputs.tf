@@ -14,7 +14,7 @@ output "appsync_api_arn" {
   value       = aws_appsync_graphql_api.main.arn
 }
 
-output "appsync_graphql_endpoint" {
+output "appsync_api_url" {
   description = "GraphQL endpoint URL for queries and mutations"
   value       = aws_appsync_graphql_api.main.uris["GRAPHQL"]
 }

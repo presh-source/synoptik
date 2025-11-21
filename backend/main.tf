@@ -22,16 +22,11 @@ terraform {
     }
   }
 
-  # Backend configuration for AWS
   # For AWS: use `terraform init -backend-config=environments/{env}/backend.tfvars`
   backend "s3" {}
 }
 
-# ============================================================================
 # Providers
-# ============================================================================
-
-# Default provider (uses region from variables or AWS config)
 provider "aws" {
   region = var.aws_region
 }
@@ -42,9 +37,7 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# ============================================================================
 # Data sources
-# ============================================================================
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
@@ -54,10 +47,6 @@ locals {
     Environment = var.environment
   })
 }
-
-# ============================================================================
-# Core Modules
-# ============================================================================
 
 # IAM Roles
 module "iam" {
@@ -75,17 +64,14 @@ module "data_lake" {
   tags         = local.merged_tags
 }
 
-# ============================================================================
-# Pipeline Modules (Uncomment as implemented)
-# ============================================================================
-
 # AppSync GraphQL API
 module "appsync" {
   source = "./modules/appsync"
 
   project_name             = var.project_name
   environment              = var.environment
-  cold_path_dynamodb_table = module.cold_path.dynamodb_table_name
+  cold_path_dynamodb_table = "${var.environment}-${var.project_name}-crawler-state"
+  appsync_domain_name      = var.appsync_domain_name
   acm_certificate_arn      = var.acm_certificate_arn
   tags                     = local.merged_tags
 }
@@ -103,20 +89,13 @@ module "cold_path" {
   requests_per_execution = 700
   sleep_interval         = 1
 
-  # AppSync configuration - will be populated after AppSync module is created
-  appsync_graphql_endpoint = try(module.appsync[0].appsync_graphql_endpoint, "")
-  appsync_api_id           = try(module.appsync[0].appsync_api_id, "")
+  appsync_api_url = module.appsync.appsync_api_url
+  appsync_api_id  = module.appsync.appsync_api_id
 
   depends_on = [module.data_lake]
 }
 
-
-
-# ============================================================================
 # Dashboard Module
-# ============================================================================
-
-# Dashboard (API Gateway, Lambda, Frontend)
 module "dashboard" {
   source = "./modules/dashboard"
 
@@ -129,8 +108,8 @@ module "dashboard" {
   cold_path_dynamodb_table        = module.cold_path.dynamodb_table_name
   sentry_dsn_backend              = var.sentry_dsn_backend
   app_version                     = var.app_version
-  appsync_domain_name             = module.appsync.appsync_domain_name
   api_domain_name                 = var.api_domain_name
+  appsync_domain_name             = var.appsync_domain_name
   hosted_zone_name                = var.hosted_zone_name
   acm_certificate_arn             = var.acm_certificate_arn
   api_gateway_cloudwatch_role_arn = module.iam.api_gateway_cloudwatch_role_arn

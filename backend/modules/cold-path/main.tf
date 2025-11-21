@@ -118,7 +118,7 @@ resource "aws_iam_role_policy" "repo_crawler_lambda_policy" {
 # IAM policy for AppSync access (only created when AppSync endpoint is provided)
 # Follows principle of least privilege by restricting to specific API and mutation field
 resource "aws_iam_role_policy" "repo_crawler_appsync_policy" {
-  count = var.appsync_graphql_endpoint != "" && var.appsync_api_id != "" ? 1 : 0
+  count = var.appsync_api_url != "" && var.appsync_api_id != "" ? 1 : 0
   name  = "${var.environment}-${var.project_name}-repo-crawler-appsync-policy"
   role  = aws_iam_role.repo_crawler_lambda.id
 
@@ -199,13 +199,13 @@ resource "aws_lambda_function" "repo_crawler" {
 
   environment {
     variables = {
-      DYNAMODB_TABLE_NAME      = aws_dynamodb_table.crawl_state.name
-      S3_BUCKET_NAME           = var.data_lake_bucket_name
-      GITHUB_TOKEN             = var.github_token
-      REQUESTS_PER_EXECUTION   = var.requests_per_execution
-      SLEEP_INTERVAL           = var.sleep_interval
-      PROJECT_NAME             = var.project_name
-      APPSYNC_GRAPHQL_ENDPOINT = var.appsync_graphql_endpoint
+      DYNAMODB_TABLE_NAME    = aws_dynamodb_table.crawl_state.name
+      S3_BUCKET_NAME         = var.data_lake_bucket_name
+      GITHUB_TOKEN           = var.github_token
+      REQUESTS_PER_EXECUTION = var.requests_per_execution
+      SLEEP_INTERVAL         = var.sleep_interval
+      PROJECT_NAME           = var.project_name
+      appsync_api_url        = var.appsync_api_url
     }
   }
 
@@ -436,7 +436,7 @@ resource "aws_iam_role_policy" "user_crawler_lambda_policy" {
 # IAM policy for AppSync access (only created when AppSync endpoint is provided)
 # Follows principle of least privilege by restricting to specific API and mutation field
 resource "aws_iam_role_policy" "user_crawler_appsync_policy" {
-  count = var.appsync_graphql_endpoint != "" && var.appsync_api_id != "" ? 1 : 0
+  count = var.appsync_api_url != "" && var.appsync_api_id != "" ? 1 : 0
   name  = "${var.environment}-${var.project_name}-user-crawler-appsync-policy"
   role  = aws_iam_role.user_crawler_lambda.id
 
@@ -472,13 +472,13 @@ resource "aws_lambda_function" "user_crawler" {
 
   environment {
     variables = {
-      DYNAMODB_TABLE_NAME      = aws_dynamodb_table.crawl_state.name
-      S3_BUCKET_NAME           = var.data_lake_bucket_name
-      GITHUB_TOKEN             = var.github_token
-      REQUESTS_PER_EXECUTION   = var.requests_per_execution
-      SLEEP_INTERVAL           = var.sleep_interval
-      PROJECT_NAME             = var.project_name
-      APPSYNC_GRAPHQL_ENDPOINT = var.appsync_graphql_endpoint
+      DYNAMODB_TABLE_NAME    = aws_dynamodb_table.crawl_state.name
+      S3_BUCKET_NAME         = var.data_lake_bucket_name
+      GITHUB_TOKEN           = var.github_token
+      REQUESTS_PER_EXECUTION = var.requests_per_execution
+      SLEEP_INTERVAL         = var.sleep_interval
+      PROJECT_NAME           = var.project_name
+      appsync_api_url        = var.appsync_api_url
     }
   }
 

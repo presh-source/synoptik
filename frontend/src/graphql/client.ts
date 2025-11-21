@@ -4,7 +4,7 @@ import { getMainDefinition } from '@apollo/client/utilities';
 import { createClient } from 'graphql-ws';
 
 // AppSync endpoint configuration from environment variables
-const APPSYNC_ENDPOINT = import.meta.env.VITE_APPSYNC_GRAPHQL_ENDPOINT;
+const APPSYNC_ENDPOINT = import.meta.env.VITE_appsync_api_url;
 const APPSYNC_API_KEY = import.meta.env.VITE_APPSYNC_API_KEY;
 const APPSYNC_REALTIME_ENDPOINT = import.meta.env.VITE_APPSYNC_REALTIME_ENDPOINT;
 

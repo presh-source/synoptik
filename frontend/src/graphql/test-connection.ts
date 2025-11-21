@@ -9,12 +9,12 @@ export function testApolloClientConnection(): void {
   console.log('Testing Apollo Client Configuration...');
   
   // Check environment variables
-  const endpoint = import.meta.env.VITE_APPSYNC_GRAPHQL_ENDPOINT;
+  const endpoint = import.meta.env.VITE_appsync_api_url;
   const apiKey = import.meta.env.VITE_APPSYNC_API_KEY;
   const realtimeEndpoint = import.meta.env.VITE_APPSYNC_REALTIME_ENDPOINT;
   
   console.log('Environment Variables:');
-  console.log('- VITE_APPSYNC_GRAPHQL_ENDPOINT:', endpoint ? '✓ Set' : '✗ Missing');
+  console.log('- VITE_appsync_api_url:', endpoint ? '✓ Set' : '✗ Missing');
   console.log('- VITE_APPSYNC_API_KEY:', apiKey ? '✓ Set' : '✗ Missing');
   console.log('- VITE_APPSYNC_REALTIME_ENDPOINT:', realtimeEndpoint ? '✓ Set' : '✗ Missing');
   

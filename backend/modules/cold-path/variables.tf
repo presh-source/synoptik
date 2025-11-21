@@ -62,7 +62,7 @@ variable "aws_powertools_layer_version" {
 
 }
 
-variable "appsync_graphql_endpoint" {
+variable "appsync_api_url" {
   description = "The AppSync GraphQL API endpoint for publishing crawler events"
   type        = string
   default     = ""

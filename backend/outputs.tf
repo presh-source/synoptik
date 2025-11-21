@@ -38,9 +38,9 @@ output "dashboard_url" {
 # AppSync GraphQL API Outputs
 # ============================================================================
 
-output "appsync_graphql_endpoint" {
+output "appsync_api_url" {
   description = "GraphQL endpoint URL for queries and mutations"
-  value       = module.appsync.appsync_graphql_endpoint
+  value       = module.appsync.appsync_api_url
 }
 
 output "appsync_realtime_endpoint" {
