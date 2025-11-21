@@ -69,33 +69,7 @@ output "acm_certificate_arn" {
   value       = var.acm_certificate_arn != "" ? var.acm_certificate_arn : (length(module.frontend_certificate) > 0 ? module.frontend_certificate[0].certificate_arn : null)
 }
 
-output "appsync_graphql_api_url" {
-  description = "The URL of the AppSync GraphQL API"
-  value       = var.appsync_graphql_api_url
-}
-
-output "appsync_api_key" {
-  description = "The API Key for the AppSync GraphQL API"
-  value       = var.appsync_api_key
-  sensitive   = true
-}
-
 output "appsync_custom_domain_url" {
   description = "The custom domain URL for the AppSync GraphQL API"
-  value       = var.appsync_appsync_domain_name != "" ? "https://{var.appsync_appsync_domain_name}/graphql" : null
-}
-
-output "appsync_domain_name" {
-  description = "The AppSync domain name (for DNS configuration)"
-  value       = var.appsync_domain_name
-}
-
-output "appsync_hosted_zone_id" {
-  description = "The hosted zone ID for the AppSync domain (for DNS configuration)"
-  value       = var.appsync_hosted_zone_id
-}
-
-output "appsync_appsync_domain_name" {
-  description = "Custom domain name for the GraphQL API"
-  value       = var.appsync_appsync_domain_name != "" ? var.appsync_appsync_domain_name : null
+  value       = var.appsync_domain_name != "" ? "https://{var.appsync_domain_name}/graphql" : null
 }

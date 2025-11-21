@@ -22,12 +22,6 @@ variable "github_token" {
   sensitive   = true
 }
 
-variable "vpc_cidr" {
-  description = "CIDR block for VPC"
-  type        = string
-  default     = "10.0.0.0/16"
-}
-
 variable "project_name" {
   description = "The name of the project"
   type        = string
@@ -75,12 +69,6 @@ variable "api_domain_name" {
   default     = ""
 }
 
-variable "appsync_appsync_domain_name" {
-  description = "Custom domain name for the GraphQL API (AppSync)"
-  type        = string
-  default     = ""
-}
-
 variable "hosted_zone_name" {
   description = "The name of the Route 53 hosted zone (e.g. example.com)"
   type        = string
@@ -91,10 +79,4 @@ variable "acm_certificate_arn" {
   description = "ARN of existing ACM certificate for custom domain (must be in us-east-1)"
   type        = string
   default     = ""
-}
-
-variable "enable_appsync" {
-  description = "Enable AppSync GraphQL API module"
-  type        = bool
-  default     = true
 }
