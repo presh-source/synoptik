@@ -118,9 +118,8 @@ resource "aws_iam_role_policy" "repo_crawler_lambda_policy" {
 # IAM policy for AppSync access (only created when AppSync endpoint is provided)
 # Follows principle of least privilege by restricting to specific API and mutation field
 resource "aws_iam_role_policy" "repo_crawler_appsync_policy" {
-  count = var.appsync_api_url != "" && var.appsync_api_id != "" ? 1 : 0
-  name  = "${var.environment}-${var.project_name}-repo-crawler-appsync-policy"
-  role  = aws_iam_role.repo_crawler_lambda.id
+  name = "${var.environment}-${var.project_name}-repo-crawler-appsync-policy"
+  role = aws_iam_role.repo_crawler_lambda.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -436,9 +435,8 @@ resource "aws_iam_role_policy" "user_crawler_lambda_policy" {
 # IAM policy for AppSync access (only created when AppSync endpoint is provided)
 # Follows principle of least privilege by restricting to specific API and mutation field
 resource "aws_iam_role_policy" "user_crawler_appsync_policy" {
-  count = var.appsync_api_url != "" && var.appsync_api_id != "" ? 1 : 0
-  name  = "${var.environment}-${var.project_name}-user-crawler-appsync-policy"
-  role  = aws_iam_role.user_crawler_lambda.id
+  name = "${var.environment}-${var.project_name}-user-crawler-appsync-policy"
+  role = aws_iam_role.user_crawler_lambda.id
 
   policy = jsonencode({
     Version = "2012-10-17"
