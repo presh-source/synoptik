@@ -70,7 +70,13 @@ variable "domain_name" {
 }
 
 variable "api_domain_name" {
-  description = "Custom domain name for the API"
+  description = "Custom domain name for the REST API"
+  type        = string
+  default     = ""
+}
+
+variable "graphql_domain_name" {
+  description = "Custom domain name for the GraphQL API (AppSync)"
   type        = string
   default     = ""
 }
@@ -85,4 +91,10 @@ variable "acm_certificate_arn" {
   description = "ARN of existing ACM certificate for custom domain (must be in us-east-1)"
   type        = string
   default     = ""
+}
+
+variable "enable_appsync" {
+  description = "Enable AppSync GraphQL API module"
+  type        = bool
+  default     = true
 }

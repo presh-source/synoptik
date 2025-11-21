@@ -33,3 +33,28 @@ output "dashboard_url" {
   description = "URL of the dashboard"
   value       = module.dashboard.dashboard_url
 }
+
+# ============================================================================
+# AppSync GraphQL API Outputs
+# ============================================================================
+
+output "appsync_graphql_endpoint" {
+  description = "GraphQL endpoint URL for queries and mutations"
+  value       = var.enable_appsync ? module.appsync[0].appsync_graphql_endpoint : null
+}
+
+output "appsync_realtime_endpoint" {
+  description = "WebSocket endpoint URL for subscriptions"
+  value       = var.enable_appsync ? module.appsync[0].appsync_realtime_endpoint : null
+}
+
+output "appsync_api_key" {
+  description = "API key for AppSync GraphQL API"
+  value       = var.enable_appsync ? module.appsync[0].appsync_api_key : null
+  sensitive   = true
+}
+
+output "appsync_api_id" {
+  description = "ID of the AppSync GraphQL API"
+  value       = var.enable_appsync ? module.appsync[0].appsync_api_id : null
+}

@@ -8,6 +8,7 @@ import CrawlerMetricsCard from '@/components/CrawlerMetrics'
 import { CrawlerMetricsSkeleton, ColdPathStatusSkeleton, ErrorRateSkeleton } from '@/components/LoadingSkeleton'
 import ErrorDisplay, { InlineErrorDisplay } from '@/components/ErrorDisplay'
 import EmptyState from '@/components/EmptyState'
+import CrawlerEventNotification from '@/components/CrawlerEventNotification'
 import { logUserAction, logComponentEvent } from '@/utils/logger'
 
 export default function PipelineStatusPage() {
@@ -150,6 +151,9 @@ export default function PipelineStatusPage() {
   // Main view with data
   return (
     <Box>
+      {/* Crawler event notification subscription - Requirements 13.2, 13.3, 18.3, 18.4 */}
+      <CrawlerEventNotification onCrawlerCompleted={() => refetch()} />
+      
       <Box 
         sx={{ 
           display: 'flex', 

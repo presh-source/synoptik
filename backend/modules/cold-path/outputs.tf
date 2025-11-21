@@ -44,3 +44,13 @@ output "user_crawler_eventbridge_rule_arn" {
   description = "ARN of the EventBridge rule for the user crawler"
   value       = aws_cloudwatch_event_rule.user_crawler_schedule.arn
 }
+
+output "repo_crawler_lambda_role_arn" {
+  description = "ARN of the IAM role for the repo crawler Lambda"
+  value       = aws_iam_role.repo_crawler_lambda.arn
+}
+
+output "user_crawler_lambda_role_arn" {
+  description = "ARN of the IAM role for the user crawler Lambda"
+  value       = aws_iam_role.user_crawler_lambda.arn
+}

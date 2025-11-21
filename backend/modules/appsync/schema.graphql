@@ -1,0 +1,87 @@
+# GraphQL Schema for Synoptik Observability Platform
+# Provides queries for pipeline metrics, mutations for event publishing,
+# and subscriptions for real-time crawler completion events
+
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}
+
+type Query {
+  """Get complete pipeline status including all crawlers and error rates"""
+  pipelineStatus: PipelineStatus!
+  
+  """Get repository crawler metrics for a specific time period"""
+  repoCrawler(timePeriodHours: Int = 1): CrawlerMetrics!
+  
+  """Get user crawler metrics for a specific time period"""
+  userCrawler(timePeriodHours: Int = 1): CrawlerMetrics!
+  
+  """Get error rates for the cold path pipeline"""
+  errorRates: ErrorRates!
+}
+
+type Mutation {
+  """Publish crawler completion event (called by crawler Lambdas)"""
+  publishCrawlerCompleted(input: CrawlerCompletedInput!): CrawlerCompleted!
+}
+
+type Subscription {
+  """Subscribe to crawler completion events, optionally filtered by crawler type"""
+  onCrawlerCompleted(crawlerType: String): CrawlerCompleted
+    @aws_subscribe(mutations: ["publishCrawlerCompleted"])
+}
+
+# Object Types
+
+type PipelineStatus {
+  coldPath: ColdPathStatus!
+  errorRates: ErrorRates!
+}
+
+type ColdPathStatus {
+  lastProcessedId: Int!
+  totalProcessed: Int!
+  updatedAt: AWSDateTime!
+  repoCrawler: CrawlerMetrics!
+  userCrawler: CrawlerMetrics!
+}
+
+type CrawlerMetrics {
+  lastProcessedId: Int!
+  totalProcessed: Int!
+  totalCrawled: Int!
+  ratePerHour: Float!
+  ratePerMinute: Float!
+  ratePerSecond: Float!
+  requestCount: Int!
+  runCount: Int!
+}
+
+type ErrorRates {
+  coldPath: Float!
+}
+
+type CrawlerCompleted {
+  crawlerType: String!
+  startId: Int!
+  endId: Int!
+  itemsFetched: Int!
+  totalProcessed: Int!
+  completedAt: AWSDateTime!
+  success: Boolean!
+  errorMessage: String
+}
+
+# Input Types
+
+input CrawlerCompletedInput {
+  crawlerType: String!
+  startId: Int!
+  endId: Int!
+  itemsFetched: Int!
+  totalProcessed: Int!
+  success: Boolean!
+  errorMessage: String
+}

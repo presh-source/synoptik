@@ -64,7 +64,14 @@ def get_crawler_metrics_from_cloudwatch(crawler_type: str, time_period_hours: in
 
     try:
         namespace = f"{PROJECT_NAME.title()}/ColdPath"
-        dimensions = [{"Name": "CrawlerType", "Value": crawler_type}]
+        
+        # Map crawler type to service name used in Powertools Metrics
+        service_name = "crawler" if crawler_type == "repo" else "user-crawler"
+        
+        dimensions = [
+            {"Name": "CrawlerType", "Value": crawler_type},
+            {"Name": "service", "Value": service_name}
+        ]
         end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(hours=time_period_hours)
         period = time_period_hours * 3600
@@ -391,26 +398,10 @@ def get_crawler_metrics_from_cloudwatch(crawler_type: str, time_period_hours: in
         }
 
 
-def get_cold_path_status():
+def get_bookmark(key_name: str) -> dict:
     """
-    Fetches the status of the cold path historical ingestion including
-    crawler metrics.
+    Helper to fetch a bookmark from DynamoDB.
     """
-    logger.info(
-        "Starting Cold Path status fetch",
-        extra={
-            "operation": "get_cold_path_status",
-            "table_name": DYNAMODB_TABLE_NAME,
-        },
-    )
-
-    add_breadcrumb(
-        "Fetching Cold Path status",
-        category="dynamodb",
-        level="info",
-    )
-
-    # Default values in case of errors
     default_status = {
         "lastProcessedId": 0,
         "totalProcessed": 0,
@@ -418,176 +409,76 @@ def get_cold_path_status():
     }
 
     if not DYNAMODB_TABLE_NAME:
-        logger.warning(
-            "DYNAMODB_TABLE_NAME environment variable not set",
-            extra={
-                "operation": "dynamodb_config_error",
-                "using_defaults": True,
-            },
+        return default_status
+
+    try:
+        table = dynamodb.Table(DYNAMODB_TABLE_NAME)
+        response = table.get_item(Key={"state_key": key_name})
+        item = response.get("Item")
+
+        if not item:
+            logger.warning(
+                f"No bookmark found for {key_name}",
+                extra={"state_key": key_name, "using_defaults": True},
+            )
+            return default_status
+
+        status = {
+            "lastProcessedId": int(item.get("last_processed_id", 0)),
+            "totalProcessed": int(item.get("total_processed", 0)),
+            "updatedAt": item.get("updated_at", datetime.now(timezone.utc).isoformat()),
+        }
+        
+        logger.info(
+            f"Retrieved bookmark for {key_name}",
+            extra={"state_key": key_name, "status": status},
         )
+        return status
 
-        add_breadcrumb(
-            "DYNAMODB_TABLE_NAME environment variable not set",
-            category="dynamodb",
-            level="warning",
-            data={"using_defaults": True},
+    except Exception as e:
+        logger.error(
+            f"Failed to get bookmark for {key_name}",
+            extra={"error": str(e), "state_key": key_name},
+            exc_info=True,
         )
-        capture_lambda_error(
-            ValueError("DYNAMODB_TABLE_NAME not configured"),
-            extra_context={
-                "function": "get_cold_path_status",
-                "issue": "missing_environment_variable",
-            },
-        )
-        base_status = default_status.copy()
-    else:
-        try:
-            logger.info(
-                "Querying DynamoDB for bookmark",
-                extra={
-                    "operation": "dynamodb_get_item",
-                    "table_name": DYNAMODB_TABLE_NAME,
-                    "key": {"state_key": "bookmark"},
-                },
-            )
+        capture_lambda_error(e, extra_context={"state_key": key_name})
+        return default_status
 
-            add_breadcrumb(
-                "Querying DynamoDB for bookmark",
-                category="dynamodb",
-                level="info",
-                data={"table_name": DYNAMODB_TABLE_NAME},
-            )
 
-            table = dynamodb.Table(DYNAMODB_TABLE_NAME)
-            response = table.get_item(Key={"state_key": "bookmark"})
-            item = response.get("Item")
+def get_cold_path_status():
+    """
+    Fetches the status of the cold path historical ingestion including
+    crawler metrics.
+    """
+    logger.info("Starting Cold Path status fetch")
 
-            if not item:
-                logger.warning(
-                    "No bookmark found in DynamoDB",
-                    extra={
-                        "operation": "dynamodb_query_result",
-                        "table_name": DYNAMODB_TABLE_NAME,
-                        "item_found": False,
-                        "using_defaults": True,
-                    },
-                )
+    # Fetch bookmarks
+    repo_bookmark = get_bookmark("bookmark")
+    user_bookmark = get_bookmark("user_bookmark")
 
-                add_breadcrumb(
-                    "No bookmark found in DynamoDB",
-                    category="dynamodb",
-                    level="warning",
-                    data={"using_defaults": True},
-                )
-                base_status = default_status.copy()
-            else:
-                base_status = {
-                    "lastProcessedId": int(item.get("last_processed_id", 0)),
-                    "totalProcessed": int(item.get("total_processed", 0)),
-                    "updatedAt": item.get(
-                        "updated_at", datetime.now(timezone.utc).isoformat()
-                    ),
-                }
-
-                logger.info(
-                    "Successfully retrieved bookmark from DynamoDB",
-                    extra={
-                        "operation": "dynamodb_query_result",
-                        "table_name": DYNAMODB_TABLE_NAME,
-                        "item_found": True,
-                        "last_processed_id": base_status["lastProcessedId"],
-                        "total_processed": base_status["totalProcessed"],
-                        "updated_at": base_status["updatedAt"],
-                    },
-                )
-
-                add_breadcrumb(
-                    "Successfully retrieved bookmark from DynamoDB",
-                    category="dynamodb",
-                    level="info",
-                    data={
-                        "last_processed_id": base_status["lastProcessedId"],
-                        "total_processed": base_status["totalProcessed"],
-                    },
-                )
-
-        except Exception as e:
-            logger.error(
-                "Failed to get cold path status from DynamoDB",
-                extra={
-                    "operation": "dynamodb_query_error",
-                    "table_name": DYNAMODB_TABLE_NAME,
-                    "error": str(e),
-                    "error_type": type(e).__name__,
-                },
-                exc_info=True,
-            )
-
-            add_breadcrumb(
-                "Failed to get cold path status from DynamoDB",
-                category="dynamodb",
-                level="error",
-                data={
-                    "error": str(e),
-                    "error_type": type(e).__name__,
-                    "table_name": DYNAMODB_TABLE_NAME,
-                },
-            )
-            capture_lambda_error(
-                e,
-                extra_context={
-                    "function": "get_cold_path_status",
-                    "table_name": DYNAMODB_TABLE_NAME,
-                    "operation": "get_item",
-                    "key": {"state_key": "bookmark"},
-                },
-            )
-            base_status = default_status.copy()
-
-    # Add crawler-specific metrics (these functions handle their own errors)
-    logger.info(
-        "Fetching crawler-specific metrics",
-        extra={
-            "operation": "fetch_crawler_metrics",
-            "crawlers": ["repo", "user"],
-        },
-    )
-
+    # Fetch CloudWatch metrics
     repo_metrics = get_crawler_metrics_from_cloudwatch("repo")
     user_metrics = get_crawler_metrics_from_cloudwatch("user")
 
-    # Enrich crawler metrics with ingestion position (same bookmark for now)
+    # Enrich metrics with bookmark data
     repo_metrics.update(
         {
-            "lastProcessedId": base_status["lastProcessedId"],
-            "totalProcessed": base_status["totalProcessed"],
+            "lastProcessedId": repo_bookmark["lastProcessedId"],
+            "totalProcessed": repo_bookmark["totalProcessed"],
         }
     )
     user_metrics.update(
         {
-            "lastProcessedId": base_status["lastProcessedId"],
-            "totalProcessed": base_status["totalProcessed"],
+            "lastProcessedId": user_bookmark["lastProcessedId"],
+            "totalProcessed": user_bookmark["totalProcessed"],
         }
     )
 
+    # Construct response
+    # Top-level fields reflect the Repo crawler (primary)
+    base_status = repo_bookmark.copy()
     base_status["repoCrawler"] = repo_metrics
     base_status["userCrawler"] = user_metrics
-
-    logger.info(
-        "Successfully compiled Cold Path status",
-        extra={
-            "operation": "cold_path_status_complete",
-            "repo_crawler_total": repo_metrics["totalCrawled"],
-            "user_crawler_total": user_metrics["totalCrawled"],
-            "last_processed_id": base_status["lastProcessedId"],
-        },
-    )
-
-    add_breadcrumb(
-        "Successfully compiled Cold Path status",
-        category="lambda",
-        level="info",
-    )
 
     return base_status
 
@@ -888,6 +779,7 @@ def get_pipeline_status():
 def lambda_handler(event, context):
     """
     Lambda handler for pipeline status endpoint
+    Handles both API Gateway and AppSync resolver requests
     """
     logger.info(
         "Lambda invocation started",
@@ -897,6 +789,7 @@ def lambda_handler(event, context):
             "function_name": context.function_name if context else "unknown",
             "http_method": event.get("httpMethod", "unknown"),
             "path": event.get("path", "unknown"),
+            "field": event.get("field", "unknown"),
         },
     )
 
@@ -908,36 +801,53 @@ def lambda_handler(event, context):
     )
 
     try:
-        status = get_pipeline_status()
+        # Check if this is an AppSync resolver request
+        field = event.get("field")
+        
+        if field == "pipelineStatus":
+            # AppSync resolver request for Query.pipelineStatus
+            logger.info("Handling AppSync resolver request for pipelineStatus")
+            status = get_pipeline_status()
+            return status
+        
+        elif field == "errorRates":
+            # AppSync resolver request for Query.errorRates
+            logger.info("Handling AppSync resolver request for errorRates")
+            error_rates = get_error_rates()
+            return error_rates
+        
+        else:
+            # API Gateway request (legacy REST endpoint)
+            status = get_pipeline_status()
 
-        logger.info(
-            "Pipeline status retrieved successfully",
-            extra={
-                "operation": "lambda_handler_success",
-                "request_id": context.aws_request_id if context else "unknown",
-                "status_code": 200,
-            },
-        )
+            logger.info(
+                "Pipeline status retrieved successfully",
+                extra={
+                    "operation": "lambda_handler_success",
+                    "request_id": context.aws_request_id if context else "unknown",
+                    "status_code": 200,
+                },
+            )
 
-        add_breadcrumb(
-            message="Pipeline status retrieved successfully",
-            category="lambda",
-            level="info",
-        )
+            add_breadcrumb(
+                message="Pipeline status retrieved successfully",
+                category="lambda",
+                level="info",
+            )
 
-        return {
-            "statusCode": 200,
-            "headers": {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Headers": (
-                    "Content-Type,X-Amz-Date,Authorization,"
-                    "X-Api-Key,X-Amz-Security-Token"
-                ),
-                "Access-Control-Allow-Methods": "GET,OPTIONS",
-            },
-            "body": json.dumps(status),
-        }
+            return {
+                "statusCode": 200,
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Headers": (
+                        "Content-Type,X-Amz-Date,Authorization,"
+                        "X-Api-Key,X-Amz-Security-Token"
+                    ),
+                    "Access-Control-Allow-Methods": "GET,OPTIONS",
+                },
+                "body": json.dumps(status),
+            }
 
     except Exception as e:
         logger.error(
@@ -953,11 +863,18 @@ def lambda_handler(event, context):
         )
 
         capture_lambda_error(e, context, extra_context={"endpoint": "pipeline-status"})
-        return {
-            "statusCode": 500,
-            "headers": {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-            },
-            "body": json.dumps({"error": "Internal Server Error", "message": str(e)}),
-        }
+        
+        # Check if this is an AppSync request
+        if event.get("field"):
+            # For AppSync, return error object directly
+            return {"error": str(e)}
+        else:
+            # For API Gateway, return HTTP response
+            return {
+                "statusCode": 500,
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Origin": "*",
+                },
+                "body": json.dumps({"error": "Internal Server Error", "message": str(e)}),
+            }

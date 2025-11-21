@@ -1,0 +1,10 @@
+# AWS AppSync scalar types
+scalar AWSDateTime
+scalar AWSDate
+scalar AWSTime
+scalar AWSTimestamp
+scalar AWSEmail
+scalar AWSJSON
+scalar AWSURL
+scalar AWSPhone
+scalar AWSIPAddress

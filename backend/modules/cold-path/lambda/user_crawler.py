@@ -19,6 +19,9 @@ from aws_lambda_powertools import Logger, Metrics, Tracer
 from aws_lambda_powertools.metrics import MetricUnit
 from botocore.exceptions import ClientError
 
+# AppSync client for publishing completion events
+from appsync_client import publish_crawler_completed
+
 # Environment variables
 PROJECT_NAME = os.environ["PROJECT_NAME"]
 DYNAMODB_TABLE_NAME = os.environ["DYNAMODB_TABLE_NAME"]
@@ -436,6 +439,21 @@ def lambda_handler(_event, context):
                     "total_processed": new_total,
                 },
             )
+
+            # Publish completion event to AppSync
+            try:
+                publish_crawler_completed(
+                    crawler_type="user",
+                    start_id=start_id,
+                    end_id=last_id,
+                    items_fetched=total_fetched,
+                    total_processed=new_total,
+                    success=True,
+                )
+                logger.info("Published crawler completion event to AppSync")
+            except Exception as e:
+                logger.error(f"Failed to publish to AppSync: {e}")
+                # Don't fail the crawler if AppSync publish fails
 
             return {
                 "statusCode": 200,

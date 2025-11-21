@@ -1,0 +1,34 @@
+# GraphQL Code Generator Configuration
+# This file configures automatic TypeScript type generation from the GraphQL schema
+# Run: npm run codegen
+# Output: src/graphql/generated/types.ts
+
+overwrite: true
+schema: 
+  - "../backend/modules/appsync/schema.graphql"
+  - "./schema-extensions.graphql"
+documents: "src/graphql/**/*.ts"
+generates:
+  src/graphql/generated/types.ts:
+    plugins:
+      - "typescript"
+      - "typescript-operations"
+      - "typescript-react-apollo"
+    config:
+      withHooks: true
+      withComponent: false
+      withHOC: false
+      skipTypename: false
+      enumsAsTypes: true
+      avoidOptionals:
+        field: false
+        inputValue: false
+        object: false
+      scalars:
+        AWSDateTime: string
+      reactApolloVersion: 3
+      addDocBlocks: true
+      apolloReactCommonImportFrom: "@apollo/client/react"
+      apolloReactHooksImportFrom: "@apollo/client/react"
+      noExport: false
+      omitOperationSuffix: false

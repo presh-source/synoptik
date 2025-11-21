@@ -79,18 +79,35 @@ module "data_lake" {
 # Pipeline Modules (Uncomment as implemented)
 # ============================================================================
 
+# AppSync GraphQL API
+module "appsync" {
+  count  = var.enable_appsync ? 1 : 0
+  source = "./modules/appsync"
+
+  project_name             = var.project_name
+  environment              = var.environment
+  cold_path_dynamodb_table = module.cold_path.dynamodb_table_name
+  tags                     = local.merged_tags
+
+  depends_on = [module.cold_path]
+}
+
 # Cold Path Pipeline
 module "cold_path" {
-  source                 = "./modules/cold-path"
-  project_name           = var.project_name
-  environment            = var.environment
-  github_token           = var.github_token
-  data_lake_bucket_name  = module.data_lake.bucket_name
-  tags                   = local.merged_tags
-  lambda_timeout         = 900
-  lambda_memory          = 1024
+  source                = "./modules/cold-path"
+  project_name          = var.project_name
+  environment           = var.environment
+  github_token          = var.github_token
+  data_lake_bucket_name = module.data_lake.bucket_name
+  tags                  = local.merged_tags
+  lambda_timeout        = 900
+  lambda_memory         = 1024
   requests_per_execution = 700
-  sleep_interval         = 1
+  sleep_interval        = 1
+
+  # AppSync configuration - will be populated after AppSync module is created
+  appsync_graphql_endpoint = try(module.appsync[0].appsync_graphql_endpoint, "")
+  appsync_api_id           = try(module.appsync[0].appsync_api_id, "")
 
   depends_on = [module.data_lake]
 }
@@ -116,6 +133,7 @@ module "dashboard" {
   app_version                     = var.app_version
   domain_name                     = var.domain_name
   api_domain_name                 = var.api_domain_name
+  graphql_domain_name             = var.graphql_domain_name
   hosted_zone_name                = var.hosted_zone_name
   acm_certificate_arn             = var.acm_certificate_arn
   api_gateway_cloudwatch_role_arn = module.iam.api_gateway_cloudwatch_role_arn
