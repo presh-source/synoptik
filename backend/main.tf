@@ -86,10 +86,8 @@ module "appsync" {
 
   project_name             = var.project_name
   environment              = var.environment
-  cold_path_dynamodb_table = module.cold_path.dynamodb_table_name
+  cold_path_dynamodb_table = "${var.environment}-${var.project_name}-crawler-state"
   tags                     = local.merged_tags
-
-  depends_on = [module.cold_path]
 }
 
 # Cold Path Pipeline
