@@ -81,11 +81,14 @@ jobs:
         working-directory: frontend
         run: npm run build
         env:
-          VITE_API_URL: ${{ secrets.API_URL }}
-          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN_FRONTEND }}
           VITE_APP_VERSION: ${{ github.sha }}
-          VITE_ENVIRONMENT: ${{ env.DEPLOY_ENV }}
           VITE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
+          VITE_API_URL: ${{ steps.targets.outputs.dashboard_api_url }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN_FRONTEND }}
+          VITE_APPSYNC_API_URL: ${{ steps.targets.outputs.appsync_api_url }}
+          VITE_APPSYNC_API_KEY: ${{ steps.targets.outputs.appsync_api_key }}
+          VITE_APPSYNC_REALTIME_ENDPOINT: ${{ steps.targets.outputs.appsync_realtime_endpoint }}
+          VITE_ENVIRONMENT: ${{ env.DEPLOY_ENV }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -113,17 +116,34 @@ jobs:
             exit 1
           fi
           
+          # Extract deployment targets
           BUCKET_NAME=$(terraform output -raw dashboard_bucket_name)
           DISTRIBUTION_ID=$(terraform output -raw cloudfront_distribution_id)
+          
+          # Extract API endpoints and keys for frontend build
+          APPSYNC_API_URL=$(terraform output -raw appsync_api_url)
+          APPSYNC_API_KEY=$(terraform output -raw appsync_api_key)
+          APPSYNC_REALTIME_ENDPOINT=$(terraform output -raw appsync_realtime_endpoint)
+          DASHBOARD_API_URL=$(terraform output -raw dashboard_api_url)
           
           if [ -z "$BUCKET_NAME" ] || [ "$BUCKET_NAME" = "null" ]; then
             echo "::error::Dashboard bucket not found in Terraform state"
             exit 1
           fi
           
+          # Output to GitHub Actions
           echo "bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
           echo "distribution_id=$DISTRIBUTION_ID" >> $GITHUB_OUTPUT
-          echo "Deployment targets: S3=$BUCKET_NAME, CloudFront=$DISTRIBUTION_ID"
+          echo "appsync_api_url=$APPSYNC_API_URL" >> $GITHUB_OUTPUT
+          echo "appsync_api_key=$APPSYNC_API_KEY" >> $GITHUB_OUTPUT
+          echo "appsync_realtime_endpoint=$APPSYNC_REALTIME_ENDPOINT" >> $GITHUB_OUTPUT
+          echo "dashboard_api_url=$DASHBOARD_API_URL" >> $GITHUB_OUTPUT
+          
+          echo "Deployment targets:"
+          echo "  S3: $BUCKET_NAME"
+          echo "  CloudFront: $DISTRIBUTION_ID"
+          echo "  AppSync: $APPSYNC_API_URL"
+          echo "  API Gateway: $DASHBOARD_API_URL"
 
       - name: Deploy to S3
         if: github.event.inputs.action == 'deploy' && (env.DEPLOY_ENV != 'prod' || github.event.inputs.confirm == 'yes') || env.DEPLOY_ENV == 'dev'
