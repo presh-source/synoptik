@@ -28,9 +28,9 @@ env:
   DEPLOY_ENV: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'prod') || (startsWith(github.ref, 'refs/heads/release/') && 'staging') || (github.ref == 'refs/heads/develop' && 'dev') || 'dev' }}
 
 permissions:
-  id-token: write      # Required for AWS OIDC authentication
-  contents: read       # Required for checking out code
-  deployments: write   # Required for creating deployment records
+  id-token: write
+  contents: read
+  deployments: write
 
 jobs:
   terraform:

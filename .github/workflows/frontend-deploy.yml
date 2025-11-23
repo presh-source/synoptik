@@ -20,22 +20,6 @@ on:
           - dev
           - staging
           - prod
-      action:
-        description: 'Deployment action'
-        required: true
-        default: 'deploy'
-        type: choice
-        options:
-          - deploy
-          - rollback
-      confirm:
-        description: 'Confirm deployment for prod (must be "yes" to allow deploy)'
-        required: false
-        default: 'no'
-        type: choice
-        options:
-          - yes
-          - no
 
 env:
   PROJECT_NAME: ${{ github.event.repository.name }}
@@ -146,7 +130,6 @@ jobs:
           echo "  API Gateway: $DASHBOARD_API_URL"
 
       - name: Deploy to S3
-        if: github.event.inputs.action == 'deploy' && (env.DEPLOY_ENV != 'prod' || github.event.inputs.confirm == 'yes') || env.DEPLOY_ENV == 'dev'
         working-directory: frontend
         run: |
           echo "Deploying to environment: ${{ env.DEPLOY_ENV }}"
@@ -164,7 +147,6 @@ jobs:
             --metadata-directive REPLACE
 
       - name: Invalidate CloudFront cache
-        if: github.event.inputs.action == 'deploy' && steps.targets.outputs.distribution_id != '' && (env.DEPLOY_ENV != 'prod' || github.event.inputs.confirm == 'yes')
         run: |
           echo "Invalidating CloudFront distribution: ${{ steps.targets.outputs.distribution_id }}"
           aws cloudfront create-invalidation \
@@ -172,8 +154,6 @@ jobs:
             --paths "/*"
 
       - name: Create Sentry release for frontend
-        if: (github.event.inputs.action == 'apply' || github.event_name == 'push') && env.SENTRY_AUTH_TOKEN != ''
-        continue-on-error: true  # Don't fail workflow if Sentry integration fails
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
