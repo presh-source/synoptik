@@ -65,14 +65,3 @@ variable "api_gateway_cloudwatch_role_arn" {
   type        = string
 }
 
-variable "appsync_target_domain_name" {
-  description = "The target domain name for the AppSync endpoint (from AppSync module output)"
-  type        = string
-  default     = ""
-}
-
-variable "appsync_target_zone_id" {
-  description = "The target zone ID for the AppSync endpoint (from AppSync module output)"
-  type        = string
-  default     = ""
-}

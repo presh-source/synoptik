@@ -64,15 +64,40 @@ module "data_lake" {
   tags         = local.merged_tags
 }
 
+# GraphQL API Certificate (for AppSync)
+module "graphql_certificate" {
+  count  = var.appsync_domain_name != "" && var.acm_certificate_arn == "" ? 1 : 0
+  source = "./modules/domain-certificate"
+
+  providers = {
+    aws.us_east_1 = aws.us_east_1
+  }
+
+  project_name     = var.project_name
+  certificate_name = "graphql"
+  domain_name      = var.appsync_domain_name
+  hosted_zone_name = var.hosted_zone_name
+
+  # Create certificate only, DNS records created later
+  create_dns_records = false
+
+  tags = local.merged_tags
+}
+
 # AppSync GraphQL API
 module "appsync" {
   source = "./modules/appsync"
+
+  providers = {
+    aws.us_east_1 = aws.us_east_1
+  }
 
   project_name             = var.project_name
   environment              = var.environment
   cold_path_dynamodb_table = "${var.environment}-${var.project_name}-crawler-state"
   appsync_domain_name      = var.appsync_domain_name
-  acm_certificate_arn      = var.acm_certificate_arn != "" ? var.acm_certificate_arn : module.dashboard.graphql_certificate_arn
+  hosted_zone_name         = var.hosted_zone_name
+  acm_certificate_arn      = var.acm_certificate_arn != "" ? var.acm_certificate_arn : (length(module.graphql_certificate) > 0 ? module.graphql_certificate[0].certificate_arn : "")
   tags                     = local.merged_tags
 }
 
@@ -113,7 +138,5 @@ module "dashboard" {
   hosted_zone_name                = var.hosted_zone_name
   acm_certificate_arn             = var.acm_certificate_arn
   api_gateway_cloudwatch_role_arn = module.iam.api_gateway_cloudwatch_role_arn
-  appsync_target_domain_name      = module.appsync.appsync_domain_name
-  appsync_target_zone_id          = module.appsync.appsync_hosted_zone_id
   tags                            = local.merged_tags
 }

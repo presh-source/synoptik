@@ -29,3 +29,8 @@ variable "acm_certificate_arn" {
   type        = string
   default     = ""
 }
+
+variable "hosted_zone_name" {
+  description = "The name of the Route53 hosted zone"
+  type        = string
+}

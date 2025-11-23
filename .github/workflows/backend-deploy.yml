@@ -20,22 +20,6 @@ on:
           - dev
           - staging
           - prod
-      action:
-        description: 'Terraform action'
-        required: true
-        default: 'plan'
-        type: choice
-        options:
-          - plan
-          - apply
-      confirm:
-        description: 'Confirm apply for prod (must be "yes" to allow apply)'
-        required: false
-        default: 'no'
-        type: choice
-        options:
-          - yes
-          - no
 
 env:
   PROJECT_NAME: ${{ github.event.repository.name }}
@@ -171,6 +155,5 @@ jobs:
           echo "### Backend Deployment Complete! :rocket:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Environment:** ${{ env.DEPLOY_ENV }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Action:** ${{ github.event.inputs.action || 'plan' }}" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "**Deployed by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
