@@ -1,49 +1,3 @@
-# Main Terraform Configuration
-
-terraform {
-  required_version = ">= 1.5.0"
-
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-    null = {
-      source  = "hashicorp/null"
-      version = "~> 3.0"
-    }
-    archive = {
-      source  = "hashicorp/archive"
-      version = "~> 2.0"
-    }
-    external = {
-      source  = "hashicorp/external"
-      version = "~> 2.0"
-    }
-  }
-
-  # For AWS: use `terraform init -backend-config=environments/{env}/backend.tfvars`
-  backend "s3" {}
-}
-
-# Providers
-provider "aws" {
-  region = var.aws_region
-}
-
-
-
-# Data sources
-data "aws_caller_identity" "current" {}
-data "aws_region" "current" {}
-
-locals {
-  merged_tags = merge(var.tags, {
-    Project     = var.project_name
-    Environment = var.environment
-  })
-}
-
 # IAM Roles
 module "iam" {
   source = "./modules/iam"
@@ -90,7 +44,6 @@ module "dashboard" {
   sentry_dsn_backend                 = var.sentry_dsn_backend
   app_version                        = var.app_version
   api_domain_name                    = var.api_domain_name
-  appsync_domain_name                = var.appsync_domain_name
   hosted_zone_name                   = var.hosted_zone_name
   acm_certificate_arn                = var.acm_certificate_arn
   api_gateway_cloudwatch_role_arn    = module.iam.api_gateway_cloudwatch_role_arn

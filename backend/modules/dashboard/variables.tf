@@ -37,13 +37,7 @@ variable "frontend_domain_name" {
 }
 
 variable "api_domain_name" {
-  description = "Custom domain name for the REST API"
-  type        = string
-  default     = ""
-}
-
-variable "appsync_domain_name" {
-  description = "Custom domain name for the GraphQL API (AppSync)"
+  description = "Custom domain name for the API"
   type        = string
   default     = ""
 }

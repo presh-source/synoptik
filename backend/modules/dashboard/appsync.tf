@@ -28,9 +28,9 @@ module "appsync" {
   project_name        = var.project_name
   environment         = var.environment
   schema              = file("${path.module}/appsync/schema.graphql")
-  appsync_domain_name = var.appsync_domain_name
+  api_domain_name     = var.api_domain_name
   hosted_zone_name    = var.hosted_zone_name
-  acm_certificate_arn = var.appsync_domain_name != "" ? (var.acm_certificate_arn != "" ? var.acm_certificate_arn : module.frontend_certificate[0].certificate_arn) : ""
+  acm_certificate_arn = var.api_domain_name != "" ? (var.acm_certificate_arn != "" ? var.acm_certificate_arn : module.frontend_certificate[0].certificate_arn) : ""
   tags                = var.tags
 
   datasources = {

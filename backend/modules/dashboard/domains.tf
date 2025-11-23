@@ -18,7 +18,7 @@ module "frontend_certificate" {
   # Include API domain as SAN if both are provided
   subject_alternative_names = compact(concat(
     var.api_domain_name != "" ? [var.api_domain_name] : [],
-    var.appsync_domain_name != "" ? [var.appsync_domain_name] : []
+    var.api_domain_name != "" ? [var.api_domain_name] : []
   ))
 
   # Create certificate only, DNS records created later

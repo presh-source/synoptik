@@ -1,4 +1,10 @@
 # Variables
+locals {
+  merged_tags = merge(var.tags, {
+    Project     = var.project_name
+    Environment = var.environment
+  })
+}
 
 variable "aws_region" {
   description = "AWS region for all resources"
@@ -64,13 +70,7 @@ variable "frontend_domain_name" {
 }
 
 variable "api_domain_name" {
-  description = "Custom domain name for the REST API"
-  type        = string
-  default     = ""
-}
-
-variable "appsync_domain_name" {
-  description = "Custom domain name for the AppSync GraphQL API"
+  description = "Custom domain name for the API"
   type        = string
   default     = ""
 }
