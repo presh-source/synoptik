@@ -5,7 +5,7 @@
 # ============================================================================
 
 module "dashboard_dependencies" {
-  source = "../../shared/lambda-layer"
+  source = "../shared/lambda-layer"
 
   project_name        = var.project_name
   environment         = var.environment
@@ -147,7 +147,7 @@ data "aws_iam_policy_document" "pipeline_status_resolver_appsync_lambda_policy" 
 # ============================================================================
 
 module "pipeline_status_lambda" {
-  source = "../../shared/lambda"
+  source = "../shared/lambda"
 
   project_name         = var.project_name
   environment          = var.environment
@@ -180,7 +180,7 @@ module "pipeline_status_lambda" {
 }
 
 module "cloudwatch_metrics_lambda" {
-  source = "../../shared/lambda"
+  source = "../shared/lambda"
 
   project_name         = var.project_name
   environment          = var.environment
@@ -216,7 +216,7 @@ module "cloudwatch_metrics_lambda" {
 # ----------------------------------------------------------------
 
 module "crawler_metrics_resolver_appsync_lambda" {
-  source = "../../shared/lambda"
+  source = "../shared/lambda"
 
   project_name         = var.project_name
   environment          = var.environment
@@ -243,7 +243,7 @@ module "crawler_metrics_resolver_appsync_lambda" {
 }
 
 module "error_rates_resolver_appsync_lambda" {
-  source = "../../shared/lambda"
+  source = "../shared/lambda"
 
   project_name         = var.project_name
   environment          = var.environment
@@ -269,7 +269,7 @@ module "error_rates_resolver_appsync_lambda" {
 }
 
 module "pipeline_status_resolver_appsync_lambda" {
-  source = "../../shared/lambda"
+  source = "../shared/lambda"
 
   project_name         = var.project_name
   environment          = var.environment

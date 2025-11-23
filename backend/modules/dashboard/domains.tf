@@ -8,6 +8,10 @@ module "frontend_certificate" {
   count  = var.frontend_domain_name != "" && var.acm_certificate_arn == "" ? 1 : 0
   source = "../shared/certificate-manager"
 
+  providers = {
+    aws.us_east_1 = aws.us_east_1
+  }
+
   project_name     = var.project_name
   certificate_name = "frontend"
   domain_name      = var.frontend_domain_name
@@ -32,6 +36,10 @@ module "frontend_certificate" {
 module "frontend_dns" {
   count  = var.frontend_domain_name != "" ? 1 : 0
   source = "../shared/certificate-manager"
+
+  providers = {
+    aws.us_east_1 = aws.us_east_1
+  }
 
   project_name     = var.project_name
   certificate_name = "frontend"
@@ -58,6 +66,10 @@ module "frontend_dns" {
 module "api_gateway_dns" {
   count  = var.api_domain_name != "" ? 1 : 0
   source = "../shared/certificate-manager"
+
+  providers = {
+    aws.us_east_1 = aws.us_east_1
+  }
 
   project_name       = var.project_name
   certificate_name   = "api-${var.environment}-${var.project_name}"
