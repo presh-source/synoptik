@@ -1,13 +1,34 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>%VITE_PROJECT_NAME% Dashboard</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Vite will replace %VITE_PROJECT_NAME% with the raw value (e.g. "myproject") -->
+  <title id="page-title">%VITE_PROJECT_NAME% Dashboard</title>
+
+  <script>
+    // Run after the HTML is parsed
+    document.addEventListener('DOMContentLoaded', () => {
+      const titleEl = document.getElementById('page-title');
+      if (!titleEl) return;
+
+      // The placeholder has already been replaced by Vite, e.g. "myproject Dashboard"
+      const parts = titleEl.textContent.split(' ');
+      if (parts.length < 2) return;
+
+      // Capitalize the first word only
+      const project = parts[0];
+      const capitalized = project.charAt(0).toUpperCase() + project.slice(1);
+      titleEl.textContent = `${capitalized} ${parts.slice(1).join(' ')}`;
+    });
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+</body>
+
 </html>
