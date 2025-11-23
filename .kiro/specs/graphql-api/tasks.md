@@ -128,7 +128,7 @@
   - Add appsync_api_url to crawler Lambdas
   - Add VITE_appsync_api_url to frontend
   - Add VITE_APPSYNC_API_KEY to frontend
-  - Add VITE_APPSYNC_REALTIME_ENDPOINT to frontend
+  - Add VITE_APPSYNC_REALTIME_URL to frontend
   - Store API key in AWS Secrets Manager
   - _Requirements: 9.1_
 

@@ -469,7 +469,7 @@ import { createClient } from 'graphql-ws';
 
 const APPSYNC_ENDPOINT = import.meta.env.VITE_appsync_api_url;
 const APPSYNC_API_KEY = import.meta.env.VITE_APPSYNC_API_KEY;
-const APPSYNC_REALTIME_ENDPOINT = import.meta.env.VITE_APPSYNC_REALTIME_ENDPOINT;
+const appsync_realtime_url = import.meta.env.VITE_APPSYNC_REALTIME_URL;
 
 // HTTP link for queries and mutations
 const httpLink = new HttpLink({
@@ -482,7 +482,7 @@ const httpLink = new HttpLink({
 // WebSocket link for subscriptions
 const wsLink = new GraphQLWsLink(
   createClient({
-    url: APPSYNC_REALTIME_ENDPOINT,
+    url: appsync_realtime_url,
     connectionParams: {
       'x-api-key': APPSYNC_API_KEY,
     },

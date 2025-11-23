@@ -93,3 +93,14 @@ output "appsync_api_id" {
   description = "The ID of the AppSync GraphQL API"
   value       = module.appsync.appsync_api_id
 }
+
+output "appsync_realtime_url" {
+  description = "WebSocket endpoint URL for subscriptions"
+  value       = module.appsync.appsync_realtime_url
+}
+
+output "appsync_api_key" {
+  description = "API key for AppSync GraphQL API"
+  value       = module.appsync.appsync_api_key
+  sensitive   = true
+}

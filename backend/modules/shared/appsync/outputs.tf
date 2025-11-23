@@ -19,7 +19,7 @@ output "appsync_api_url" {
   value       = aws_appsync_graphql_api.main.uris["GRAPHQL"]
 }
 
-output "appsync_realtime_endpoint" {
+output "appsync_realtime_url" {
   description = "WebSocket endpoint URL for subscriptions"
   value       = aws_appsync_graphql_api.main.uris["REALTIME"]
 }

@@ -85,9 +85,9 @@ jobs:
           VITE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
           VITE_API_URL: ${{ steps.targets.outputs.dashboard_api_url }}
           VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN_FRONTEND }}
-          VITE_APPSYNC_API_URL: ${{ steps.targets.outputs.appsync_api_url }}
-          VITE_APPSYNC_API_KEY: ${{ steps.targets.outputs.appsync_api_key }}
-          VITE_APPSYNC_REALTIME_ENDPOINT: ${{ steps.targets.outputs.appsync_realtime_endpoint }}
+          VITE_APPSYNC_API_URL: ${{ steps.targets.outputs.dashboard_appsync_api_url }}
+          VITE_APPSYNC_API_KEY: ${{ steps.targets.outputs.dashboard_appsync_api_key }}
+          VITE_APPSYNC_REALTIME_URL: ${{ steps.targets.outputs.dashboard_appsync_realtime_url }}
           VITE_ENVIRONMENT: ${{ env.DEPLOY_ENV }}
 
       - name: Setup Terraform
@@ -123,7 +123,7 @@ jobs:
           # Extract API endpoints and keys for frontend build
           APPSYNC_API_URL=$(terraform output -raw appsync_api_url)
           APPSYNC_API_KEY=$(terraform output -raw appsync_api_key)
-          APPSYNC_REALTIME_ENDPOINT=$(terraform output -raw appsync_realtime_endpoint)
+          appsync_realtime_url=$(terraform output -raw appsync_realtime_url)
           DASHBOARD_API_URL=$(terraform output -raw dashboard_api_url)
           
           if [ -z "$BUCKET_NAME" ] || [ "$BUCKET_NAME" = "null" ]; then
@@ -136,7 +136,7 @@ jobs:
           echo "distribution_id=$DISTRIBUTION_ID" >> $GITHUB_OUTPUT
           echo "appsync_api_url=$APPSYNC_API_URL" >> $GITHUB_OUTPUT
           echo "appsync_api_key=$APPSYNC_API_KEY" >> $GITHUB_OUTPUT
-          echo "appsync_realtime_endpoint=$APPSYNC_REALTIME_ENDPOINT" >> $GITHUB_OUTPUT
+          echo "appsync_realtime_url=$appsync_realtime_url" >> $GITHUB_OUTPUT
           echo "dashboard_api_url=$DASHBOARD_API_URL" >> $GITHUB_OUTPUT
           
           echo "Deployment targets:"

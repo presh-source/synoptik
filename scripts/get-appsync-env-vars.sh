@@ -19,7 +19,7 @@ cd "$(dirname "$0")/../backend"
 # Get Terraform outputs
 echo "📡 Retrieving AppSync endpoints..."
 GRAPHQL_ENDPOINT=$(terraform output -raw appsync_api_url 2>/dev/null || echo "")
-REALTIME_ENDPOINT=$(terraform output -raw appsync_realtime_endpoint 2>/dev/null || echo "")
+REALTIME_ENDPOINT=$(terraform output -raw appsync_realtime_url 2>/dev/null || echo "")
 API_KEY=$(terraform output -raw appsync_api_key 2>/dev/null || echo "")
 
 if [ -z "$GRAPHQL_ENDPOINT" ]; then
@@ -48,7 +48,7 @@ echo "Add these to frontend/.env.local:"
 echo ""
 echo "VITE_appsync_api_url=$GRAPHQL_ENDPOINT"
 echo "VITE_APPSYNC_API_KEY=$API_KEY"
-echo "VITE_APPSYNC_REALTIME_ENDPOINT=$REALTIME_ENDPOINT"
+echo "VITE_APPSYNC_REALTIME_URL=$REALTIME_ENDPOINT"
 echo ""
 
 echo "=========================================="
@@ -81,7 +81,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     # Update existing values
     sed -i.tmp "s|VITE_appsync_api_url=.*|VITE_appsync_api_url=$GRAPHQL_ENDPOINT|" "$ENV_FILE"
     sed -i.tmp "s|VITE_APPSYNC_API_KEY=.*|VITE_APPSYNC_API_KEY=$API_KEY|" "$ENV_FILE"
-    sed -i.tmp "s|VITE_APPSYNC_REALTIME_ENDPOINT=.*|VITE_APPSYNC_REALTIME_ENDPOINT=$REALTIME_ENDPOINT|" "$ENV_FILE"
+    sed -i.tmp "s|VITE_APPSYNC_REALTIME_URL=.*|VITE_APPSYNC_REALTIME_URL=$REALTIME_ENDPOINT|" "$ENV_FILE"
     rm -f "$ENV_FILE.tmp"
   else
     # Append new values
@@ -89,7 +89,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "# AppSync GraphQL API Configuration" >> "$ENV_FILE"
     echo "VITE_appsync_api_url=$GRAPHQL_ENDPOINT" >> "$ENV_FILE"
     echo "VITE_APPSYNC_API_KEY=$API_KEY" >> "$ENV_FILE"
-    echo "VITE_APPSYNC_REALTIME_ENDPOINT=$REALTIME_ENDPOINT" >> "$ENV_FILE"
+    echo "VITE_APPSYNC_REALTIME_URL=$REALTIME_ENDPOINT" >> "$ENV_FILE"
   fi
   
   echo "✅ Updated $ENV_FILE"
