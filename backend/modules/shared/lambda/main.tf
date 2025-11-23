@@ -79,14 +79,14 @@ resource "aws_cloudwatch_log_group" "lambda" {
 # ============================================================================
 
 resource "aws_lambda_function" "this" {
-  function_name = "${var.environment}-${var.project_name}-${var.function_name}"
-  description   = var.function_description
-  handler       = var.handler
-  runtime       = var.runtime
-  timeout       = var.timeout
-  memory_size   = var.memory_size
-  role          = aws_iam_role.lambda_exec.arn
-  filename      = var.filename
+  function_name    = "${var.environment}-${var.project_name}-${var.function_name}"
+  description      = var.function_description
+  handler          = var.handler
+  runtime          = var.runtime
+  timeout          = var.timeout
+  memory_size      = var.memory_size
+  role             = aws_iam_role.lambda_exec.arn
+  filename         = var.filename
   source_code_hash = var.source_code_hash
 
   layers = var.layers

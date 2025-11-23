@@ -1,8 +1,8 @@
 # Dashboard Module - AppSync
 
 resource "aws_iam_role_policy" "appsync_lambda_invocation" {
-  name   = "${var.environment}-${var.project_name}-appsync-lambda-invocation"
-  role   = split("/", var.appsync_lambda_invocation_role_arn)[1]
+  name = "${var.environment}-${var.project_name}-appsync-lambda-invocation"
+  role = split("/", var.appsync_lambda_invocation_role_arn)[1]
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
