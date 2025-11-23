@@ -46,8 +46,8 @@ locals {
 
 # IAM Roles
 module "iam" {
-  source       = "./modules/iam"
-  
+  source = "./modules/iam"
+
   project_name = var.project_name
   environment  = var.environment
   tags         = local.merged_tags
@@ -55,8 +55,8 @@ module "iam" {
 
 # Data Lake (S3)
 module "data_lake" {
-  source       = "./modules/data-lake"
-  
+  source = "./modules/data-lake"
+
   project_name = var.project_name
   environment  = var.environment
   tags         = local.merged_tags
@@ -64,8 +64,8 @@ module "data_lake" {
 
 # Cold Path Pipeline
 module "cold_path" {
-  source                 = "./modules/cold-path"
-  
+  source = "./modules/cold-path"
+
   project_name           = var.project_name
   environment            = var.environment
   github_token           = var.github_token
@@ -83,7 +83,7 @@ module "cold_path" {
 # Dashboard Module
 module "dashboard" {
   source = "./modules/dashboard"
-  
+
   project_name                       = var.project_name
   environment                        = var.environment
   cold_path_dynamodb_table           = module.cold_path.dynamodb_table_name
