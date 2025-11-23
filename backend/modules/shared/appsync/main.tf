@@ -152,43 +152,7 @@ resource "aws_appsync_function" "functions" {
   response_mapping_template = each.value.response_template
 }
 
-# ============================================================================
-# Custom Domain
-# ============================================================================
 
-resource "aws_appsync_domain_name" "main" {
-  count = var.appsync_domain_name != "" ? 1 : 0
-
-  domain_name     = var.appsync_domain_name
-  certificate_arn = var.acm_certificate_arn
-}
-
-resource "aws_appsync_domain_name_api_association" "main" {
-  count = var.appsync_domain_name != "" ? 1 : 0
-
-  api_id      = aws_appsync_graphql_api.main.id
-  domain_name = aws_appsync_domain_name.main[0].domain_name
-}
-
-module "appsync_dns" {
-  count  = var.appsync_domain_name != "" ? 1 : 0
-  source = "../certificate-manager"
-
-  project_name     = var.project_name
-  certificate_name = "appsync-dns"
-  domain_name      = var.appsync_domain_name
-  hosted_zone_name = var.hosted_zone_name
-
-  # Don't create certificate, only DNS records
-  create_certificate = false
-
-  # AppSync domain details
-  target_domain_name = aws_appsync_domain_name.main[0].appsync_domain_name
-  target_zone_id     = aws_appsync_domain_name.main[0].hosted_zone_id
-
-  enable_ipv6 = false # AppSync doesn't support IPv6
-  tags        = var.tags
-}
 
 # ============================================================================
 # Secrets Manager

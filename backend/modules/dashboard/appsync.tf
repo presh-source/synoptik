@@ -25,12 +25,10 @@ resource "aws_iam_role_policy" "appsync_lambda_invocation" {
 module "appsync" {
   source = "../shared/appsync"
 
-  project_name        = var.project_name
-  environment         = var.environment
-  schema              = file("${path.module}/appsync/schema.graphql")
-  hosted_zone_name    = var.hosted_zone_name
-  acm_certificate_arn = var.api_domain_name != "" ? (var.acm_certificate_arn != "" ? var.acm_certificate_arn : module.frontend_certificate[0].certificate_arn) : ""
-  tags                = var.tags
+  project_name = var.project_name
+  environment  = var.environment
+  schema       = file("${path.module}/appsync/schema.graphql")
+  tags         = var.tags
 
   datasources = {
     PipelineStatusLambda = {

@@ -42,6 +42,12 @@ variable "api_domain_name" {
   default     = ""
 }
 
+variable "appsync_domain_name" {
+  description = "Custom domain name for the AppSync GraphQL API"
+  type        = string
+  default     = ""
+}
+
 variable "hosted_zone_name" {
   description = "The name of the Route 53 hosted zone (e.g. example.com)"
   type        = string
