@@ -17,8 +17,8 @@ module "frontend_certificate" {
 
   # Include API domain as SAN if both are provided
   subject_alternative_names = compact(concat(
-    var.api_domain_name != "" ? [var.api_domain_name] : [],
-    var.api_domain_name != "" ? [var.api_domain_name] : []
+    var.api_gateway_domain_name != "" ? [var.api_gateway_domain_name] : [],
+    var.api_gateway_domain_name != "" ? [var.api_gateway_domain_name] : []
   ))
 
   # Create certificate only, DNS records created later
@@ -58,12 +58,12 @@ module "frontend_dns" {
 # ============================================================================
 
 module "api_gateway_dns" {
-  count  = var.api_domain_name != "" ? 1 : 0
+  count  = var.api_gateway_domain_name != "" ? 1 : 0
   source = "../shared/certificate-manager"
 
   project_name       = var.project_name
   certificate_name   = "api-${var.environment}-${var.project_name}"
-  domain_name        = var.api_domain_name
+  domain_name        = var.api_gateway_domain_name
   hosted_zone_name   = var.hosted_zone_name
   create_certificate = false # Certificate already created above
 

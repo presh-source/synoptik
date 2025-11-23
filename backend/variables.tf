@@ -69,7 +69,7 @@ variable "frontend_domain_name" {
   default     = ""
 }
 
-variable "api_domain_name" {
+variable "api_gateway_domain_name" {
   description = "Custom domain name for the API"
   type        = string
   default     = ""

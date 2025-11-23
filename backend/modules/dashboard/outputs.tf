@@ -74,9 +74,9 @@ output "frontend_domain_name" {
   value       = var.frontend_domain_name != "" ? var.frontend_domain_name : null
 }
 
-output "api_domain_name" {
+output "api_gateway_domain_name" {
   description = "Custom domain name for the API"
-  value       = var.api_domain_name != "" ? var.api_domain_name : null
+  value       = var.api_gateway_domain_name != "" ? var.api_gateway_domain_name : null
 }
 
 output "acm_certificate_arn" {
