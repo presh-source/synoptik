@@ -19,12 +19,27 @@ output "api_url" {
 # Lambda outputs
 output "pipeline_status_lambda_arn" {
   description = "ARN of the pipeline status Lambda function"
-  value       = aws_lambda_function.pipeline_status.arn
+  value       = module.pipeline_status_lambda.function_arn
 }
 
 output "cloudwatch_metrics_lambda_arn" {
   description = "ARN of the CloudWatch metrics Lambda function"
-  value       = aws_lambda_function.cloudwatch_metrics.arn
+  value       = module.cloudwatch_metrics_lambda.function_arn
+}
+
+output "crawler_metrics_resolver_appsync_lambda_arn" {
+  description = "ARN of the crawler metrics resolver Lambda function for AppSync"
+  value       = module.crawler_metrics_resolver_appsync_lambda.function_arn
+}
+
+output "error_rates_resolver_appsync_lambda_arn" {
+  description = "ARN of the error rates resolver Lambda function for AppSync"
+  value       = module.error_rates_resolver_appsync_lambda.function_arn
+}
+
+output "pipeline_status_resolver_appsync_lambda_arn" {
+  description = "ARN of the pipeline status resolver Lambda function for AppSync"
+  value       = module.pipeline_status_resolver_appsync_lambda.function_arn
 }
 
 # Frontend outputs
@@ -45,18 +60,18 @@ output "cloudfront_distribution_id" {
 
 output "cloudfront_domain_name" {
   description = "Domain name of the CloudFront distribution"
-  value       = aws_cloudfront_distribution.dashboard.domain_name
+  value       = aws_cloudfront_distribution.dashboard.frontend_domain_name
 }
 
 output "dashboard_url" {
   description = "URL of the dashboard"
-  value       = var.domain_name != "" ? "https://${var.domain_name}" : "https://${aws_cloudfront_distribution.dashboard.domain_name}"
+  value       = var.frontend_domain_name != "" ? "https://${var.frontend_domain_name}" : "https://${aws_cloudfront_distribution.dashboard.frontend_domain_name}"
 }
 
 # Domain and certificate outputs
-output "domain_name" {
+output "frontend_domain_name" {
   description = "Custom domain name for the frontend"
-  value       = var.domain_name != "" ? var.domain_name : null
+  value       = var.frontend_domain_name != "" ? var.frontend_domain_name : null
 }
 
 output "api_domain_name" {
@@ -69,7 +84,12 @@ output "acm_certificate_arn" {
   value       = var.acm_certificate_arn != "" ? var.acm_certificate_arn : (length(module.frontend_certificate) > 0 ? module.frontend_certificate[0].certificate_arn : null)
 }
 
-output "appsync_custom_domain_url" {
-  description = "The custom domain URL for the AppSync GraphQL API"
-  value       = var.appsync_domain_name != "" ? "https://${var.appsync_domain_name}/graphql" : null
+output "appsync_api_url" {
+  description = "The URL of the AppSync GraphQL API"
+  value       = module.appsync.appsync_api_url
+}
+
+output "appsync_api_id" {
+  description = "The ID of the AppSync GraphQL API"
+  value       = module.appsync.appsync_api_id
 }

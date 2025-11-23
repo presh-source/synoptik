@@ -1,6 +1,3 @@
-# API Gateway Module
-# Manages REST API Gateway configuration
-
 # ============================================================================
 # API Gateway REST API
 # ============================================================================
@@ -225,8 +222,8 @@ resource "aws_api_gateway_account" "api" {
 # ============================================================================
 
 resource "aws_api_gateway_domain_name" "api" {
-  count           = var.custom_domain_name != "" ? 1 : 0
-  domain_name     = var.custom_domain_name
+  count           = var.domain_name != "" ? 1 : 0
+  domain_name     = var.domain_name
   certificate_arn = var.certificate_arn
 
   endpoint_configuration {
@@ -237,7 +234,7 @@ resource "aws_api_gateway_domain_name" "api" {
 }
 
 resource "aws_api_gateway_base_path_mapping" "api" {
-  count       = var.custom_domain_name != "" ? 1 : 0
+  count       = var.domain_name != "" ? 1 : 0
   api_id      = aws_api_gateway_rest_api.api.id
   stage_name  = aws_api_gateway_stage.api.stage_name
   domain_name = aws_api_gateway_domain_name.api[0].domain_name

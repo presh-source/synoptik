@@ -1,0 +1,9 @@
+{
+  "version": "2018-05-29",
+  "operation": "Invoke",
+  "payload": {
+    "field": "userCrawler",
+    "crawlerType": "user",
+    "timePeriodHours": $util.defaultIfNull($context.arguments.timePeriodHours, 1)
+  }
+}

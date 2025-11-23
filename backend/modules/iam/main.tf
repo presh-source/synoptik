@@ -117,3 +117,41 @@ resource "aws_iam_role_policy_attachment" "api_gateway_cloudwatch" {
   role       = aws_iam_role.api_gateway_cloudwatch.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
 }
+
+# AppSync Lambda Invocation Role
+resource "aws_iam_role" "appsync_lambda_invocation" {
+  name = "${var.environment}-${var.project_name}-appsync-lambda-invocation"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "appsync.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy" "appsync_lambda_invocation" {
+  name = "${var.environment}-${var.project_name}-appsync-lambda-invocation-policy"
+  role = aws_iam_role.appsync_lambda_invocation.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "lambda:InvokeFunction"
+        ]
+        Resource = "*" # Restrict this in the calling module
+      }
+    ]
+  })
+}

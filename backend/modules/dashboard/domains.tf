@@ -5,8 +5,8 @@
 # ============================================================================
 
 module "frontend_certificate" {
-  count  = var.domain_name != "" && var.acm_certificate_arn == "" ? 1 : 0
-  source = "../domain-certificate"
+  count  = var.frontend_domain_name != "" && var.acm_certificate_arn == "" ? 1 : 0
+  source = "../shared/certificate-manager"
 
   providers = {
     aws.us_east_1 = aws.us_east_1
@@ -14,11 +14,14 @@ module "frontend_certificate" {
 
   project_name     = var.project_name
   certificate_name = "frontend"
-  domain_name      = var.domain_name
+  domain_name      = var.frontend_domain_name
   hosted_zone_name = var.hosted_zone_name
 
   # Include API domain as SAN if both are provided
-  subject_alternative_names = var.api_domain_name != "" ? [var.api_domain_name] : []
+  subject_alternative_names = compact(concat(
+    var.api_domain_name != "" ? [var.api_domain_name] : [],
+    var.appsync_domain_name != "" ? [var.appsync_domain_name] : []
+  ))
 
   # Create certificate only, DNS records created later
   create_dns_records = false
@@ -31,8 +34,8 @@ module "frontend_certificate" {
 # ============================================================================
 
 module "frontend_dns" {
-  count  = var.domain_name != "" ? 1 : 0
-  source = "../domain-certificate"
+  count  = var.frontend_domain_name != "" ? 1 : 0
+  source = "../shared/certificate-manager"
 
   providers = {
     aws.us_east_1 = aws.us_east_1
@@ -40,14 +43,14 @@ module "frontend_dns" {
 
   project_name     = var.project_name
   certificate_name = "frontend-dns"
-  domain_name      = var.domain_name
+  domain_name      = var.frontend_domain_name
   hosted_zone_name = var.hosted_zone_name
 
   # Don't create certificate, only DNS records
   create_certificate = false
 
   # CloudFront distribution details
-  target_domain_name = aws_cloudfront_distribution.dashboard.domain_name
+  target_domain_name = aws_cloudfront_distribution.dashboard.frontend_domain_name
   target_zone_id     = aws_cloudfront_distribution.dashboard.hosted_zone_id
 
   enable_ipv6 = true

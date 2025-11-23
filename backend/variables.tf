@@ -57,7 +57,7 @@ variable "tags" {
   }
 }
 
-variable "domain_name" {
+variable "frontend_domain_name" {
   description = "Custom domain name for the frontend"
   type        = string
   default     = ""

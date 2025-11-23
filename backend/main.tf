@@ -64,43 +64,6 @@ module "data_lake" {
   tags         = local.merged_tags
 }
 
-# GraphQL API Certificate (for AppSync)
-module "graphql_certificate" {
-  count  = var.appsync_domain_name != "" && var.acm_certificate_arn == "" ? 1 : 0
-  source = "./modules/domain-certificate"
-
-  providers = {
-    aws.us_east_1 = aws.us_east_1
-  }
-
-  project_name     = var.project_name
-  certificate_name = "graphql"
-  domain_name      = var.appsync_domain_name
-  hosted_zone_name = var.hosted_zone_name
-
-  # Create certificate only, DNS records created later
-  create_dns_records = false
-
-  tags = local.merged_tags
-}
-
-# AppSync GraphQL API
-module "appsync" {
-  source = "./modules/appsync"
-
-  providers = {
-    aws.us_east_1 = aws.us_east_1
-  }
-
-  project_name             = var.project_name
-  environment              = var.environment
-  cold_path_dynamodb_table = "${var.environment}-${var.project_name}-crawler-state"
-  appsync_domain_name      = var.appsync_domain_name
-  hosted_zone_name         = var.hosted_zone_name
-  acm_certificate_arn      = var.acm_certificate_arn != "" ? var.acm_certificate_arn : (length(module.graphql_certificate) > 0 ? module.graphql_certificate[0].certificate_arn : "")
-  tags                     = local.merged_tags
-}
-
 # Cold Path Pipeline
 module "cold_path" {
   source                 = "./modules/cold-path"
@@ -114,8 +77,8 @@ module "cold_path" {
   requests_per_execution = 700
   sleep_interval         = 1
 
-  appsync_api_url = module.appsync.appsync_api_url
-  appsync_api_id  = module.appsync.appsync_api_id
+  appsync_api_url = module.dashboard.appsync_api_url
+  appsync_api_id  = module.dashboard.appsync_api_id
 
   depends_on = [module.data_lake]
 }
@@ -128,15 +91,16 @@ module "dashboard" {
     aws.us_east_1 = aws.us_east_1
   }
 
-  project_name                    = var.project_name
-  environment                     = var.environment
-  cold_path_dynamodb_table        = module.cold_path.dynamodb_table_name
-  sentry_dsn_backend              = var.sentry_dsn_backend
-  app_version                     = var.app_version
-  api_domain_name                 = var.api_domain_name
-  appsync_domain_name             = var.appsync_domain_name
-  hosted_zone_name                = var.hosted_zone_name
-  acm_certificate_arn             = var.acm_certificate_arn
-  api_gateway_cloudwatch_role_arn = module.iam.api_gateway_cloudwatch_role_arn
-  tags                            = local.merged_tags
+  project_name                        = var.project_name
+  environment                         = var.environment
+  cold_path_dynamodb_table            = module.cold_path.dynamodb_table_name
+  sentry_dsn_backend                  = var.sentry_dsn_backend
+  app_version                         = var.app_version
+  api_domain_name                     = var.api_domain_name
+  appsync_domain_name                 = var.appsync_domain_name
+  hosted_zone_name                    = var.hosted_zone_name
+  acm_certificate_arn                 = var.acm_certificate_arn
+  api_gateway_cloudwatch_role_arn     = module.iam.api_gateway_cloudwatch_role_arn
+  appsync_lambda_invocation_role_arn  = module.iam.appsync_lambda_invocation_role_arn
+  tags                                = local.merged_tags
 }

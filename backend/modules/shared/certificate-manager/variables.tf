@@ -18,7 +18,7 @@ variable "domain_name" {
 }
 
 variable "hosted_zone_name" {
-  description = "Name of the Route53 hosted zone (if different from domain_name)"
+  description = "Name of the Route53 hosted zone (if different from custom_domain_name)"
   type        = string
   default     = ""
 }

@@ -34,3 +34,13 @@ output "api_gateway_cloudwatch_role_arn" {
   description = "ARN of the API Gateway CloudWatch Logs role"
   value       = aws_iam_role.api_gateway_cloudwatch.arn
 }
+
+output "appsync_lambda_invocation_role_arn" {
+  description = "ARN of the AppSync Lambda invocation role"
+  value       = aws_iam_role.appsync_lambda_invocation.arn
+}
+
+output "appsync_lambda_invocation_role_name" {
+  description = "Name of the AppSync Lambda invocation role"
+  value       = aws_iam_role.appsync_lambda_invocation.name
+}

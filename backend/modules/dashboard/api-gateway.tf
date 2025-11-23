@@ -1,32 +1,11 @@
 # Dashboard Module - API Gateway Configuration using api-gateway module
 
 # ============================================================================
-# Certificate for API (if needed and not provided)
-# ============================================================================
-
-module "api_certificate" {
-  count  = var.api_domain_name != "" && var.acm_certificate_arn == "" ? 1 : 0
-  source = "../domain-certificate"
-
-  providers = {
-    aws.us_east_1 = aws.us_east_1
-  }
-
-  project_name       = var.project_name
-  certificate_name   = "api"
-  domain_name        = var.api_domain_name
-  hosted_zone_name   = var.hosted_zone_name
-  create_dns_records = false # DNS created separately after API Gateway
-
-  tags = var.tags
-}
-
-# ============================================================================
 # API Gateway Module
 # ============================================================================
 
 module "dashboard_api" {
-  source = "../api-gateway"
+  source = "../shared/api-gateway"
 
   project_name    = var.project_name
   environment     = var.environment
@@ -70,20 +49,20 @@ module "dashboard_api" {
   lambda_integrations = {
     "pipeline-status-get" = {
       resource_path        = "pipeline-status"
-      lambda_invoke_arn    = aws_lambda_function.pipeline_status.invoke_arn
-      lambda_function_name = aws_lambda_function.pipeline_status.function_name
+      lambda_invoke_arn    = module.pipeline_status_lambda.invoke_arn
+      lambda_function_name = module.pipeline_status_lambda.function_name
     }
 
     "metrics-cloudwatch-get" = {
       resource_path        = "metrics-cloudwatch"
-      lambda_invoke_arn    = aws_lambda_function.cloudwatch_metrics.invoke_arn
-      lambda_function_name = aws_lambda_function.cloudwatch_metrics.function_name
+      lambda_invoke_arn    = module.cloudwatch_metrics_lambda.invoke_arn
+      lambda_function_name = module.cloudwatch_metrics_lambda.function_name
     }
   }
 
   # Configuration
-  custom_domain_name  = var.api_domain_name
-  certificate_arn     = var.api_domain_name != "" ? (var.acm_certificate_arn != "" ? var.acm_certificate_arn : module.api_certificate[0].certificate_arn) : ""
+  domain_name         = var.api_domain_name
+  certificate_arn     = var.api_domain_name != "" ? (var.acm_certificate_arn != "" ? var.acm_certificate_arn : module.frontend_certificate[0].certificate_arn) : ""
   cloudwatch_role_arn = var.api_gateway_cloudwatch_role_arn
   enable_cors         = true
   enable_xray_tracing = false
@@ -93,7 +72,7 @@ module "dashboard_api" {
 
   tags = var.tags
 
-  depends_on = [module.api_certificate]
+  depends_on = [module.frontend_certificate]
 }
 
 # ============================================================================
@@ -102,7 +81,7 @@ module "dashboard_api" {
 
 module "api_dns" {
   count  = var.api_domain_name != "" ? 1 : 0
-  source = "../domain-certificate"
+  source = "../shared/certificate-manager"
 
   providers = {
     aws.us_east_1 = aws.us_east_1

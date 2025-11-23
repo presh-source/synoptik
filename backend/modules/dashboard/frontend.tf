@@ -64,7 +64,7 @@ resource "aws_cloudfront_distribution" "dashboard" {
   comment             = "${var.project_name} Dashboard"
   default_root_object = "index.html"
   price_class         = "PriceClass_100" # Use only North America and Europe
-  aliases             = var.domain_name != "" ? [var.domain_name] : []
+  aliases             = var.frontend_domain_name != "" ? [var.frontend_domain_name] : []
 
   origin {
     domain_name = aws_s3_bucket.dashboard.bucket_regional_domain_name
@@ -115,10 +115,10 @@ resource "aws_cloudfront_distribution" "dashboard" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = var.domain_name == ""
+    cloudfront_default_certificate = var.frontend_domain_name == ""
     acm_certificate_arn            = var.acm_certificate_arn != "" ? var.acm_certificate_arn : (length(module.frontend_certificate) > 0 ? module.frontend_certificate[0].certificate_arn : null)
-    ssl_support_method             = var.domain_name != "" ? "sni-only" : null
-    minimum_protocol_version       = var.domain_name != "" ? "TLSv1.2_2021" : null
+    ssl_support_method             = var.frontend_domain_name != "" ? "sni-only" : null
+    minimum_protocol_version       = var.frontend_domain_name != "" ? "TLSv1.2_2021" : null
   }
 
   tags = var.tags

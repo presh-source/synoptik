@@ -40,24 +40,24 @@ output "deployment_id" {
   value       = aws_api_gateway_deployment.api.id
 }
 
-output "custom_domain_name" {
+output "domain_name" {
   description = "Custom domain name (if configured)"
-  value       = var.custom_domain_name != "" ? aws_api_gateway_domain_name.api[0].domain_name : null
+  value       = var.domain_name != "" ? aws_api_gateway_domain_name.api[0].domain_name : null
 }
 
 output "custom_domain_cloudfront_domain_name" {
   description = "CloudFront domain name for custom domain (for DNS)"
-  value       = var.custom_domain_name != "" ? aws_api_gateway_domain_name.api[0].cloudfront_domain_name : null
+  value       = var.domain_name != "" ? aws_api_gateway_domain_name.api[0].cloudfront_domain_name : null
 }
 
 output "custom_domain_cloudfront_zone_id" {
   description = "CloudFront zone ID for custom domain (for DNS)"
-  value       = var.custom_domain_name != "" ? aws_api_gateway_domain_name.api[0].cloudfront_zone_id : null
+  value       = var.domain_name != "" ? aws_api_gateway_domain_name.api[0].cloudfront_zone_id : null
 }
 
 output "api_url" {
   description = "Full URL of the API (custom domain if configured, otherwise invoke URL)"
-  value       = var.custom_domain_name != "" ? "https://${var.custom_domain_name}${var.base_path != "" ? "/${var.base_path}" : ""}" : aws_api_gateway_stage.api.invoke_url
+  value       = var.domain_name != "" ? "https://${var.domain_name}${var.base_path != "" ? "/${var.base_path}" : ""}" : aws_api_gateway_stage.api.invoke_url
 }
 
 output "log_group_name" {

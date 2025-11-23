@@ -31,53 +31,6 @@ output "appsync_api_key" {
 }
 
 # ============================================================================
-# Lambda Function ARNs
-# ============================================================================
-
-output "pipeline_status_resolver_lambda_arn" {
-  description = "ARN of the pipeline status resolver Lambda function"
-  value       = aws_lambda_function.pipeline_status_resolver.arn
-}
-
-output "crawler_metrics_resolver_lambda_arn" {
-  description = "ARN of the crawler metrics resolver Lambda function"
-  value       = aws_lambda_function.crawler_metrics_resolver.arn
-}
-
-output "error_rates_resolver_lambda_arn" {
-  description = "ARN of the error rates resolver Lambda function"
-  value       = aws_lambda_function.error_rates_resolver.arn
-}
-
-# ============================================================================
-# Lambda Function Names
-# ============================================================================
-
-output "pipeline_status_resolver_lambda_name" {
-  description = "Name of the pipeline status resolver Lambda function"
-  value       = aws_lambda_function.pipeline_status_resolver.function_name
-}
-
-output "crawler_metrics_resolver_lambda_name" {
-  description = "Name of the crawler metrics resolver Lambda function"
-  value       = aws_lambda_function.crawler_metrics_resolver.function_name
-}
-
-output "error_rates_resolver_lambda_name" {
-  description = "Name of the error rates resolver Lambda function"
-  value       = aws_lambda_function.error_rates_resolver.function_name
-}
-
-# ============================================================================
-# IAM Roles
-# ============================================================================
-
-output "appsync_lambda_role_arn" {
-  description = "ARN of the IAM role for AppSync to invoke Lambda functions"
-  value       = aws_iam_role.appsync_lambda_role.arn
-}
-
-# ============================================================================
 # Secrets Manager
 # ============================================================================
 

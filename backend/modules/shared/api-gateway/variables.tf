@@ -95,7 +95,7 @@ variable "cloudwatch_role_arn" {
   default     = ""
 }
 
-variable "custom_domain_name" {
+variable "domain_name" {
   description = "Custom domain name for the API"
   type        = string
   default     = ""

@@ -1,0 +1,9 @@
+#if($util.isNull($context.arguments.crawlerType))
+  $util.toJson($context.result)
+#else
+  #if($context.result.crawlerType == $context.arguments.crawlerType)
+    $util.toJson($context.result)
+  #else
+    $util.toJson(null)
+  #end
+#end

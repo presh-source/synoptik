@@ -30,7 +30,7 @@ variable "tags" {
   default     = {}
 }
 
-variable "domain_name" {
+variable "frontend_domain_name" {
   description = "Custom domain name for the frontend"
   type        = string
   default     = ""
@@ -64,4 +64,10 @@ variable "api_gateway_cloudwatch_role_arn" {
   description = "ARN of the IAM role for API Gateway to write to CloudWatch Logs"
   type        = string
 }
+
+variable "appsync_lambda_invocation_role_arn" {
+  description = "ARN of the IAM role for AppSync to invoke Lambda functions"
+  type        = string
+}
+
 
