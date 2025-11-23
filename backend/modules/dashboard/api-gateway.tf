@@ -60,9 +60,9 @@ module "dashboard_api" {
     }
   }
 
-  # Configuration
-  domain_name         = var.api_gateway_domain_name
-  certificate_arn     = var.api_gateway_domain_name != "" ? (var.acm_certificate_arn != "" ? var.acm_certificate_arn : (length(module.frontend_certificate) > 0 ? module.frontend_certificate[0].certificate_arn : "")) : ""
+  # Configuration - only use custom domain if we have a certificate
+  domain_name         = var.api_gateway_domain_name != "" && (var.acm_certificate_arn != "" || length(module.frontend_certificate) > 0) ? var.api_gateway_domain_name : ""
+  certificate_arn     = var.acm_certificate_arn != "" ? var.acm_certificate_arn : (length(module.frontend_certificate) > 0 ? module.frontend_certificate[0].certificate_arn : null)
   cloudwatch_role_arn = var.api_gateway_cloudwatch_role_arn
   enable_cors         = true
   enable_xray_tracing = false
