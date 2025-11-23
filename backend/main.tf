@@ -79,7 +79,7 @@ module "cold_path" {
 
 # Dashboard Module
 module "dashboard" {
-  source = "./modules/dashboard"
+  source                             = "./modules/dashboard"
   project_name                       = var.project_name
   environment                        = var.environment
   cold_path_dynamodb_table           = module.cold_path.dynamodb_table_name
