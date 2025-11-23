@@ -31,12 +31,6 @@ provider "aws" {
   region = var.aws_region
 }
 
-# Provider for us-east-1 (required for CloudFront ACM certificates)
-provider "aws" {
-  alias  = "us_east_1"
-  region = "us-east-1"
-}
-
 # Data sources
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
@@ -86,11 +80,6 @@ module "cold_path" {
 # Dashboard Module
 module "dashboard" {
   source = "./modules/dashboard"
-
-  providers = {
-    aws.us_east_1 = aws.us_east_1
-  }
-
   project_name                       = var.project_name
   environment                        = var.environment
   cold_path_dynamodb_table           = module.cold_path.dynamodb_table_name

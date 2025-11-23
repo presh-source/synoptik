@@ -74,31 +74,3 @@ module "dashboard_api" {
 
   depends_on = [module.frontend_certificate]
 }
-
-# ============================================================================
-# DNS for API Domain (after API Gateway is created)
-# ============================================================================
-
-module "api_dns" {
-  count  = var.api_domain_name != "" ? 1 : 0
-  source = "../shared/certificate-manager"
-
-  providers = {
-    aws.us_east_1 = aws.us_east_1
-  }
-
-  project_name       = var.project_name
-  certificate_name   = "api-dns"
-  domain_name        = var.api_domain_name
-  hosted_zone_name   = var.hosted_zone_name
-  create_certificate = false # Certificate already created above
-
-  # Point to API Gateway custom domain
-  target_domain_name = module.dashboard_api.custom_domain_cloudfront_domain_name
-  target_zone_id     = module.dashboard_api.custom_domain_cloudfront_zone_id
-
-  enable_ipv6 = true
-  tags        = var.tags
-
-  depends_on = [module.dashboard_api]
-}

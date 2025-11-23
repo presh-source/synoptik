@@ -25,10 +25,6 @@ resource "aws_iam_role_policy" "appsync_lambda_invocation" {
 module "appsync" {
   source = "../shared/appsync"
 
-  providers = {
-    aws.us_east_1 = aws.us_east_1
-  }
-
   project_name        = var.project_name
   environment         = var.environment
   schema              = file("${path.module}/appsync/schema.graphql")
