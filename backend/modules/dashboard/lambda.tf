@@ -22,16 +22,14 @@ module "dashboard_dependencies" {
 
 data "archive_file" "pipeline_status_lambda" {
   type        = "zip"
-  source_dir  = "${path.module}/lambda"
+  source_file = "${path.module}/lambda/pipeline_status.py"
   output_path = "${path.module}/pipeline_status_lambda.zip"
-  excludes    = ["cloudwatch_metrics.py", "requirements.txt", "__pycache__", "*.pyc"]
 }
 
 data "archive_file" "cloudwatch_metrics_lambda" {
   type        = "zip"
-  source_dir  = "${path.module}/lambda"
+  source_file = "${path.module}/lambda/cloudwatch_metrics.py"
   output_path = "${path.module}/cloudwatch_metrics_lambda.zip"
-  excludes    = ["pipeline_status.py", "requirements.txt", "__pycache__", "*.pyc"]
 }
 
 data "archive_file" "crawler_metrics_resolver_appsync_lambda" {
