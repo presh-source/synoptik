@@ -11,8 +11,8 @@ module "dashboard_dependencies" {
   environment         = var.environment
   layer_name          = "dashboard-deps"
   description         = "Shared dependencies for dashboard Lambda functions"
-  source_path         = "${path.module}/lambda_deps_build"
-  build_path          = "${path.module}/lambda_deps_build_output"
+  source_path         = "${path.module}/lambda-layer/build"
+  build_path          = "${path.module}/lambda-layer/build-output"
   compatible_runtimes = ["python3.11"]
 }
 
