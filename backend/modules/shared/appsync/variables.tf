@@ -19,7 +19,7 @@ variable "schema" {
   type        = string
 }
 
-variable "api_domain_name" {
+variable "appsync_domain_name" {
   description = "The custom domain name for the GraphQL API"
   type        = string
   default     = ""
