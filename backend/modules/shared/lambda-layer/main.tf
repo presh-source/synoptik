@@ -51,6 +51,4 @@ resource "aws_lambda_layer_version" "this" {
   source_code_hash    = data.archive_file.zip.output_base64sha256
   compatible_runtimes = var.compatible_runtimes
   license_info        = var.license_info
-
-  tags = var.tags
 }

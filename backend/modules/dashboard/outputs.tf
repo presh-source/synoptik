@@ -60,12 +60,12 @@ output "cloudfront_distribution_id" {
 
 output "cloudfront_domain_name" {
   description = "Domain name of the CloudFront distribution"
-  value       = aws_cloudfront_distribution.dashboard.frontend_domain_name
+  value       = aws_cloudfront_distribution.dashboard.domain_name
 }
 
 output "dashboard_url" {
   description = "URL of the dashboard"
-  value       = var.frontend_domain_name != "" ? "https://${var.frontend_domain_name}" : "https://${aws_cloudfront_distribution.dashboard.frontend_domain_name}"
+  value       = var.frontend_domain_name != "" ? "https://${var.frontend_domain_name}" : "https://${aws_cloudfront_distribution.dashboard.domain_name}"
 }
 
 # Domain and certificate outputs

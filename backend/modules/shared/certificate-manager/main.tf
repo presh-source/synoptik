@@ -1,6 +1,8 @@
 # Domain and Certificate Module
 # Manages Route53 DNS records and ACM certificates
 
+
+
 # ============================================================================
 # Route53 Hosted Zone (Data Source)
 # ============================================================================
@@ -16,8 +18,8 @@ data "aws_route53_zone" "main" {
 # ============================================================================
 
 resource "aws_acm_certificate" "cert" {
-  count                     = var.domain_name != "" && var.create_certificate ? 1 : 0
-  provider                  = aws.us_east_1 # CloudFront requires certificates in us-east-1
+  count = var.domain_name != "" && var.create_certificate ? 1 : 0
+
   domain_name               = var.domain_name
   subject_alternative_names = var.subject_alternative_names
 
@@ -58,8 +60,8 @@ resource "aws_route53_record" "cert_validation" {
 # ============================================================================
 
 resource "aws_acm_certificate_validation" "cert" {
-  count                   = var.domain_name != "" && var.create_certificate && var.validation_method == "DNS" ? 1 : 0
-  provider                = aws.us_east_1
+  count = var.domain_name != "" && var.create_certificate && var.validation_method == "DNS" ? 1 : 0
+
   certificate_arn         = aws_acm_certificate.cert[0].arn
   validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
 

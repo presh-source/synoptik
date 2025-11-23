@@ -31,6 +31,8 @@ provider "aws" {
   region = var.aws_region
 }
 
+
+
 # Data sources
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
@@ -45,6 +47,7 @@ locals {
 # IAM Roles
 module "iam" {
   source       = "./modules/iam"
+  
   project_name = var.project_name
   environment  = var.environment
   tags         = local.merged_tags
@@ -53,6 +56,7 @@ module "iam" {
 # Data Lake (S3)
 module "data_lake" {
   source       = "./modules/data-lake"
+  
   project_name = var.project_name
   environment  = var.environment
   tags         = local.merged_tags
@@ -61,6 +65,7 @@ module "data_lake" {
 # Cold Path Pipeline
 module "cold_path" {
   source                 = "./modules/cold-path"
+  
   project_name           = var.project_name
   environment            = var.environment
   github_token           = var.github_token
@@ -70,16 +75,15 @@ module "cold_path" {
   lambda_memory          = 1024
   requests_per_execution = 700
   sleep_interval         = 1
-
-  appsync_api_url = module.dashboard.appsync_api_url
-  appsync_api_id  = module.dashboard.appsync_api_id
-
-  depends_on = [module.data_lake]
+  appsync_api_url        = module.dashboard.appsync_api_url
+  appsync_api_id         = module.dashboard.appsync_api_id
+  depends_on             = [module.data_lake]
 }
 
 # Dashboard Module
 module "dashboard" {
-  source                             = "./modules/dashboard"
+  source = "./modules/dashboard"
+  
   project_name                       = var.project_name
   environment                        = var.environment
   cold_path_dynamodb_table           = module.cold_path.dynamodb_table_name

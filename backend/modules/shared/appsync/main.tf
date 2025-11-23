@@ -2,6 +2,8 @@
 # AppSync GraphQL API
 # ============================================================================
 
+
+
 resource "aws_appsync_graphql_api" "main" {
   name                = "${var.environment}-${var.project_name}-graphql-api"
   authentication_type = "API_KEY"
@@ -172,9 +174,7 @@ module "appsync_dns" {
   count  = var.appsync_domain_name != "" ? 1 : 0
   source = "../certificate-manager"
 
-  providers = {
-    aws.us_east_1 = aws.us_east_1
-  }
+
 
   project_name     = var.project_name
   certificate_name = "appsync-dns"

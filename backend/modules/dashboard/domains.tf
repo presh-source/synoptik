@@ -8,9 +8,7 @@ module "frontend_certificate" {
   count  = var.frontend_domain_name != "" && var.acm_certificate_arn == "" ? 1 : 0
   source = "../shared/certificate-manager"
 
-  providers = {
-    aws.us_east_1 = aws.us_east_1
-  }
+
 
   project_name     = var.project_name
   certificate_name = "frontend"
@@ -37,10 +35,6 @@ module "frontend_dns" {
   count  = var.frontend_domain_name != "" ? 1 : 0
   source = "../shared/certificate-manager"
 
-  providers = {
-    aws.us_east_1 = aws.us_east_1
-  }
-
   project_name     = var.project_name
   certificate_name = "frontend"
   domain_name      = var.frontend_domain_name
@@ -50,7 +44,7 @@ module "frontend_dns" {
   create_certificate = false
 
   # CloudFront distribution details
-  target_domain_name = aws_cloudfront_distribution.dashboard.frontend_domain_name
+  target_domain_name = aws_cloudfront_distribution.dashboard.domain_name
   target_zone_id     = aws_cloudfront_distribution.dashboard.hosted_zone_id
 
   enable_ipv6 = true
@@ -66,10 +60,6 @@ module "frontend_dns" {
 module "api_gateway_dns" {
   count  = var.api_domain_name != "" ? 1 : 0
   source = "../shared/certificate-manager"
-
-  providers = {
-    aws.us_east_1 = aws.us_east_1
-  }
 
   project_name       = var.project_name
   certificate_name   = "api-${var.environment}-${var.project_name}"
