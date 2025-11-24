@@ -29,24 +29,24 @@ module "cold_path" {
   lambda_memory          = 1024
   requests_per_execution = 700
   sleep_interval         = 1
-  # appsync_api_url        = module.dashboard.appsync_api_url
-  # appsync_api_id         = module.dashboard.appsync_api_id
-  depends_on = [module.data_lake]
+  appsync_api_url        = module.dashboard.appsync_api_url
+  appsync_api_id         = module.dashboard.appsync_api_id
+  depends_on             = [module.data_lake]
 }
 
-# # Dashboard Module
-# module "dashboard" {
-#   source = "./modules/dashboard"
+# Dashboard Module
+module "dashboard" {
+  source = "./modules/dashboard"
 
-#   project_name                       = var.project_name
-#   environment                        = var.environment
-#   cold_path_dynamodb_table           = module.cold_path.dynamodb_table_name
-#   sentry_dsn_backend                 = var.sentry_dsn_backend
-#   app_version                        = var.app_version
-#   api_gateway_domain_name            = var.api_gateway_domain_name
-#   hosted_zone_name                   = var.hosted_zone_name
-#   acm_certificate_arn                = var.acm_certificate_arn
-#   api_gateway_cloudwatch_role_arn    = module.iam.api_gateway_cloudwatch_role_arn
-#   appsync_lambda_invocation_role_arn = module.iam.appsync_lambda_invocation_role_arn
-#   tags                               = local.merged_tags
-# }
+  project_name                       = var.project_name
+  environment                        = var.environment
+  cold_path_dynamodb_table           = module.cold_path.dynamodb_table_name
+  sentry_dsn_backend                 = var.sentry_dsn_backend
+  app_version                        = var.app_version
+  api_gateway_domain_name            = var.api_gateway_domain_name
+  hosted_zone_name                   = var.hosted_zone_name
+  acm_certificate_arn                = var.acm_certificate_arn
+  api_gateway_cloudwatch_role_arn    = module.iam.api_gateway_cloudwatch_role_arn
+  appsync_lambda_invocation_role_arn = module.iam.appsync_lambda_invocation_role_arn
+  tags                               = local.merged_tags
+}

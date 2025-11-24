@@ -117,23 +117,23 @@ resource "aws_iam_role_policy" "repo_crawler_lambda_policy" {
 
 # IAM policy for AppSync access (only created when AppSync endpoint is provided)
 # Follows principle of least privilege by restricting to specific API and mutation field
-# resource "aws_iam_role_policy" "repo_crawler_appsync_policy" {
-#   name = "${var.environment}-${var.project_name}-repo-crawler-appsync-policy"
-#   role = aws_iam_role.repo_crawler_lambda.id
+resource "aws_iam_role_policy" "repo_crawler_appsync_policy" {
+  name = "${var.environment}-${var.project_name}-repo-crawler-appsync-policy"
+  role = aws_iam_role.repo_crawler_lambda.id
 
-#   policy = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [
-#       {
-#         Effect = "Allow"
-#         Action = [
-#           "appsync:GraphQL"
-#         ]
-#         Resource = "arn:aws:appsync:${data.aws_region.current.name}:*:apis/${var.appsync_api_id}/types/Mutation/fields/publishCrawlerCompleted"
-#       }
-#     ]
-#   })
-# }
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "appsync:GraphQL"
+        ]
+        Resource = "arn:aws:appsync:${data.aws_region.current.name}:*:apis/${var.appsync_api_id}/types/Mutation/fields/publishCrawlerCompleted"
+      }
+    ]
+  })
+}
 
 # Install Lambda dependencies locally using an external data source to ensure it runs before archiving
 data "external" "pip_install" {
@@ -204,7 +204,7 @@ resource "aws_lambda_function" "repo_crawler" {
       REQUESTS_PER_EXECUTION = var.requests_per_execution
       SLEEP_INTERVAL         = var.sleep_interval
       PROJECT_NAME           = var.project_name
-      # APPSYNC_API_URL        = var.appsync_api_url
+      APPSYNC_API_URL        = var.appsync_api_url
     }
   }
 
@@ -434,23 +434,23 @@ resource "aws_iam_role_policy" "user_crawler_lambda_policy" {
 
 # IAM policy for AppSync access (only created when AppSync endpoint is provided)
 # Follows principle of least privilege by restricting to specific API and mutation field
-# resource "aws_iam_role_policy" "user_crawler_appsync_policy" {
-#   name = "${var.environment}-${var.project_name}-user-crawler-appsync-policy"
-#   role = aws_iam_role.user_crawler_lambda.id
+resource "aws_iam_role_policy" "user_crawler_appsync_policy" {
+  name = "${var.environment}-${var.project_name}-user-crawler-appsync-policy"
+  role = aws_iam_role.user_crawler_lambda.id
 
-#   policy = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [
-#       {
-#         Effect = "Allow"
-#         Action = [
-#           "appsync:GraphQL"
-#         ]
-#         Resource = "arn:aws:appsync:${data.aws_region.current.name}:*:apis/${var.appsync_api_id}/types/Mutation/fields/publishCrawlerCompleted"
-#       }
-#     ]
-#   })
-# }
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "appsync:GraphQL"
+        ]
+        Resource = "arn:aws:appsync:${data.aws_region.current.name}:*:apis/${var.appsync_api_id}/types/Mutation/fields/publishCrawlerCompleted"
+      }
+    ]
+  })
+}
 
 # Lambda function
 resource "aws_lambda_function" "user_crawler" {
@@ -476,7 +476,7 @@ resource "aws_lambda_function" "user_crawler" {
       REQUESTS_PER_EXECUTION = var.requests_per_execution
       SLEEP_INTERVAL         = var.sleep_interval
       PROJECT_NAME           = var.project_name
-      # APPSYNC_API_URL        = var.appsync_api_url
+      appsync_api_url        = var.appsync_api_url
     }
   }
 
