@@ -69,7 +69,7 @@ jobs:
           VITE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
           VITE_API_URL: ${{ steps.targets.outputs.dashboard_api_url }}
           VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN_FRONTEND }}
-          VITE_dashboard_appsync_api_url: ${{ steps.targets.outputs.dashboard_dashboard_dashboard_appsync_api_url }}
+          VITE_DASHBOARD_APPSYNC_API_URL: ${{ steps.targets.outputs.dashboard_dashboard_dashboard_appsync_api_url }}
           VITE_APPSYNC_API_KEY: ${{ steps.targets.outputs.dashboard_appsync_api_key }}
           VITE_APPSYNC_REALTIME_URL: ${{ steps.targets.outputs.dashboard_appsync_realtime_url }}
           VITE_ENVIRONMENT: ${{ env.DEPLOY_ENV }}

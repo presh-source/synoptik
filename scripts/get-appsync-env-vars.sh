@@ -46,7 +46,7 @@ echo "=========================================="
 echo ""
 echo "Add these to frontend/.env.local:"
 echo ""
-echo "VITE_dashboard_appsync_api_url=$GRAPHQL_ENDPOINT"
+echo "VITE_DASHBOARD_APPSYNC_API_URL=$GRAPHQL_ENDPOINT"
 echo "VITE_APPSYNC_API_KEY=$API_KEY"
 echo "VITE_APPSYNC_REALTIME_URL=$REALTIME_ENDPOINT"
 echo ""
@@ -77,9 +77,9 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
   fi
   
   # Update or add AppSync variables
-  if grep -q "VITE_dashboard_appsync_api_url" "$ENV_FILE" 2>/dev/null; then
+  if grep -q "VITE_DASHBOARD_APPSYNC_API_URL" "$ENV_FILE" 2>/dev/null; then
     # Update existing values
-    sed -i.tmp "s|VITE_dashboard_appsync_api_url=.*|VITE_dashboard_appsync_api_url=$GRAPHQL_ENDPOINT|" "$ENV_FILE"
+    sed -i.tmp "s|VITE_DASHBOARD_APPSYNC_API_URL=.*|VITE_DASHBOARD_APPSYNC_API_URL=$GRAPHQL_ENDPOINT|" "$ENV_FILE"
     sed -i.tmp "s|VITE_APPSYNC_API_KEY=.*|VITE_APPSYNC_API_KEY=$API_KEY|" "$ENV_FILE"
     sed -i.tmp "s|VITE_APPSYNC_REALTIME_URL=.*|VITE_APPSYNC_REALTIME_URL=$REALTIME_ENDPOINT|" "$ENV_FILE"
     rm -f "$ENV_FILE.tmp"
@@ -87,7 +87,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     # Append new values
     echo "" >> "$ENV_FILE"
     echo "# AppSync GraphQL API Configuration" >> "$ENV_FILE"
-    echo "VITE_dashboard_appsync_api_url=$GRAPHQL_ENDPOINT" >> "$ENV_FILE"
+    echo "VITE_DASHBOARD_APPSYNC_API_URL=$GRAPHQL_ENDPOINT" >> "$ENV_FILE"
     echo "VITE_APPSYNC_API_KEY=$API_KEY" >> "$ENV_FILE"
     echo "VITE_APPSYNC_REALTIME_URL=$REALTIME_ENDPOINT" >> "$ENV_FILE"
   fi

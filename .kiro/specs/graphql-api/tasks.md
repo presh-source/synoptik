@@ -126,7 +126,7 @@
 
 - [x] 17. Add environment variables
   - Add dashboard_appsync_api_url to crawler Lambdas
-  - Add VITE_dashboard_appsync_api_url to frontend
+  - Add VITE_DASHBOARD_APPSYNC_API_URL to frontend
   - Add VITE_APPSYNC_API_KEY to frontend
   - Add VITE_APPSYNC_REALTIME_URL to frontend
   - Store API key in AWS Secrets Manager

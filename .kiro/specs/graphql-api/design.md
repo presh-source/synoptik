@@ -352,7 +352,7 @@ from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 import requests
 
-APPSYNC_ENDPOINT = os.environ.get('dashboard_appsync_api_url')
+DASHBOARD_APPSYNC_API_URL = os.environ.get('dashboard_appsync_api_url')
 AWS_REGION = os.environ.get('AWS_REGION', 'us-east-1')
 
 def publish_crawler_completed(
@@ -409,7 +409,7 @@ def publish_crawler_completed(
     
     request = AWSRequest(
         method='POST',
-        url=APPSYNC_ENDPOINT,
+        url=DASHBOARD_APPSYNC_API_URL,
         data=json.dumps(payload),
         headers={
             'Content-Type': 'application/json'
@@ -420,7 +420,7 @@ def publish_crawler_completed(
     
     # Send request
     response = requests.post(
-        APPSYNC_ENDPOINT,
+        DASHBOARD_APPSYNC_API_URL,
         headers=dict(request.headers),
         data=request.body
     )
@@ -467,13 +467,13 @@ import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { createClient } from 'graphql-ws';
 
-const APPSYNC_ENDPOINT = import.meta.env.VITE_dashboard_appsync_api_url;
+const DASHBOARD_APPSYNC_API_URL = import.meta.env.VITE_DASHBOARD_APPSYNC_API_URL;
 const APPSYNC_API_KEY = import.meta.env.VITE_APPSYNC_API_KEY;
 const appsync_realtime_url = import.meta.env.VITE_APPSYNC_REALTIME_URL;
 
 // HTTP link for queries and mutations
 const httpLink = new HttpLink({
-  uri: APPSYNC_ENDPOINT,
+  uri: DASHBOARD_APPSYNC_API_URL,
   headers: {
     'x-api-key': APPSYNC_API_KEY,
   },
