@@ -49,7 +49,7 @@ export default function CrawlerEventNotification({
   // Subscribe to crawler completion events
   // Requirement 13.2: Establish WebSocket connection for subscriptions
   const { error } = useOnCrawlerCompletedSubscription({
-    variables: crawlerType ? { crawlerType } : {},
+    variables: {}, // Subscribe to all events, filter client-side
     // Requirement 18.4: Handle subscription errors gracefully
     onError: (error: Error) => {
       logError('Subscription error for crawler events', error, {
@@ -64,7 +64,8 @@ export default function CrawlerEventNotification({
     onData: ({ data: subscriptionData }: any) => {
       const event = subscriptionData.data?.onCrawlerCompleted
 
-      if (event) {
+      // Client-side filtering: only process events matching the specified crawler type
+      if (event && (!crawlerType || event.crawlerType === crawlerType)) {
         logComponentEvent('CrawlerEventNotification', 'crawler_completed', {
           extra: {
             crawlerType: event.crawlerType,
