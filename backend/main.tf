@@ -43,6 +43,7 @@ module "dashboard" {
   cold_path_dynamodb_table           = module.cold_path.dynamodb_table_name
   sentry_dsn_backend                 = var.sentry_dsn_backend
   app_version                        = var.app_version
+  frontend_domain_name               = var.frontend_domain_name
   api_gateway_domain_name            = var.api_gateway_domain_name
   hosted_zone_name                   = var.hosted_zone_name
   acm_certificate_arn                = var.acm_certificate_arn
