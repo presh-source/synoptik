@@ -49,6 +49,7 @@ export type CrawlerCompleted = {
 };
 
 export type CrawlerCompletedInput = {
+  completedAt?: InputMaybe<Scalars['AWSDateTime']['input']>;
   crawlerType: Scalars['String']['input'];
   endId: Scalars['Int']['input'];
   errorMessage?: InputMaybe<Scalars['String']['input']>;

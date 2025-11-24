@@ -11,21 +11,22 @@ import { useEffect } from 'react'
  * Features:
  * - Uses GraphQL API via Apollo Client as primary data source
  * - Falls back to REST API if GraphQL fails
- * - 30-second polling interval by default
+ * - Polling disabled (uses subscriptions for real-time updates)
  * - Response validation before returning data
  * - Automatic error recovery (continues polling after errors)
  * - Proper loading and error state handling
  * 
  * Requirements: 1.1, 1.2, 5.3
  */
-export const usePipelineStatus = (refetchInterval = 30000) => {
+export const usePipelineStatus = (_refetchInterval = 0) => {
   // Try GraphQL first with Apollo Client
   const {
     data: graphqlData,
     loading: graphqlLoading,
     error: graphqlError,
+    refetch: graphqlRefetch,
   } = useGetPipelineStatusQuery({
-    pollInterval: refetchInterval,
+    pollInterval: 0, // Disable polling as we use subscriptions
     fetchPolicy: 'cache-and-network',
     errorPolicy: 'all', // Return partial data even if there are errors
   })
@@ -65,7 +66,7 @@ export const usePipelineStatus = (refetchInterval = 30000) => {
       try {
         // API endpoint already validates response via validatePipelineStatusResponse
         const data = await pipelineApi.getStatus()
-        
+
         logInfo('Pipeline status fetched successfully via REST API (fallback)', {
           component: 'usePipelineStatus',
           action: 'fetch',
@@ -75,7 +76,7 @@ export const usePipelineStatus = (refetchInterval = 30000) => {
             errorRate: data.errorRates.coldPath,
           },
         })
-        
+
         return data
       } catch (error) {
         // Log error with context
@@ -87,28 +88,28 @@ export const usePipelineStatus = (refetchInterval = 30000) => {
             action: 'fetch',
           }
         )
-        
+
         // Re-throw to let React Query handle the error state
         throw error
       }
     },
     // Only enable REST fallback if GraphQL has an error
     enabled: !!graphqlError && !graphqlLoading,
-    
+
     // Polling configuration
-    refetchInterval, // Default 30 seconds (30000ms)
-    refetchIntervalInBackground: true, // Continue polling even when tab is not focused
-    
+    refetchInterval: false, // Disable polling
+    refetchIntervalInBackground: false,
+
     // Error recovery configuration
     retry: 3, // Retry failed requests up to 3 times
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff: 1s, 2s, 4s, max 10s
-    
+
     // Stale data configuration
     staleTime: 0, // Data is immediately stale, always refetch on mount
     refetchOnMount: true, // Refetch when component mounts
     refetchOnWindowFocus: true, // Refetch when window regains focus
     refetchOnReconnect: true, // Refetch when network reconnects
-    
+
     // Keep previous data while fetching new data (smooth transitions)
     placeholderData: (previousData) => previousData,
   })
@@ -116,9 +117,9 @@ export const usePipelineStatus = (refetchInterval = 30000) => {
   // Transform GraphQL data to match the expected PipelineStatus interface
   const transformedGraphqlData = graphqlData?.pipelineStatus
     ? {
-        coldPath: graphqlData.pipelineStatus.coldPath,
-        errorRates: graphqlData.pipelineStatus.errorRates,
-      }
+      coldPath: graphqlData.pipelineStatus.coldPath,
+      errorRates: graphqlData.pipelineStatus.errorRates,
+    }
     : undefined
 
   // Return GraphQL data if available, otherwise fall back to REST
@@ -129,9 +130,16 @@ export const usePipelineStatus = (refetchInterval = 30000) => {
       isError: !!graphqlError,
       error: graphqlError ? new Error(graphqlError.message) : null,
       refetch: () => {
-        // Apollo Client doesn't return a promise from refetch in the same way
-        // but we can trigger a refetch
-        return Promise.resolve({ data: transformedGraphqlData } as any)
+        // Trigger refetch for Apollo Client
+        return graphqlRefetch().then(result => {
+          // Return in a shape compatible with what callers might expect (though mostly void/promise)
+          return {
+            data: result.data?.pipelineStatus ? {
+              coldPath: result.data.pipelineStatus.coldPath,
+              errorRates: result.data.pipelineStatus.errorRates
+            } : undefined
+          } as any;
+        });
       },
     }
   }

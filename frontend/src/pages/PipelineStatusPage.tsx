@@ -46,22 +46,22 @@ export default function PipelineStatusPage() {
   if (isLoading && !data) {
     return (
       <Box>
-        <Typography 
-          variant="h4" 
+        <Typography
+          variant="h4"
           gutterBottom
           sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}
         >
           Pipeline Status
         </Typography>
-        <Typography 
-          variant="body2" 
-          color="text.secondary" 
-          sx={{ 
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{
             mb: 3,
             fontSize: { xs: '0.8rem', sm: '0.875rem' }
           }}
         >
-          Real-time monitoring of the Cold Path data pipeline. Auto-refreshes every 30 seconds.
+          Real-time monitoring of the Cold Path data pipeline. Updates automatically when events occur.
         </Typography>
 
         <Grid container spacing={3}>
@@ -83,28 +83,28 @@ export default function PipelineStatusPage() {
   if (isError && !data) {
     return (
       <Box>
-        <Typography 
-          variant="h4" 
+        <Typography
+          variant="h4"
           gutterBottom
           sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}
         >
           Pipeline Status
         </Typography>
-        <Typography 
-          variant="body2" 
-          color="text.secondary" 
-          sx={{ 
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{
             mb: 3,
             fontSize: { xs: '0.8rem', sm: '0.875rem' }
           }}
         >
-          Real-time monitoring of the Cold Path data pipeline. Auto-refreshes every 30 seconds.
+          Real-time monitoring of the Cold Path data pipeline. Updates automatically when events occur.
         </Typography>
 
         <Grid container spacing={3}>
           <Grid item xs={12}>
-            <ErrorDisplay 
-              error={error} 
+            <ErrorDisplay
+              error={error}
               onRetry={handleRetry}
               title="Failed to Load Pipeline Status"
             />
@@ -118,27 +118,27 @@ export default function PipelineStatusPage() {
   if (!data) {
     return (
       <Box>
-        <Typography 
-          variant="h4" 
+        <Typography
+          variant="h4"
           gutterBottom
           sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}
         >
           Pipeline Status
         </Typography>
-        <Typography 
-          variant="body2" 
-          color="text.secondary" 
-          sx={{ 
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{
             mb: 3,
             fontSize: { xs: '0.8rem', sm: '0.875rem' }
           }}
         >
-          Real-time monitoring of the Cold Path data pipeline. Auto-refreshes every 30 seconds.
+          Real-time monitoring of the Cold Path data pipeline. Updates automatically when events occur.
         </Typography>
 
         <Grid container spacing={3}>
           <Grid item xs={12}>
-            <EmptyState 
+            <EmptyState
               title="No Pipeline Data Available"
               message="Pipeline status data is currently unavailable. The system will automatically retry."
             />
@@ -153,18 +153,18 @@ export default function PipelineStatusPage() {
     <Box>
       {/* Crawler event notification subscription - Requirements 13.2, 13.3, 18.3, 18.4 */}
       <CrawlerEventNotification onCrawlerCompleted={() => refetch()} />
-      
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          alignItems: { xs: 'flex-start', sm: 'center' }, 
-          justifyContent: 'space-between', 
+
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          justifyContent: 'space-between',
           mb: 1,
           flexDirection: { xs: 'column', sm: 'row' },
           gap: { xs: 1, sm: 0 }
         }}
       >
-        <Typography 
+        <Typography
           variant="h4"
           sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}
         >
@@ -173,21 +173,21 @@ export default function PipelineStatusPage() {
         {/* Auto-refresh indicator - Requirement 1.3 */}
         <Chip
           icon={<RefreshIcon />}
-          label="Auto-refresh: 30s"
+          label="Real-time Updates"
           size="small"
-          color="primary"
+          color="success"
           variant="outlined"
         />
       </Box>
-      <Typography 
-        variant="body2" 
-        color="text.secondary" 
-        sx={{ 
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{
           mb: 3,
           fontSize: { xs: '0.8rem', sm: '0.875rem' }
         }}
       >
-        Real-time monitoring of the Cold Path data pipeline. Auto-refreshes every 30 seconds.
+        Real-time monitoring of the Cold Path data pipeline. Updates automatically when events occur.
       </Typography>
 
       {/* Show inline error if there's an error but we have cached data - Requirement 8.5 */}
@@ -202,7 +202,7 @@ export default function PipelineStatusPage() {
           {data.errorRates ? (
             <ErrorRateIndicator errorRates={data.errorRates} />
           ) : (
-            <EmptyState 
+            <EmptyState
               title="Error Rate Data Unavailable"
               message="Error rate metrics are currently unavailable."
             />
@@ -213,7 +213,7 @@ export default function PipelineStatusPage() {
           {data.coldPath ? (
             <ColdPathStatusCard data={data.coldPath} />
           ) : (
-            <EmptyState 
+            <EmptyState
               title="Cold Path Status Unavailable"
               message="Cold Path status data is currently unavailable."
             />
@@ -227,7 +227,7 @@ export default function PipelineStatusPage() {
               userCrawler={data.coldPath.userCrawler}
             />
           ) : (
-            <EmptyState 
+            <EmptyState
               title="Crawler Metrics Unavailable"
               message="Crawler performance metrics are currently unavailable."
             />
