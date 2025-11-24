@@ -11,7 +11,7 @@ module "frontend_certificate" {
 
 
   project_name     = var.project_name
-  certificate_name = "dashboard-frontend"
+  certificate_name = "frontend"
   domain_name      = var.frontend_domain_name
   hosted_zone_name = var.hosted_zone_name
 
@@ -23,10 +23,7 @@ module "frontend_certificate" {
 
   # Create certificate only, DNS records created later
   create_dns_records = false
-
-  # Placeholder values (not used when create_dns_records is false)
   target_domain_name = ""
-  target_zone_id     = ""
 
   tags = var.tags
 }
@@ -40,7 +37,7 @@ module "frontend_dns" {
   source = "../shared/certificate-manager"
 
   project_name     = var.project_name
-  certificate_name = "frontend-${var.environment}-dns"
+  certificate_name = "frontend"
   domain_name      = var.frontend_domain_name
   hosted_zone_name = var.hosted_zone_name
 
