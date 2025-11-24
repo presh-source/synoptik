@@ -10,6 +10,7 @@ retry logic, and error handling.
 import json
 import os
 import time
+from datetime import datetime, timezone
 
 import boto3
 import requests
@@ -85,6 +86,7 @@ def publish_crawler_completed(
             "endId": end_id,
             "itemsFetched": items_fetched,
             "totalProcessed": total_processed,
+            "completedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "success": success,
             "errorMessage": error_message,
         }

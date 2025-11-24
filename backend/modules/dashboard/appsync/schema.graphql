@@ -82,6 +82,7 @@ input CrawlerCompletedInput {
   endId: Int!
   itemsFetched: Int!
   totalProcessed: Int!
+  completedAt: AWSDateTime
   success: Boolean!
   errorMessage: String
 }

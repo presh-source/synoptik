@@ -40,17 +40,26 @@ const amplifyLink = new ApolloLink((operation) => {
       definition.operation === 'subscription';
 
     if (isSubscription) {
+      const cleanVariables = variables || {};
+
       console.log('[Amplify Subscription] Starting subscription:', {
         query: queryString,
-        variables,
+        variables: cleanVariables,
       });
+
+      // Ensure API key is present
+      if (!import.meta.env.VITE_DASHBOARD_APPSYNC_API_KEY) {
+        console.error('[Amplify Subscription] Missing API Key');
+        observer.error(new Error('Missing API Key'));
+        return () => { };
+      }
 
       // Use Amplify's native subscription (WebSocket)
       // TypeScript doesn't know that subscriptions return an Observable, so we cast to any
       const subscription = (graphqlClient.graphql({
         query: queryString,
-        variables,
-        authMode: 'apiKey', // Explicitly set auth mode
+        variables: cleanVariables,
+        authMode: 'apiKey',
       }) as any).subscribe({
         next: (response: any) => {
           console.log('[Amplify Subscription] Received data:', response);
@@ -72,6 +81,10 @@ const amplifyLink = new ApolloLink((operation) => {
         },
         error: (error: any) => {
           console.error('[Amplify Subscription] Subscription error:', error);
+          // Check for UnconventionalError and try to extract meaningful message
+          if (error.message === 'An error of unexpected shape occurred.') {
+            console.warn('[Amplify Subscription] Encountered UnconventionalError. This often means the subscription handshake failed or the data shape is mismatched.');
+          }
           observer.error(error);
         },
         complete: () => {
