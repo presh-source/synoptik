@@ -6,9 +6,11 @@
 
 locals {
   # Hash of all files in the source directory to detect changes
-  source_files_hash = sha256(join("", [
-    for f in fileset(var.source_path, "**") : filesha256("${var.source_path}/${f}")
-  ]))
+  # Use try() to handle case where directory doesn't exist yet
+  source_files = try(fileset(var.source_path, "**"), [])
+  source_files_hash = length(local.source_files) > 0 ? sha256(join("", [
+    for f in local.source_files : filesha256("${var.source_path}/${f}")
+  ])) : sha256("empty")
 
   output_zip_path = "${var.build_path}/layer.zip"
 }
@@ -20,10 +22,12 @@ locals {
 resource "null_resource" "build" {
   triggers = {
     source_hash = local.source_files_hash
+    # Force rebuild if build output doesn't exist
+    always_build = fileexists("${var.build_path}/python") ? "exists" : timestamp()
   }
 
   provisioner "local-exec" {
-    command = "${path.module}/build.sh ${var.source_path} ${var.build_path}"
+    command = "mkdir -p ${var.build_path} && ${path.module}/build.sh ${var.source_path} ${var.build_path}"
   }
 }
 
