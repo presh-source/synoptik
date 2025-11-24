@@ -12,12 +12,12 @@
  * 5. Run: window.testSubscription.stop()
  */
 
-import { apolloClient } from '@/graphql/client'
-import { ON_CRAWLER_COMPLETED } from '@/graphql/subscriptions'
+import { apolloClient } from '../graphql/client'
+import { ON_CRAWLER_COMPLETED } from '../graphql/subscriptions'
 import {
   OnCrawlerCompletedSubscription,
   CrawlerCompleted,
-} from '@/graphql/generated/types'
+} from '../graphql/generated/types'
 
 class SubscriptionTester {
   private subscription: any = null
@@ -86,7 +86,7 @@ class SubscriptionTester {
    */
   private handleEvent(event: CrawlerCompleted) {
     const latency = Date.now() - this.startTime
-    
+
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
     console.log('📨 Crawler Event Received!')
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
@@ -97,17 +97,17 @@ class SubscriptionTester {
     console.log('🔹 Start ID:', event.startId)
     console.log('🔹 End ID:', event.endId)
     console.log('🔹 Completed At:', new Date(event.completedAt).toLocaleString())
-    
+
     if (event.errorMessage) {
       console.log('🔹 Error Message:', event.errorMessage)
     }
-    
+
     console.log('🔹 Latency:', `${latency}ms`)
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-    
+
     // Store event
     this.events.push(event)
-    
+
     // Update start time for next event
     this.startTime = Date.now()
   }
@@ -119,18 +119,18 @@ class SubscriptionTester {
     console.log('\n📊 Subscription Summary')
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
     console.log('Total Events Received:', this.events.length)
-    
+
     if (this.events.length > 0) {
       const repoEvents = this.events.filter(e => e.crawlerType === 'repo')
       const userEvents = this.events.filter(e => e.crawlerType === 'user')
       const successEvents = this.events.filter(e => e.success)
       const failureEvents = this.events.filter(e => !e.success)
-      
+
       console.log('  - Repo Crawler Events:', repoEvents.length)
       console.log('  - User Crawler Events:', userEvents.length)
       console.log('  - Successful:', successEvents.length)
       console.log('  - Failed:', failureEvents.length)
-      
+
       console.log('\nEvent Details:')
       this.events.forEach((event, index) => {
         console.log(`  ${index + 1}. ${event.crawlerType} - ${event.itemsFetched} items - ${event.success ? '✅' : '❌'}`)
@@ -200,7 +200,7 @@ if (typeof window !== 'undefined') {
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')
     },
   }
-  
+
   console.log('✅ Subscription testing utility loaded!')
   console.log('💡 Run testSubscription.help() for usage instructions')
 }
