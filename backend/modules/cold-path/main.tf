@@ -130,7 +130,7 @@ resource "aws_iam_role_policy" "repo_crawler_appsync_policy" {
         Action = [
           "appsync:GraphQL"
         ]
-        Resource = "arn:aws:appsync:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:apis/${var.appsync_api_id}/*"
+        Resource = "arn:aws:appsync:${data.aws_region.current.name}:*:apis/${var.appsync_api_id}/types/Mutation/fields/publishCrawlerCompleted"
       }
     ]
   })

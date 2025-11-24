@@ -23,8 +23,9 @@ type Query {
 }
 
 type Mutation {
-  """Publish crawler completion event (called by crawler Lambdas)"""
-  publishCrawlerCompleted(input: CrawlerCompletedInput!): CrawlerCompleted!
+	publishCrawlerCompleted(input: CrawlerCompletedInput!): CrawlerCompleted!
+	@aws_iam
+  @aws_api_key
 }
 
 type Subscription {
@@ -63,16 +64,19 @@ type ErrorRates {
   coldPath: Float!
 }
 
-type CrawlerCompleted {
-  crawlerType: String!
-  startId: Int!
-  endId: Int!
-  itemsFetched: Int!
-  totalProcessed: Int!
-  completedAt: AWSDateTime!
-  success: Boolean!
-  errorMessage: String
+type CrawlerCompleted 
+  @aws_iam
+  @aws_api_key {
+	crawlerType: String!
+	startId: Int!
+	endId: Int!
+	itemsFetched: Int!
+	totalProcessed: Int!
+	completedAt: AWSDateTime!
+	success: Boolean!
+	errorMessage: String
 }
+
 
 # Input Types
 
