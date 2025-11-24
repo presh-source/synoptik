@@ -8,8 +8,6 @@ module "frontend_certificate" {
   count  = var.frontend_domain_name != "" && var.acm_certificate_arn == "" ? 1 : 0
   source = "../shared/certificate-manager"
 
-
-
   project_name     = var.project_name
   certificate_name = "frontend"
   domain_name      = var.frontend_domain_name
@@ -21,7 +19,8 @@ module "frontend_certificate" {
     var.api_gateway_domain_name != "" ? [var.api_gateway_domain_name] : []
   ))
 
-  # Create certificate only, DNS records created later
+  # Create BOTH certificate AND DNS validation records
+  create_certificate = true
   create_dns_records = true
 
   tags = var.tags
@@ -36,12 +35,13 @@ module "frontend_dns" {
   source = "../shared/certificate-manager"
 
   project_name     = var.project_name
-  certificate_name = "frontend"
+  certificate_name = "frontend-dns"
   domain_name      = var.frontend_domain_name
   hosted_zone_name = var.hosted_zone_name
 
-  # Don't create certificate, only DNS records
-  create_certificate = true
+  # Don't create certificate, ONLY DNS A/AAAA records
+  create_certificate = false
+  create_dns_records = true
 
   # CloudFront distribution details
   target_domain_name = aws_cloudfront_distribution.dashboard.domain_name
