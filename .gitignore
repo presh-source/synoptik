@@ -27,7 +27,7 @@ backend/tfplan
 backend/modules/cold-path/lambda_package.zip
 backend/modules/cold-path/lambda_layer.zip
 backend/modules/cold-path/lambda_deps_build/
-backend/modules/dashboard/lambda-layer/build-output/*
+
 # Node
 node_modules/
 dist/
