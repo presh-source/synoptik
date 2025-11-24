@@ -26,7 +26,7 @@ interface CrawlerEventNotificationProps {
    * Callback to refetch pipeline status when a crawler completes
    */
   onCrawlerCompleted?: () => void
-  
+
   /**
    * Optional filter for crawler type ("repo" or "user")
    * If not provided, subscribes to all crawler events
@@ -51,7 +51,7 @@ export default function CrawlerEventNotification({
   const { error } = useOnCrawlerCompletedSubscription({
     variables: crawlerType ? { crawlerType } : {},
     // Requirement 18.4: Handle subscription errors gracefully
-    onError: (error) => {
+    onError: (error: Error) => {
       logError('Subscription error for crawler events', error, {
         component: 'CrawlerEventNotification',
         action: 'subscribe',
@@ -61,9 +61,9 @@ export default function CrawlerEventNotification({
       })
     },
     // Requirement 13.3, 18.3: Receive events and update cache
-    onData: ({ data: subscriptionData }) => {
+    onData: ({ data: subscriptionData }: any) => {
       const event = subscriptionData.data?.onCrawlerCompleted
-      
+
       if (event) {
         logComponentEvent('CrawlerEventNotification', 'crawler_completed', {
           extra: {

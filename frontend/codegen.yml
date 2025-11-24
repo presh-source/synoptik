@@ -28,7 +28,10 @@ generates:
         AWSDateTime: string
       reactApolloVersion: 4
       addDocBlocks: true
-      apolloReactCommonImportFrom: "@apollo/client"
-      apolloReactHooksImportFrom: "@apollo/client"
+      withMutationFn: false
+      withRefetchFn: false
+      withSubscriptionHooks: true
+      withSuspenseQuery: false
+      withLazyQueries: false
       noExport: false
       omitOperationSuffix: false

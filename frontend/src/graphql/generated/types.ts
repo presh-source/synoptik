@@ -1,6 +1,5 @@
 import { gql } from '@apollo/client';
-import * as ApolloReactCommon from '@apollo/client';
-import * as ApolloReactHooks from '@apollo/client';
+import * as Apollo from '@apollo/client';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -178,7 +177,6 @@ export const PublishCrawlerCompletedDocument = gql`
   }
 }
     `;
-export type PublishCrawlerCompletedMutationFn = ApolloReactCommon.MutationFunction<PublishCrawlerCompletedMutation, PublishCrawlerCompletedMutationVariables>;
 
 /**
  * __usePublishCrawlerCompletedMutation__
@@ -197,13 +195,13 @@ export type PublishCrawlerCompletedMutationFn = ApolloReactCommon.MutationFuncti
  *   },
  * });
  */
-export function usePublishCrawlerCompletedMutation(baseOptions?: ApolloReactHooks.MutationHookOptions<PublishCrawlerCompletedMutation, PublishCrawlerCompletedMutationVariables>) {
+export function usePublishCrawlerCompletedMutation(baseOptions?: Apollo.MutationHookOptions<PublishCrawlerCompletedMutation, PublishCrawlerCompletedMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useMutation<PublishCrawlerCompletedMutation, PublishCrawlerCompletedMutationVariables>(PublishCrawlerCompletedDocument, options);
+        return Apollo.useMutation<PublishCrawlerCompletedMutation, PublishCrawlerCompletedMutationVariables>(PublishCrawlerCompletedDocument, options);
       }
 export type PublishCrawlerCompletedMutationHookResult = ReturnType<typeof usePublishCrawlerCompletedMutation>;
-export type PublishCrawlerCompletedMutationResult = ApolloReactCommon.MutationResult<PublishCrawlerCompletedMutation>;
-export type PublishCrawlerCompletedMutationOptions = ApolloReactCommon.BaseMutationOptions<PublishCrawlerCompletedMutation, PublishCrawlerCompletedMutationVariables>;
+export type PublishCrawlerCompletedMutationResult = Apollo.MutationResult<PublishCrawlerCompletedMutation>;
+export type PublishCrawlerCompletedMutationOptions = Apollo.BaseMutationOptions<PublishCrawlerCompletedMutation, PublishCrawlerCompletedMutationVariables>;
 export const GetPipelineStatusDocument = gql`
     query GetPipelineStatus {
   pipelineStatus {
@@ -254,22 +252,22 @@ export const GetPipelineStatusDocument = gql`
  *   },
  * });
  */
-export function useGetPipelineStatusQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetPipelineStatusQuery, GetPipelineStatusQueryVariables>) {
+export function useGetPipelineStatusQuery(baseOptions?: Apollo.QueryHookOptions<GetPipelineStatusQuery, GetPipelineStatusQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetPipelineStatusQuery, GetPipelineStatusQueryVariables>(GetPipelineStatusDocument, options);
+        return Apollo.useQuery<GetPipelineStatusQuery, GetPipelineStatusQueryVariables>(GetPipelineStatusDocument, options);
       }
-export function useGetPipelineStatusLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetPipelineStatusQuery, GetPipelineStatusQueryVariables>) {
+export function useGetPipelineStatusLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetPipelineStatusQuery, GetPipelineStatusQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetPipelineStatusQuery, GetPipelineStatusQueryVariables>(GetPipelineStatusDocument, options);
+          return Apollo.useLazyQuery<GetPipelineStatusQuery, GetPipelineStatusQueryVariables>(GetPipelineStatusDocument, options);
         }
-export function useGetPipelineStatusSuspenseQuery(baseOptions?: ApolloReactHooks.SkipToken | ApolloReactHooks.SuspenseQueryHookOptions<GetPipelineStatusQuery, GetPipelineStatusQueryVariables>) {
-          const options = baseOptions === ApolloReactHooks.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useSuspenseQuery<GetPipelineStatusQuery, GetPipelineStatusQueryVariables>(GetPipelineStatusDocument, options);
+export function useGetPipelineStatusSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPipelineStatusQuery, GetPipelineStatusQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetPipelineStatusQuery, GetPipelineStatusQueryVariables>(GetPipelineStatusDocument, options);
         }
 export type GetPipelineStatusQueryHookResult = ReturnType<typeof useGetPipelineStatusQuery>;
 export type GetPipelineStatusLazyQueryHookResult = ReturnType<typeof useGetPipelineStatusLazyQuery>;
 export type GetPipelineStatusSuspenseQueryHookResult = ReturnType<typeof useGetPipelineStatusSuspenseQuery>;
-export type GetPipelineStatusQueryResult = ApolloReactCommon.QueryResult<GetPipelineStatusQuery, GetPipelineStatusQueryVariables>;
+export type GetPipelineStatusQueryResult = Apollo.QueryResult<GetPipelineStatusQuery, GetPipelineStatusQueryVariables>;
 export const GetRepoCrawlerMetricsDocument = gql`
     query GetRepoCrawlerMetrics($timePeriodHours: Int) {
   repoCrawler(timePeriodHours: $timePeriodHours) {
@@ -301,22 +299,22 @@ export const GetRepoCrawlerMetricsDocument = gql`
  *   },
  * });
  */
-export function useGetRepoCrawlerMetricsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetRepoCrawlerMetricsQuery, GetRepoCrawlerMetricsQueryVariables>) {
+export function useGetRepoCrawlerMetricsQuery(baseOptions?: Apollo.QueryHookOptions<GetRepoCrawlerMetricsQuery, GetRepoCrawlerMetricsQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetRepoCrawlerMetricsQuery, GetRepoCrawlerMetricsQueryVariables>(GetRepoCrawlerMetricsDocument, options);
+        return Apollo.useQuery<GetRepoCrawlerMetricsQuery, GetRepoCrawlerMetricsQueryVariables>(GetRepoCrawlerMetricsDocument, options);
       }
-export function useGetRepoCrawlerMetricsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRepoCrawlerMetricsQuery, GetRepoCrawlerMetricsQueryVariables>) {
+export function useGetRepoCrawlerMetricsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetRepoCrawlerMetricsQuery, GetRepoCrawlerMetricsQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetRepoCrawlerMetricsQuery, GetRepoCrawlerMetricsQueryVariables>(GetRepoCrawlerMetricsDocument, options);
+          return Apollo.useLazyQuery<GetRepoCrawlerMetricsQuery, GetRepoCrawlerMetricsQueryVariables>(GetRepoCrawlerMetricsDocument, options);
         }
-export function useGetRepoCrawlerMetricsSuspenseQuery(baseOptions?: ApolloReactHooks.SkipToken | ApolloReactHooks.SuspenseQueryHookOptions<GetRepoCrawlerMetricsQuery, GetRepoCrawlerMetricsQueryVariables>) {
-          const options = baseOptions === ApolloReactHooks.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useSuspenseQuery<GetRepoCrawlerMetricsQuery, GetRepoCrawlerMetricsQueryVariables>(GetRepoCrawlerMetricsDocument, options);
+export function useGetRepoCrawlerMetricsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetRepoCrawlerMetricsQuery, GetRepoCrawlerMetricsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetRepoCrawlerMetricsQuery, GetRepoCrawlerMetricsQueryVariables>(GetRepoCrawlerMetricsDocument, options);
         }
 export type GetRepoCrawlerMetricsQueryHookResult = ReturnType<typeof useGetRepoCrawlerMetricsQuery>;
 export type GetRepoCrawlerMetricsLazyQueryHookResult = ReturnType<typeof useGetRepoCrawlerMetricsLazyQuery>;
 export type GetRepoCrawlerMetricsSuspenseQueryHookResult = ReturnType<typeof useGetRepoCrawlerMetricsSuspenseQuery>;
-export type GetRepoCrawlerMetricsQueryResult = ApolloReactCommon.QueryResult<GetRepoCrawlerMetricsQuery, GetRepoCrawlerMetricsQueryVariables>;
+export type GetRepoCrawlerMetricsQueryResult = Apollo.QueryResult<GetRepoCrawlerMetricsQuery, GetRepoCrawlerMetricsQueryVariables>;
 export const GetUserCrawlerMetricsDocument = gql`
     query GetUserCrawlerMetrics($timePeriodHours: Int) {
   userCrawler(timePeriodHours: $timePeriodHours) {
@@ -348,22 +346,22 @@ export const GetUserCrawlerMetricsDocument = gql`
  *   },
  * });
  */
-export function useGetUserCrawlerMetricsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetUserCrawlerMetricsQuery, GetUserCrawlerMetricsQueryVariables>) {
+export function useGetUserCrawlerMetricsQuery(baseOptions?: Apollo.QueryHookOptions<GetUserCrawlerMetricsQuery, GetUserCrawlerMetricsQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetUserCrawlerMetricsQuery, GetUserCrawlerMetricsQueryVariables>(GetUserCrawlerMetricsDocument, options);
+        return Apollo.useQuery<GetUserCrawlerMetricsQuery, GetUserCrawlerMetricsQueryVariables>(GetUserCrawlerMetricsDocument, options);
       }
-export function useGetUserCrawlerMetricsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetUserCrawlerMetricsQuery, GetUserCrawlerMetricsQueryVariables>) {
+export function useGetUserCrawlerMetricsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetUserCrawlerMetricsQuery, GetUserCrawlerMetricsQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetUserCrawlerMetricsQuery, GetUserCrawlerMetricsQueryVariables>(GetUserCrawlerMetricsDocument, options);
+          return Apollo.useLazyQuery<GetUserCrawlerMetricsQuery, GetUserCrawlerMetricsQueryVariables>(GetUserCrawlerMetricsDocument, options);
         }
-export function useGetUserCrawlerMetricsSuspenseQuery(baseOptions?: ApolloReactHooks.SkipToken | ApolloReactHooks.SuspenseQueryHookOptions<GetUserCrawlerMetricsQuery, GetUserCrawlerMetricsQueryVariables>) {
-          const options = baseOptions === ApolloReactHooks.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useSuspenseQuery<GetUserCrawlerMetricsQuery, GetUserCrawlerMetricsQueryVariables>(GetUserCrawlerMetricsDocument, options);
+export function useGetUserCrawlerMetricsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetUserCrawlerMetricsQuery, GetUserCrawlerMetricsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetUserCrawlerMetricsQuery, GetUserCrawlerMetricsQueryVariables>(GetUserCrawlerMetricsDocument, options);
         }
 export type GetUserCrawlerMetricsQueryHookResult = ReturnType<typeof useGetUserCrawlerMetricsQuery>;
 export type GetUserCrawlerMetricsLazyQueryHookResult = ReturnType<typeof useGetUserCrawlerMetricsLazyQuery>;
 export type GetUserCrawlerMetricsSuspenseQueryHookResult = ReturnType<typeof useGetUserCrawlerMetricsSuspenseQuery>;
-export type GetUserCrawlerMetricsQueryResult = ApolloReactCommon.QueryResult<GetUserCrawlerMetricsQuery, GetUserCrawlerMetricsQueryVariables>;
+export type GetUserCrawlerMetricsQueryResult = Apollo.QueryResult<GetUserCrawlerMetricsQuery, GetUserCrawlerMetricsQueryVariables>;
 export const GetErrorRatesDocument = gql`
     query GetErrorRates {
   errorRates {
@@ -387,22 +385,22 @@ export const GetErrorRatesDocument = gql`
  *   },
  * });
  */
-export function useGetErrorRatesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetErrorRatesQuery, GetErrorRatesQueryVariables>) {
+export function useGetErrorRatesQuery(baseOptions?: Apollo.QueryHookOptions<GetErrorRatesQuery, GetErrorRatesQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetErrorRatesQuery, GetErrorRatesQueryVariables>(GetErrorRatesDocument, options);
+        return Apollo.useQuery<GetErrorRatesQuery, GetErrorRatesQueryVariables>(GetErrorRatesDocument, options);
       }
-export function useGetErrorRatesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetErrorRatesQuery, GetErrorRatesQueryVariables>) {
+export function useGetErrorRatesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetErrorRatesQuery, GetErrorRatesQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetErrorRatesQuery, GetErrorRatesQueryVariables>(GetErrorRatesDocument, options);
+          return Apollo.useLazyQuery<GetErrorRatesQuery, GetErrorRatesQueryVariables>(GetErrorRatesDocument, options);
         }
-export function useGetErrorRatesSuspenseQuery(baseOptions?: ApolloReactHooks.SkipToken | ApolloReactHooks.SuspenseQueryHookOptions<GetErrorRatesQuery, GetErrorRatesQueryVariables>) {
-          const options = baseOptions === ApolloReactHooks.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useSuspenseQuery<GetErrorRatesQuery, GetErrorRatesQueryVariables>(GetErrorRatesDocument, options);
+export function useGetErrorRatesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetErrorRatesQuery, GetErrorRatesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetErrorRatesQuery, GetErrorRatesQueryVariables>(GetErrorRatesDocument, options);
         }
 export type GetErrorRatesQueryHookResult = ReturnType<typeof useGetErrorRatesQuery>;
 export type GetErrorRatesLazyQueryHookResult = ReturnType<typeof useGetErrorRatesLazyQuery>;
 export type GetErrorRatesSuspenseQueryHookResult = ReturnType<typeof useGetErrorRatesSuspenseQuery>;
-export type GetErrorRatesQueryResult = ApolloReactCommon.QueryResult<GetErrorRatesQuery, GetErrorRatesQueryVariables>;
+export type GetErrorRatesQueryResult = Apollo.QueryResult<GetErrorRatesQuery, GetErrorRatesQueryVariables>;
 export const OnCrawlerCompletedDocument = gql`
     subscription OnCrawlerCompleted($crawlerType: String) {
   onCrawlerCompleted(crawlerType: $crawlerType) {
@@ -434,9 +432,9 @@ export const OnCrawlerCompletedDocument = gql`
  *   },
  * });
  */
-export function useOnCrawlerCompletedSubscription(baseOptions?: ApolloReactHooks.SubscriptionHookOptions<OnCrawlerCompletedSubscription, OnCrawlerCompletedSubscriptionVariables>) {
+export function useOnCrawlerCompletedSubscription(baseOptions?: Apollo.SubscriptionHookOptions<OnCrawlerCompletedSubscription, OnCrawlerCompletedSubscriptionVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useSubscription<OnCrawlerCompletedSubscription, OnCrawlerCompletedSubscriptionVariables>(OnCrawlerCompletedDocument, options);
+        return Apollo.useSubscription<OnCrawlerCompletedSubscription, OnCrawlerCompletedSubscriptionVariables>(OnCrawlerCompletedDocument, options);
       }
 export type OnCrawlerCompletedSubscriptionHookResult = ReturnType<typeof useOnCrawlerCompletedSubscription>;
-export type OnCrawlerCompletedSubscriptionResult = ApolloReactCommon.SubscriptionResult<OnCrawlerCompletedSubscription>;
+export type OnCrawlerCompletedSubscriptionResult = Apollo.SubscriptionResult<OnCrawlerCompletedSubscription>;
