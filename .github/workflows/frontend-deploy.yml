@@ -120,6 +120,7 @@ jobs:
         working-directory: frontend
         run: npm run build
         env:
+          VITE_AWS_REGION: ${{ env.AWS_REGION }}
           VITE_APP_VERSION: ${{ github.sha }}
           VITE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
           VITE_API_URL: ${{ steps.targets.outputs.dashboard_api_url }}

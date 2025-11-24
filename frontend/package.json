@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@apollo/client": "^4.0.9",
+    "@aws-amplify/api-graphql": "^4.8.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@mui/icons-material": "^6.1.7",
@@ -19,9 +20,9 @@
     "@sentry/react": "^7.99.0",
     "@sentry/tracing": "^7.99.0",
     "@tanstack/react-query": "^5.62.7",
+    "aws-amplify": "^6.15.8",
     "axios": "^1.7.9",
     "graphql": "^16.12.0",
-    "graphql-ws": "^6.0.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0",
