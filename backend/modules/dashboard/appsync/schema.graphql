@@ -25,7 +25,6 @@ type Query {
 type Mutation {
 	publishCrawlerCompleted(input: CrawlerCompletedInput!): CrawlerCompleted!
 	@aws_iam
-  @aws_api_key
 }
 
 type Subscription {
@@ -65,8 +64,7 @@ type ErrorRates {
 }
 
 type CrawlerCompleted 
-  @aws_iam
-  @aws_api_key {
+  @aws_iam {
 	crawlerType: String!
 	startId: Int!
 	endId: Int!
