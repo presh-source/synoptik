@@ -491,10 +491,12 @@ def lambda_handler(event, _context):
         return {
             "statusCode": 200,
             "headers": {
-                "Content-Type": "application/json",
+                "Content-Type": "application/json; charset=utf-8",
                 "Access-Control-Allow-Origin": "*",
                 "Access-Control-Allow-Headers": "Content-Type",
                 "Access-Control-Allow-Methods": "GET,OPTIONS",
+                "X-Content-Type-Options": "nosniff",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
             },
             "body": json.dumps(response),
         }
@@ -511,10 +513,12 @@ def lambda_handler(event, _context):
         return {
             "statusCode": 500,
             "headers": {
-                "Content-Type": "application/json",
+                "Content-Type": "application/json; charset=utf-8",
                 "Access-Control-Allow-Origin": "*",
                 "Access-Control-Allow-Headers": "Content-Type",
                 "Access-Control-Allow-Methods": "GET,OPTIONS",
+                "X-Content-Type-Options": "nosniff",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
             },
             "body": json.dumps({"error": "Internal server error", "message": str(e)}),
         }
