@@ -8,7 +8,7 @@ import theme from './theme'
 import { initSentry } from './config/sentry'
 import { apolloClient } from './graphql/client'
 import { testApolloClientConnection } from './graphql/test-connection'
-import './utils/test-appsync-connection' // Load AppSync connection test utility
+
 // import './utils/test-subscription' // Load subscription testing utility for browser console - Disabled to prevent infinite loop
 
 // Initialize Sentry for error tracking in production
