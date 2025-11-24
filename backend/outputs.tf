@@ -40,7 +40,7 @@ output "dashboard_url" {
 
 output "dashboard_appsync_api_url" {
   description = "GraphQL endpoint URL for queries and mutations"
-  value       = module.dashboard.dashboard_appsync_api_url
+  value       = module.dashboard.appsync_api_url
 }
 
 output "dashboard_appsync_realtime_url" {

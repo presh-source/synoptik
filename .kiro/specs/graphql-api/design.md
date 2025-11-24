@@ -352,7 +352,7 @@ from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 import requests
 
-DASHBOARD_APPSYNC_API_URL = os.environ.get('dashboard_appsync_api_url')
+DASHBOARD_APPSYNC_API_URL = os.environ.get('DASHBOARD_APPSYNC_API_URL')
 AWS_REGION = os.environ.get('AWS_REGION', 'us-east-1')
 
 def publish_crawler_completed(

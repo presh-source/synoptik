@@ -204,7 +204,7 @@ resource "aws_lambda_function" "repo_crawler" {
       REQUESTS_PER_EXECUTION    = var.requests_per_execution
       SLEEP_INTERVAL            = var.sleep_interval
       PROJECT_NAME              = var.project_name
-      dashboard_appsync_api_url = var.dashboard_appsync_api_url
+      DASHBOARD_APPSYNC_API_URL = var.dashboard_appsync_api_url
     }
   }
 
@@ -476,7 +476,7 @@ resource "aws_lambda_function" "user_crawler" {
       REQUESTS_PER_EXECUTION    = var.requests_per_execution
       SLEEP_INTERVAL            = var.sleep_interval
       PROJECT_NAME              = var.project_name
-      dashboard_appsync_api_url = var.dashboard_appsync_api_url
+      DASHBOARD_APPSYNC_API_URL = var.dashboard_appsync_api_url
     }
   }
 

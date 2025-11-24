@@ -29,7 +29,7 @@ module "cold_path" {
   lambda_memory             = 1024
   requests_per_execution    = 700
   sleep_interval            = 1
-  dashboard_appsync_api_url = module.dashboard.dashboard_appsync_api_url
+  dashboard_appsync_api_url = module.dashboard.appsync_api_url
   appsync_api_id            = module.dashboard.appsync_api_id
   depends_on                = [module.data_lake]
 }
