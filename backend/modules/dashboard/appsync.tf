@@ -97,12 +97,5 @@ module "appsync" {
       request_template  = file("${path.module}/appsync/templates/Mutation.publishCrawlerCompleted.req.vtl")
       response_template = file("${path.module}/appsync/templates/Mutation.publishCrawlerCompleted.res.vtl")
     }
-    "Subscription.onCrawlerCompleted" = {
-      type              = "Subscription"
-      field             = "onCrawlerCompleted"
-      datasource        = "None"
-      request_template  = file("${path.module}/appsync/templates/Subscription.onCrawlerCompleted.req.vtl")
-      response_template = file("${path.module}/appsync/templates/Subscription.onCrawlerCompleted.res.vtl")
-    }
   }
 }
