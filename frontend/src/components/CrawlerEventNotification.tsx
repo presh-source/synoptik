@@ -65,6 +65,7 @@ export default function CrawlerEventNotification({
       const event = subscriptionData.data?.onCrawlerCompleted
 
       // Client-side filtering: only process events matching the specified crawler type
+      // Note: event can be null during subscription initialization
       if (event && (!crawlerType || event.crawlerType === crawlerType)) {
         logComponentEvent('CrawlerEventNotification', 'crawler_completed', {
           extra: {

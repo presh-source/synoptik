@@ -29,7 +29,7 @@ type Mutation {
 
 type Subscription {
   """Subscribe to crawler completion events, optionally filtered by crawler type"""
-  onCrawlerCompleted(crawlerType: String): CrawlerCompleted!
+  onCrawlerCompleted(crawlerType: String): CrawlerCompleted
     @aws_subscribe(mutations: ["publishCrawlerCompleted"])
 }
 
