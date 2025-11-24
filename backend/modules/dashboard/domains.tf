@@ -11,7 +11,7 @@ module "frontend_certificate" {
 
 
   project_name     = var.project_name
-  certificate_name = "frontend"
+  certificate_name = "dashboard-frontend"
   domain_name      = var.frontend_domain_name
   hosted_zone_name = var.hosted_zone_name
 
@@ -23,6 +23,10 @@ module "frontend_certificate" {
 
   # Create certificate only, DNS records created later
   create_dns_records = false
+
+  # Placeholder values (not used when create_dns_records is false)
+  target_domain_name = ""
+  target_zone_id     = ""
 
   tags = var.tags
 }
@@ -36,7 +40,7 @@ module "frontend_dns" {
   source = "../shared/certificate-manager"
 
   project_name     = var.project_name
-  certificate_name = "frontend"
+  certificate_name = "frontend-${var.environment}-dns"
   domain_name      = var.frontend_domain_name
   hosted_zone_name = var.hosted_zone_name
 
@@ -51,28 +55,5 @@ module "frontend_dns" {
   tags        = var.tags
 
   depends_on = [aws_cloudfront_distribution.dashboard]
-}
-
-# API Gateway DNS Records (custom domain)
-module "api_gateway_dns" {
-  count  = var.api_gateway_domain_name != "" ? 1 : 0
-  source = "../shared/certificate-manager"
-
-  project_name     = var.project_name
-  certificate_name = "api-${var.environment}-${var.project_name}"
-  domain_name      = var.api_gateway_domain_name
-  hosted_zone_name = var.hosted_zone_name
-
-  # Do not create a new certificate – we already have one from frontend_certificate
-  create_certificate = false
-
-  # Point DNS to the CloudFront distribution created for the API Gateway custom domain
-  target_domain_name = coalesce(module.dashboard_api.custom_domain_cloudfront_domain_name, var.api_gateway_domain_name)
-  target_zone_id     = module.dashboard_api.custom_domain_cloudfront_zone_id
-
-  enable_ipv6 = true
-  tags        = var.tags
-
-  depends_on = [module.dashboard_api]
 }
 

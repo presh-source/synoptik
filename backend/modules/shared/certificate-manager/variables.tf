@@ -55,11 +55,13 @@ variable "create_dns_records" {
 variable "target_domain_name" {
   description = "Target domain name for DNS alias record (e.g., CloudFront or API Gateway domain)"
   type        = string
+  default     = ""
 }
 
 variable "target_zone_id" {
   description = "Target zone ID for DNS alias record (e.g., CloudFront or API Gateway zone ID)"
   type        = string
+  default     = ""
 }
 
 variable "evaluate_target_health" {
