@@ -178,7 +178,7 @@ export const PublishCrawlerCompletedDocument = gql`
   }
 }
     `;
-// Type alias removed due to import issues - use ReturnType<typeof usePublishCrawlerCompletedMutation>[0] instead
+
 
 /**
  * __usePublishCrawlerCompletedMutation__
@@ -203,7 +203,7 @@ export function usePublishCrawlerCompletedMutation(baseOptions?: ApolloReactHook
       }
 export type PublishCrawlerCompletedMutationHookResult = ReturnType<typeof usePublishCrawlerCompletedMutation>;
 export type PublishCrawlerCompletedMutationResult = ApolloReactCommon.MutationResult<PublishCrawlerCompletedMutation>;
-// Type alias removed due to import issues - use Parameters<typeof usePublishCrawlerCompletedMutation>[0] instead
+export type PublishCrawlerCompletedMutationOptions = ApolloReactHooks.MutationHookOptions<PublishCrawlerCompletedMutation, PublishCrawlerCompletedMutationVariables>;
 export const GetPipelineStatusDocument = gql`
     query GetPipelineStatus {
   pipelineStatus {

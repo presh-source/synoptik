@@ -5,7 +5,7 @@
 
 overwrite: true
 schema: 
-  - "../backend/modules/appsync/schema.graphql"
+  - "../backend/modules/dashboard/appsync/schema.graphql"
   - "./schema-extensions.graphql"
 documents: "src/graphql/**/*.ts"
 generates:
@@ -26,9 +26,9 @@ generates:
         object: false
       scalars:
         AWSDateTime: string
-      reactApolloVersion: 3
+      reactApolloVersion: 4
       addDocBlocks: true
-      apolloReactCommonImportFrom: "@apollo/client/react"
-      apolloReactHooksImportFrom: "@apollo/client/react"
+      apolloReactCommonImportFrom: "@apollo/client"
+      apolloReactHooksImportFrom: "@apollo/client"
       noExport: false
       omitOperationSuffix: false
