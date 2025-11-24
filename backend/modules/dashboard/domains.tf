@@ -67,7 +67,7 @@ module "api_gateway_dns" {
   create_certificate = false
 
   # Point DNS to the CloudFront distribution created for the API Gateway custom domain
-  target_domain_name = module.dashboard_api.custom_domain_cloudfront_domain_name
+  target_domain_name = coalesce(module.dashboard_api.custom_domain_cloudfront_domain_name, var.api_gateway_domain_name)
   target_zone_id     = module.dashboard_api.custom_domain_cloudfront_zone_id
 
   enable_ipv6 = true
