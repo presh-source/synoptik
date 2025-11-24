@@ -40,13 +40,20 @@ const amplifyLink = new ApolloLink((operation) => {
       definition.operation === 'subscription';
 
     if (isSubscription) {
+      console.log('[Amplify Subscription] Starting subscription:', {
+        query: queryString,
+        variables,
+      });
+
       // Use Amplify's native subscription (WebSocket)
       // TypeScript doesn't know that subscriptions return an Observable, so we cast to any
       const subscription = (graphqlClient.graphql({
         query: queryString,
         variables,
+        authMode: 'apiKey', // Explicitly set auth mode
       }) as any).subscribe({
         next: (response: any) => {
+          console.log('[Amplify Subscription] Received data:', response);
           try {
             // Amplify returns the response in different formats
             // Handle both { data } and { value: { data } } formats
