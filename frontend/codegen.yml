@@ -26,8 +26,10 @@ generates:
         object: false
       scalars:
         AWSDateTime: string
-      reactApolloVersion: 4
+      reactApolloVersion: 3
       addDocBlocks: true
+      apolloReactCommonImportFrom: "@apollo/client/react"
+      apolloReactHooksImportFrom: "@apollo/client/react"
       withMutationFn: false
       withRefetchFn: false
       withSubscriptionHooks: true
