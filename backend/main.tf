@@ -31,7 +31,7 @@ module "cold_path" {
   sleep_interval         = 1
   # appsync_api_url        = module.dashboard.appsync_api_url
   # appsync_api_id         = module.dashboard.appsync_api_id
-  depends_on             = [module.data_lake]
+  depends_on = [module.data_lake]
 }
 
 # # Dashboard Module
