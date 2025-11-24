@@ -61,19 +61,6 @@ jobs:
         run: npm run lint
         continue-on-error: true
 
-      - name: Build application
-        working-directory: frontend
-        run: npm run build
-        env:
-          VITE_APP_VERSION: ${{ github.sha }}
-          VITE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
-          VITE_API_URL: ${{ steps.targets.outputs.dashboard_api_url }}
-          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN_FRONTEND }}
-          VITE_DASHBOARD_APPSYNC_API_URL: ${{ steps.targets.outputs.dashboard_dashboard_dashboard_appsync_api_url }}
-          VITE_APPSYNC_API_KEY: ${{ steps.targets.outputs.dashboard_appsync_api_key }}
-          VITE_APPSYNC_REALTIME_URL: ${{ steps.targets.outputs.dashboard_appsync_realtime_url }}
-          VITE_ENVIRONMENT: ${{ env.DEPLOY_ENV }}
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -105,7 +92,7 @@ jobs:
           DISTRIBUTION_ID=$(terraform output -raw cloudfront_distribution_id)
           
           # Extract API endpoints and keys for frontend build
-          DASHBOARD_dashboard_appsync_api_url=$(terraform output -raw dashboard_dashboard_appsync_api_url)
+          DASHBOARD_APPSYNC_API_URL=$(terraform output -raw dashboard_appsync_api_url)
           DASHBOARD_APPSYNC_API_KEY=$(terraform output -raw dashboard_appsync_api_key)
           DASHBOARD_APPSYNC_REALTIME_URL=$(terraform output -raw dashboard_appsync_realtime_url)
           DASHBOARD_API_URL=$(terraform output -raw dashboard_api_url)
@@ -119,15 +106,28 @@ jobs:
           echo "bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
           echo "distribution_id=$DISTRIBUTION_ID" >> $GITHUB_OUTPUT
           echo "dashboard_api_url=$DASHBOARD_API_URL" >> $GITHUB_OUTPUT
-          echo "dashboard_dashboard_appsync_api_url=$DASHBOARD_dashboard_appsync_api_url" >> $GITHUB_OUTPUT
+          echo "dashboard_appsync_api_url=$DASHBOARD_APPSYNC_API_URL" >> $GITHUB_OUTPUT
           echo "dashboard_appsync_api_key=$DASHBOARD_APPSYNC_API_KEY" >> $GITHUB_OUTPUT
           echo "dashboard_appsync_realtime_url=$DASHBOARD_APPSYNC_REALTIME_URL" >> $GITHUB_OUTPUT
           
           echo "Deployment targets:"
           echo "  S3: $BUCKET_NAME"
           echo "  CloudFront: $DISTRIBUTION_ID"
-          echo "  AppSync: $DASHBOARD_dashboard_appsync_api_url"
+          echo "  AppSync: $DASHBOARD_APPSYNC_API_URL"
           echo "  API Gateway: $DASHBOARD_API_URL"
+
+      - name: Build application
+        working-directory: frontend
+        run: npm run build
+        env:
+          VITE_APP_VERSION: ${{ github.sha }}
+          VITE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
+          VITE_API_URL: ${{ steps.targets.outputs.dashboard_api_url }}
+          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN_FRONTEND }}
+          VITE_DASHBOARD_APPSYNC_API_URL: ${{ steps.targets.outputs.dashboard_appsync_api_url }}
+          VITE_DASHBOARD_APPSYNC_API_KEY: ${{ steps.targets.outputs.dashboard_appsync_api_key }}
+          VITE_DASHBOARD_APPSYNC_REALTIME_URL: ${{ steps.targets.outputs.dashboard_appsync_realtime_url }}
+          VITE_ENVIRONMENT: ${{ env.DEPLOY_ENV }}
 
       - name: Deploy to S3
         working-directory: frontend
