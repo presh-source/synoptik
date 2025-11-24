@@ -8,6 +8,8 @@ module "frontend_certificate" {
   count  = var.frontend_domain_name != "" && var.acm_certificate_arn == "" ? 1 : 0
   source = "../shared/certificate-manager"
 
+
+
   project_name     = var.project_name
   certificate_name = "frontend"
   domain_name      = var.frontend_domain_name
@@ -19,9 +21,8 @@ module "frontend_certificate" {
     var.api_gateway_domain_name != "" ? [var.api_gateway_domain_name] : []
   ))
 
-  # Create BOTH certificate AND DNS validation records
-  create_certificate = true
-  create_dns_records = true
+  # Create certificate only, DNS records created later
+  create_dns_records = false
 
   tags = var.tags
 }
@@ -35,13 +36,12 @@ module "frontend_dns" {
   source = "../shared/certificate-manager"
 
   project_name     = var.project_name
-  certificate_name = "frontend-dns"
+  certificate_name = "frontend"
   domain_name      = var.frontend_domain_name
   hosted_zone_name = var.hosted_zone_name
 
-  # Don't create certificate, ONLY DNS A/AAAA records
+  # Don't create certificate, only DNS records
   create_certificate = false
-  create_dns_records = true
 
   # CloudFront distribution details
   target_domain_name = aws_cloudfront_distribution.dashboard.domain_name
@@ -51,5 +51,28 @@ module "frontend_dns" {
   tags        = var.tags
 
   depends_on = [aws_cloudfront_distribution.dashboard]
+}
+
+# API Gateway DNS Records (custom domain)
+module "api_gateway_dns" {
+  count  = var.api_gateway_domain_name != "" ? 1 : 0
+  source = "../shared/certificate-manager"
+
+  project_name     = var.project_name
+  certificate_name = "api-${var.environment}-${var.project_name}"
+  domain_name      = var.api_gateway_domain_name
+  hosted_zone_name = var.hosted_zone_name
+
+  # Do not create a new certificate – we already have one from frontend_certificate
+  create_certificate = false
+
+  # Point DNS to the CloudFront distribution created for the API Gateway custom domain
+  target_domain_name = module.dashboard_api.custom_domain_cloudfront_domain_name
+  target_zone_id     = module.dashboard_api.custom_domain_cloudfront_zone_id
+
+  enable_ipv6 = true
+  tags        = var.tags
+
+  depends_on = [module.dashboard_api]
 }
 
