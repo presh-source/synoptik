@@ -56,7 +56,7 @@
 - [x] 8. Integrate AppSync publishing into repo crawler
   - Add `appsync_client.py` to repo crawler Lambda layer
   - Update `repo_crawler.py` to call `publish_crawler_completed()` on success
-  - Add appsync_api_url environment variable
+  - Add dashboard_appsync_api_url environment variable
   - Grant repo crawler IAM permission for AppSync
   - Handle AppSync publish failures gracefully
   - _Requirements: 14.1, 14.2, 14.3, 14.4_
@@ -64,7 +64,7 @@
 - [x] 9. Integrate AppSync publishing into user crawler
   - Add `appsync_client.py` to user crawler Lambda layer
   - Update `user_crawler.py` to call `publish_crawler_completed()` on success
-  - Add appsync_api_url environment variable
+  - Add dashboard_appsync_api_url environment variable
   - Grant user crawler IAM permission for AppSync
   - Handle AppSync publish failures gracefully
   - _Requirements: 15.1, 15.2, 15.3, 15.4_
@@ -125,8 +125,8 @@
   - _Requirements: 16.5, 17.1, 17.2, 17.5_
 
 - [x] 17. Add environment variables
-  - Add appsync_api_url to crawler Lambdas
-  - Add VITE_appsync_api_url to frontend
+  - Add dashboard_appsync_api_url to crawler Lambdas
+  - Add VITE_dashboard_appsync_api_url to frontend
   - Add VITE_APPSYNC_API_KEY to frontend
   - Add VITE_APPSYNC_REALTIME_URL to frontend
   - Store API key in AWS Secrets Manager

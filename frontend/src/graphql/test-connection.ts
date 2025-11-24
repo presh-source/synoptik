@@ -7,17 +7,17 @@ import { apolloClient } from './client';
 
 export function testApolloClientConnection(): void {
   console.log('Testing Apollo Client Configuration...');
-  
+
   // Check environment variables
-  const endpoint = import.meta.env.VITE_appsync_api_url;
+  const endpoint = import.meta.env.VITE_dashboard_appsync_api_url;
   const apiKey = import.meta.env.VITE_APPSYNC_API_KEY;
   const realtimeEndpoint = import.meta.env.VITE_APPSYNC_REALTIME_URL;
-  
+
   console.log('Environment Variables:');
-  console.log('- VITE_appsync_api_url:', endpoint ? '✓ Set' : '✗ Missing');
+  console.log('- VITE_dashboard_appsync_api_url:', endpoint ? '✓ Set' : '✗ Missing');
   console.log('- VITE_APPSYNC_API_KEY:', apiKey ? '✓ Set' : '✗ Missing');
   console.log('- VITE_APPSYNC_REALTIME_URL:', realtimeEndpoint ? '✓ Set' : '✗ Missing');
-  
+
   // Check Apollo Client instance
   if (apolloClient) {
     console.log('✓ Apollo Client instance created successfully');
@@ -26,16 +26,16 @@ export function testApolloClientConnection(): void {
   } else {
     console.error('✗ Apollo Client instance not created');
   }
-  
+
   // Validate configuration
   const isValid = endpoint && apiKey && realtimeEndpoint && apolloClient;
-  
+
   if (isValid) {
     console.log('\n✓ Apollo Client is properly configured and ready to use');
   } else {
     console.error('\n✗ Apollo Client configuration is incomplete');
   }
-  
+
   return;
 }
 

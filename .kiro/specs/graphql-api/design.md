@@ -352,7 +352,7 @@ from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 import requests
 
-APPSYNC_ENDPOINT = os.environ.get('appsync_api_url')
+APPSYNC_ENDPOINT = os.environ.get('dashboard_appsync_api_url')
 AWS_REGION = os.environ.get('AWS_REGION', 'us-east-1')
 
 def publish_crawler_completed(
@@ -467,7 +467,7 @@ import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { createClient } from 'graphql-ws';
 
-const APPSYNC_ENDPOINT = import.meta.env.VITE_appsync_api_url;
+const APPSYNC_ENDPOINT = import.meta.env.VITE_dashboard_appsync_api_url;
 const APPSYNC_API_KEY = import.meta.env.VITE_APPSYNC_API_KEY;
 const appsync_realtime_url = import.meta.env.VITE_APPSYNC_REALTIME_URL;
 
@@ -953,7 +953,7 @@ export type PipelineStatus = {
 1. Add appsync_client.py to crawler Lambda layers
 2. Update crawler code to publish events
 3. Grant crawlers IAM permission for AppSync
-4. Set appsync_api_url environment variable
+4. Set dashboard_appsync_api_url environment variable
 
 ### Frontend Deployment
 

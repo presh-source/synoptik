@@ -18,7 +18,7 @@ from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 
 # Environment variables
-APPSYNC_ENDPOINT = os.environ.get("APPSYNC_API_URL")
+APPSYNC_ENDPOINT = os.environ.get("dashboard_appsync_api_url")
 AWS_REGION = os.environ.get("AWS_REGION", "us-east-1")
 
 # Initialize logger
@@ -68,12 +68,12 @@ def publish_crawler_completed(
         dict: Response from AppSync API
 
     Raises:
-        ValueError: If appsync_api_url is not configured
+        ValueError: If dashboard_appsync_api_url is not configured
         Exception: If all retry attempts fail
     """
 
     if not APPSYNC_ENDPOINT:
-        error_msg = "appsync_api_url environment variable not set"
+        error_msg = "dashboard_appsync_api_url environment variable not set"
         logger.error(error_msg)
         raise ValueError(error_msg)
 

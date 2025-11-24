@@ -198,13 +198,13 @@ resource "aws_lambda_function" "repo_crawler" {
 
   environment {
     variables = {
-      DYNAMODB_TABLE_NAME    = aws_dynamodb_table.crawl_state.name
-      S3_BUCKET_NAME         = var.data_lake_bucket_name
-      GITHUB_TOKEN           = var.github_token
-      REQUESTS_PER_EXECUTION = var.requests_per_execution
-      SLEEP_INTERVAL         = var.sleep_interval
-      PROJECT_NAME           = var.project_name
-      APPSYNC_API_URL        = var.appsync_api_url
+      DYNAMODB_TABLE_NAME       = aws_dynamodb_table.crawl_state.name
+      S3_BUCKET_NAME            = var.data_lake_bucket_name
+      GITHUB_TOKEN              = var.github_token
+      REQUESTS_PER_EXECUTION    = var.requests_per_execution
+      SLEEP_INTERVAL            = var.sleep_interval
+      PROJECT_NAME              = var.project_name
+      dashboard_appsync_api_url = var.dashboard_appsync_api_url
     }
   }
 
@@ -470,13 +470,13 @@ resource "aws_lambda_function" "user_crawler" {
 
   environment {
     variables = {
-      DYNAMODB_TABLE_NAME    = aws_dynamodb_table.crawl_state.name
-      S3_BUCKET_NAME         = var.data_lake_bucket_name
-      GITHUB_TOKEN           = var.github_token
-      REQUESTS_PER_EXECUTION = var.requests_per_execution
-      SLEEP_INTERVAL         = var.sleep_interval
-      PROJECT_NAME           = var.project_name
-      appsync_api_url        = var.appsync_api_url
+      DYNAMODB_TABLE_NAME       = aws_dynamodb_table.crawl_state.name
+      S3_BUCKET_NAME            = var.data_lake_bucket_name
+      GITHUB_TOKEN              = var.github_token
+      REQUESTS_PER_EXECUTION    = var.requests_per_execution
+      SLEEP_INTERVAL            = var.sleep_interval
+      PROJECT_NAME              = var.project_name
+      dashboard_appsync_api_url = var.dashboard_appsync_api_url
     }
   }
 

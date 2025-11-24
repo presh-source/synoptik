@@ -84,9 +84,9 @@ output "acm_certificate_arn" {
   value       = var.acm_certificate_arn != "" ? var.acm_certificate_arn : (length(module.frontend_certificate) > 0 ? module.frontend_certificate[0].certificate_arn : null)
 }
 
-output "appsync_api_url" {
+output "dashboard_appsync_api_url" {
   description = "The URL of the AppSync GraphQL API"
-  value       = module.appsync.appsync_api_url
+  value       = module.appsync.dashboard_appsync_api_url
 }
 
 output "appsync_api_id" {
