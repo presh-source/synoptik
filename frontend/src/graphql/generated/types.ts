@@ -1,6 +1,6 @@
 import { gql } from '@apollo/client';
-import * as ApolloReactCommon from '@apollo/client/react';
-import * as ApolloReactHooks from '@apollo/client/react';
+import * as ApolloReactCommon from '@apollo/client';
+import * as ApolloReactHooks from '@apollo/client';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -178,7 +178,7 @@ export const PublishCrawlerCompletedDocument = gql`
   }
 }
     `;
-
+export type PublishCrawlerCompletedMutationFn = ApolloReactCommon.MutationFunction<PublishCrawlerCompletedMutation, PublishCrawlerCompletedMutationVariables>;
 
 /**
  * __usePublishCrawlerCompletedMutation__
@@ -203,7 +203,7 @@ export function usePublishCrawlerCompletedMutation(baseOptions?: ApolloReactHook
       }
 export type PublishCrawlerCompletedMutationHookResult = ReturnType<typeof usePublishCrawlerCompletedMutation>;
 export type PublishCrawlerCompletedMutationResult = ApolloReactCommon.MutationResult<PublishCrawlerCompletedMutation>;
-export type PublishCrawlerCompletedMutationOptions = ApolloReactHooks.MutationHookOptions<PublishCrawlerCompletedMutation, PublishCrawlerCompletedMutationVariables>;
+export type PublishCrawlerCompletedMutationOptions = ApolloReactCommon.BaseMutationOptions<PublishCrawlerCompletedMutation, PublishCrawlerCompletedMutationVariables>;
 export const GetPipelineStatusDocument = gql`
     query GetPipelineStatus {
   pipelineStatus {

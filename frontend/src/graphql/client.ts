@@ -46,16 +46,29 @@ const amplifyLink = new ApolloLink((operation) => {
         query: queryString,
         variables,
       }) as any).subscribe({
-        next: ({ data, errors }: any) => {
-          observer.next({
-            data: data || {},
-            errors: errors || undefined,
-          });
+        next: (response: any) => {
+          try {
+            // Amplify returns the response in different formats
+            // Handle both { data } and { value: { data } } formats
+            const result = response.value || response;
+            const data = result.data || result;
+            const errors = result.errors;
+
+            observer.next({
+              data: data || {},
+              errors: errors || undefined,
+            });
+          } catch (err) {
+            console.error('[Amplify Subscription] Error processing response:', err, response);
+            observer.error(err);
+          }
         },
         error: (error: any) => {
+          console.error('[Amplify Subscription] Subscription error:', error);
           observer.error(error);
         },
         complete: () => {
+          console.log('[Amplify Subscription] Subscription completed');
           observer.complete();
         },
       });
