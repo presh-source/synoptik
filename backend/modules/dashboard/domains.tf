@@ -22,7 +22,7 @@ module "frontend_certificate" {
   ))
 
   # Create certificate only, DNS records created later
-  create_dns_records = false
+  create_dns_records = true
 
   tags = var.tags
 }
@@ -41,7 +41,7 @@ module "frontend_dns" {
   hosted_zone_name = var.hosted_zone_name
 
   # Don't create certificate, only DNS records
-  create_certificate = false
+  create_certificate = true
 
   # CloudFront distribution details
   target_domain_name = aws_cloudfront_distribution.dashboard.domain_name
