@@ -32,24 +32,57 @@ const amplifyLink = new ApolloLink((operation) => {
   return new Observable((observer) => {
     const { query, variables } = operation;
     const queryString = print(query);
+    const definition = query.definitions[0];
 
-    // Use Amplify's graphqlClient to execute
-    (async () => {
-      try {
-        const result: any = await graphqlClient.graphql({
-          query: queryString,
-          variables,
-        });
+    // Check if this is a subscription
+    const isSubscription =
+      definition.kind === 'OperationDefinition' &&
+      definition.operation === 'subscription';
 
-        observer.next({
-          data: result.data || {},
-          errors: result.errors || undefined,
-        });
-        observer.complete();
-      } catch (error) {
-        observer.error(error);
-      }
-    })();
+    if (isSubscription) {
+      // Use Amplify's native subscription (WebSocket)
+      // TypeScript doesn't know that subscriptions return an Observable, so we cast to any
+      const subscription = (graphqlClient.graphql({
+        query: queryString,
+        variables,
+      }) as any).subscribe({
+        next: ({ data, errors }: any) => {
+          observer.next({
+            data: data || {},
+            errors: errors || undefined,
+          });
+        },
+        error: (error: any) => {
+          observer.error(error);
+        },
+        complete: () => {
+          observer.complete();
+        },
+      });
+
+      // Return cleanup function
+      return () => {
+        subscription.unsubscribe();
+      };
+    } else {
+      // Use regular graphql() for queries and mutations
+      (async () => {
+        try {
+          const result: any = await graphqlClient.graphql({
+            query: queryString,
+            variables,
+          });
+
+          observer.next({
+            data: result.data || {},
+            errors: result.errors || undefined,
+          });
+          observer.complete();
+        } catch (error) {
+          observer.error(error);
+        }
+      })();
+    }
   });
 });
 
