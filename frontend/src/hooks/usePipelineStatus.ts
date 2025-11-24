@@ -5,19 +5,6 @@ import type { PipelineStatus } from '@/types'
 import { logApiError, logInfo, logWarn } from '@/utils/logger'
 import { useEffect } from 'react'
 
-/**
- * Custom hook for fetching pipeline status with automatic polling and error recovery
- * 
- * Features:
- * - Uses GraphQL API via Apollo Client as primary data source
- * - Falls back to REST API if GraphQL fails
- * - Polling disabled (uses subscriptions for real-time updates)
- * - Response validation before returning data
- * - Automatic error recovery (continues polling after errors)
- * - Proper loading and error state handling
- * 
- * Requirements: 1.1, 1.2, 5.3
- */
 export const usePipelineStatus = (_refetchInterval = 0) => {
   // Try GraphQL first with Apollo Client
   const {

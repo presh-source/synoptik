@@ -1,7 +1,8 @@
 # Cold Path Module - GitHub Repository Crawler Pipeline
 
-# Get current AWS region
+# Get current AWS region and account
 data "aws_region" "current" {}
+data "aws_caller_identity" "current" {}
 
 # DynamoDB table for crawler state management
 resource "aws_dynamodb_table" "crawl_state" {
@@ -129,7 +130,7 @@ resource "aws_iam_role_policy" "repo_crawler_appsync_policy" {
         Action = [
           "appsync:GraphQL"
         ]
-        Resource = "arn:aws:appsync:${data.aws_region.current.name}:*:apis/${var.appsync_api_id}/types/Mutation/fields/publishCrawlerCompleted"
+        Resource = "arn:aws:appsync:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:apis/${var.appsync_api_id}/*"
       }
     ]
   })
@@ -446,7 +447,7 @@ resource "aws_iam_role_policy" "user_crawler_appsync_policy" {
         Action = [
           "appsync:GraphQL"
         ]
-        Resource = "arn:aws:appsync:${data.aws_region.current.name}:*:apis/${var.appsync_api_id}/types/Mutation/fields/publishCrawlerCompleted"
+        Resource = "arn:aws:appsync:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:apis/${var.appsync_api_id}/*"
       }
     ]
   })
