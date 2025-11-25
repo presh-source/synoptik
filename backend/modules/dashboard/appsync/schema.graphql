@@ -1,4 +1,3 @@
-# GraphQL Schema for Synoptik Observability Platform
 # Provides queries for pipeline metrics, mutations for event publishing,
 # and subscriptions for real-time crawler completion events
 
@@ -20,6 +19,13 @@ type Query {
   
   """Get error rates for the cold path pipeline"""
   errorRates: ErrorRates!
+
+  # Telemetry Queries
+  getBookmark(crawler_type: String!): BookmarkData
+  listRunsByType(crawler_type: String!, limit: Int, nextToken: String): RunDataConnection
+  getRunRequests(run_id: ID!): [RequestData!]!
+  listHourlyAggregations(crawler_type: String!, metric_type: String!, startHour: String!, endHour: String!): [HourlyAggregation!]!
+  getCrawlerStats(timeRange: String!): CrawlerStats
 }
 
 type Mutation {
@@ -87,4 +93,72 @@ input CrawlerCompletedInput {
   completedAt: AWSDateTime
   success: Boolean!
   errorMessage: String
+}
+  errorMessage: String
+}
+
+# Telemetry Types
+
+type BookmarkData {
+  crawler_type: String!
+  last_processed_id: Int!
+  total_runs: Int!
+  total_requests: Int!
+  total_processed: Int!
+  total_size: Int!
+  updated_at: AWSDateTime!
+}
+
+type RunData {
+  run_id: ID!
+  crawler_type: String!
+  created_at: AWSDateTime!
+  retrieval: Int!
+  size: Int!
+  request_count: Int!
+  duration_ms: Int!
+}
+
+type RequestData {
+  run_id: ID!
+  crawler_type: String!
+  created_at: AWSDateTime!
+  since_id: Int!
+  request_start: AWSDateTime!
+  request_end: AWSDateTime!
+  retrieval: Int!
+  status_code: Int!
+  rate_limit_remaining: Int!
+  rate_limit_limit: Int!
+  rate_limit_reset: Int!
+}
+
+type HourlyAggregation {
+  crawler_type: String!
+  metric_type: String!
+  hour: String!
+  total: Int!
+  average: Float!
+  min: Int!
+  max: Int!
+  count: Int!
+  created_at: AWSDateTime!
+}
+
+type CrawlerStats {
+  repo: CrawlerTypeStats!
+  user: CrawlerTypeStats!
+}
+
+type CrawlerTypeStats {
+  total_runs: Int!
+  total_processed: Int!
+  total_size: Int!
+  avg_items_per_hour: Float!
+  last_run: AWSDateTime
+}
+
+type RunDataConnection {
+  items: [RunData!]!
+  nextToken: String
 }

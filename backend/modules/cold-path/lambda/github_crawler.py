@@ -1,14 +1,13 @@
 """
-GitHub User Crawler Lambda Function
-Crawls GitHub users using the /users
-endpoint and stores raw data in S3 as Parquet files
+Unified GitHub Crawler Lambda Function
+Crawls GitHub repositories or users based on input event
+Stores raw data in S3 as Parquet files
 Uses AWS Lambda Powertools for observability
 """
 
 import json
 import os
 import time
-import uuid
 from datetime import datetime, timezone
 from io import BytesIO
 
@@ -24,47 +23,69 @@ from utils.appsync_client import publish_crawler_completed
 
 # Environment variables
 PROJECT_NAME = os.environ["PROJECT_NAME"]
-DYNAMODB_TABLE_NAME = os.environ["DYNAMODB_TABLE_NAME"]
+CRAWL_STATE_TABLE_NAME = os.environ["CRAWL_STATE_TABLE_NAME"]
 S3_BUCKET_NAME = os.environ["S3_BUCKET_NAME"]
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 REQUESTS_PER_EXECUTION = int(os.environ.get("REQUESTS_PER_EXECUTION", "700"))
 SLEEP_INTERVAL = float(os.environ.get("SLEEP_INTERVAL", "0.1"))
 
 # Initialize Powertools
-logger = Logger(service=f"{PROJECT_NAME}-user-crawler")
-tracer = Tracer(service=f"{PROJECT_NAME}-user-crawler")
-metrics = Metrics(namespace=f"{PROJECT_NAME.title()}/ColdPath", service="user-crawler")
-metrics.add_dimension(name="CrawlerType", value="user")
+logger = Logger(service=f"{PROJECT_NAME}-github-crawler")
+tracer = Tracer(service=f"{PROJECT_NAME}-github-crawler")
+metrics = Metrics(
+    namespace=f"{PROJECT_NAME.title()}/ColdPath", service="github-crawler"
+)
 
-
-# AWS clients
+# Initialize AWS clients
 dynamodb = boto3.resource("dynamodb")
+crawl_state_table = dynamodb.Table("CRAWL_STATE_TABLE_NAME")
 s3_client = boto3.client("s3")
 eventbridge = boto3.client("events")
 
 # GitHub API configuration
 GITHUB_API_BASE = "https://api.github.com"
-USERS_ENDPOINT = f"{GITHUB_API_BASE}/users"
+
+# Configuration mapping
+CRAWLER_CONFIG = {
+    "repo": {
+        "endpoint": f"{GITHUB_API_BASE}/repositories",
+        "bookmark_key": "repo_bookmark",
+        "s3_prefix": "cold-path/github/repositories",
+        "entity_name": "repositories",
+    },
+    "user": {
+        "endpoint": f"{GITHUB_API_BASE}/users",
+        "bookmark_key": "user_bookmark",
+        "s3_prefix": "cold-path/github/users",
+        "entity_name": "users",
+    },
+}
 
 
 @tracer.capture_method
-def get_last_processed_id() -> int:
-    """Read the last processed user ID from DynamoDB"""
+def get_last_processed_id(crawler_type: str) -> int:
+    """Read the last processed ID from DynamoDB for the specific crawler type"""
+    config = CRAWLER_CONFIG.get(crawler_type)
+    if not config:
+        raise ValueError(f"Invalid crawler type: {crawler_type}")
+
     try:
-        table = dynamodb.Table(DYNAMODB_TABLE_NAME)
-        response = table.get_item(
-            Key={"state_key": "user_bookmark"}, ConsistentRead=True
+        response = crawl_state_table.get_item(
+            Key={"state_key": config["bookmark_key"]}, ConsistentRead=True
         )
 
         if "Item" in response:
             last_id = int(response["Item"].get("last_processed_id", 0))
-            logger.info("Retrieved last processed ID", extra={"last_id": last_id})
+            logger.info(
+                f"Retrieved last processed ID for {crawler_type}",
+                extra={"last_id": last_id},
+            )
             metrics.add_metric(
                 name="LastProcessedId", unit=MetricUnit.Count, value=last_id
             )
             return last_id
 
-        logger.warning("No bookmark found, starting from 0")
+        logger.warning(f"No bookmark found for {crawler_type}, starting from 0")
         return 0
 
     except ClientError as e:
@@ -73,12 +94,15 @@ def get_last_processed_id() -> int:
 
 
 @tracer.capture_method
-def update_bookmark(last_id: int, total_processed: int) -> None:
+def update_bookmark(crawler_type: str, last_id: int, total_processed: int) -> None:
     """Synchronously update the bookmark in DynamoDB"""
+    config = CRAWLER_CONFIG.get(crawler_type)
+    if not config:
+        raise ValueError(f"Invalid crawler type: {crawler_type}")
+
     try:
-        table = dynamodb.Table(DYNAMODB_TABLE_NAME)
-        table.update_item(
-            Key={"state_key": "user_bookmark"},
+        crawl_state_table.update_item(
+            Key={"state_key": config["bookmark_key"]},
             UpdateExpression="SET last_processed_id = :lid, total_processed = :tp, updated_at = :ua",
             ExpressionAttributeValues={
                 ":lid": last_id,
@@ -87,7 +111,7 @@ def update_bookmark(last_id: int, total_processed: int) -> None:
             },
         )
         logger.info(
-            "Updated bookmark",
+            f"Updated bookmark for {crawler_type}",
             extra={"last_id": last_id, "total_processed": total_processed},
         )
         metrics.add_metric(name="BookmarkUpdated", unit=MetricUnit.Count, value=1)
@@ -97,60 +121,69 @@ def update_bookmark(last_id: int, total_processed: int) -> None:
         raise
 
 
+def flatten_repo(repo: dict) -> dict:
+    """Flatten repository data for Parquet"""
+    return {
+        "id": repo.get("id"),
+        "node_id": repo.get("node_id"),
+        "name": repo.get("name"),
+        "full_name": repo.get("full_name"),
+        "private": repo.get("private"),
+        "owner_id": repo.get("owner", {}).get("id"),
+        "owner_node_id": repo.get("owner", {}).get("node_id"),
+        "description": repo.get("description"),
+        "fork": repo.get("fork"),
+    }
+
+
+def flatten_user(user: dict) -> dict:
+    """Flatten user data for Parquet"""
+    return {
+        "id": user.get("id"),
+        "login": user.get("login"),
+        "node_id": user.get("node_id"),
+        "avatar_url": user.get("avatar_url"),
+        "gravatar_id": user.get("gravatar_id"),
+        "url": user.get("url"),
+        "html_url": user.get("html_url"),
+        "type": user.get("type"),
+        "user_view_type": user.get("user_view_type"),
+        "site_admin": user.get("site_admin"),
+    }
+
+
 @tracer.capture_method
-def save_to_s3_parquet(users: list[dict], start_id: int, end_id: int) -> dict:
+def save_to_s3_parquet(
+    crawler_type: str, items: list[dict], start_id: int, end_id: int
+) -> dict:
     """Save data to S3 as Parquet with partitioning. Returns file metadata."""
+    config = CRAWLER_CONFIG.get(crawler_type)
+    if not config:
+        raise ValueError(f"Invalid crawler type: {crawler_type}")
+
     now = datetime.now(timezone.utc)
     year = now.year
     month = f"{now.month:02d}"
     day = f"{now.day:02d}"
 
     # Create S3 key with partitioning
-    s3_key = f"cold-path/users/year={year}/month={month}/day={day}/users_{start_id:012d}_{end_id:012d}.parquet"
+    # Repo: cold-path/year=.../repos_...
+    # User: cold-path/users/year=.../users_...
+    prefix = config["s3_prefix"]
+    filename_prefix = "repos" if crawler_type == "repo" else "users"
+    s3_key = f"{prefix}/year={year}/month={month}/day={day}/{filename_prefix}_{start_id:012d}_{end_id:012d}.parquet"
 
     try:
-        # Flatten nested structures for Parquet
-        flattened_users = []
-        for user in users:
-            flat_user = {
-                "id": user.get("id"),
-                "login": user.get("login"),
-                "node_id": user.get("node_id"),
-                "avatar_url": user.get("avatar_url"),
-                "gravatar_id": user.get("gravatar_id"),
-                "url": user.get("url"),
-                "html_url": user.get("html_url"),
-                "followers_url": user.get("followers_url"),
-                "following_url": user.get("following_url"),
-                "gists_url": user.get("gists_url"),
-                "starred_url": user.get("starred_url"),
-                "subscriptions_url": user.get("subscriptions_url"),
-                "organizations_url": user.get("organizations_url"),
-                "repos_url": user.get("repos_url"),
-                "events_url": user.get("events_url"),
-                "received_events_url": user.get("received_events_url"),
-                "type": user.get("type"),
-                "site_admin": user.get("site_admin"),
-                "user_view_type": user.get("user_view_type"),
-                "name": user.get("name"),
-                "company": user.get("company"),
-                "blog": user.get("blog"),
-                "location": user.get("location"),
-                "email": user.get("email"),
-                "hireable": user.get("hireable"),
-                "bio": user.get("bio"),
-                "twitter_username": user.get("twitter_username"),
-                "public_repos": user.get("public_repos"),
-                "public_gists": user.get("public_gists"),
-                "followers": user.get("followers"),
-                "following": user.get("following"),
-                "created_at": user.get("created_at"),
-                "updated_at": user.get("updated_at"),
-            }
-            flattened_users.append(flat_user)
+        # Flatten nested structures based on type
+        flattened_items = []
+        for item in items:
+            if crawler_type == "repo":
+                flattened_items.append(flatten_repo(item))
+            else:
+                flattened_items.append(flatten_user(item))
 
         # Convert to DataFrame
-        df = pd.DataFrame(flattened_users)
+        df = pd.DataFrame(flattened_items)
 
         # Convert to Parquet in memory
         parquet_buffer = BytesIO()
@@ -171,22 +204,23 @@ def save_to_s3_parquet(users: list[dict], start_id: int, end_id: int) -> dict:
             Metadata={
                 "start_id": str(start_id),
                 "end_id": str(end_id),
-                "count": str(len(users)),
+                "count": str(len(items)),
                 "format": "parquet",
                 "compression": "snappy",
+                "crawler_type": crawler_type,
             },
         )
 
         logger.info(
-            "Saved users to S3",
+            f"Saved {crawler_type} data to S3",
             extra={
-                "count": len(users),
+                "count": len(items),
                 "s3_key": s3_key,
                 "size_bytes": len(parquet_buffer.getvalue()),
             },
         )
-        metrics.add_metric(name="ItemsCrawled", unit=MetricUnit.Count, value=len(users))
-        metrics.add_metric(name="UsersSaved", unit=MetricUnit.Count, value=len(users))
+        metrics.add_metric(name="ItemsCrawled", unit=MetricUnit.Count, value=len(items))
+        metrics.add_metric(name="FilesSaved", unit=MetricUnit.Count, value=1)
         metrics.add_metric(
             name="ParquetFileSize",
             unit=MetricUnit.Bytes,
@@ -196,7 +230,7 @@ def save_to_s3_parquet(users: list[dict], start_id: int, end_id: int) -> dict:
         return {
             "s3_key": s3_key,
             "size": len(parquet_buffer.getvalue()),
-            "row_count": len(users),
+            "row_count": len(items),
         }
 
     except Exception as e:
@@ -250,20 +284,24 @@ def handle_response(response, retry_count, max_retries):
 
 
 @tracer.capture_method
-def fetch_users(
-    since_id: int, github_token: str, max_retries: int = 3
+def fetch_data(
+    crawler_type: str, since_id: int, github_token: str, max_retries: int = 3
 ) -> tuple[list[dict] | None, dict]:
     """
-    Fetch users from GitHub API with exponential backoff retry
-    Returns (list of users or None on error, request_metrics)
+    Fetch data from GitHub API with exponential backoff retry
+    Returns (list of items or None on error, request_metrics)
     """
+    config = CRAWLER_CONFIG.get(crawler_type)
+    if not config:
+        raise ValueError(f"Invalid crawler type: {crawler_type}")
+
     headers = {
         "Authorization": f"token {github_token}",
         "Accept": "application/vnd.github.v3+json",
-        "User-Agent": f"{PROJECT_NAME}-Crawler",
+        "User-Agent": f"{PROJECT_NAME}-GithubCrawler",
     }
 
-    url = f"{USERS_ENDPOINT}?since={since_id}&per_page=100"
+    url = f"{config['endpoint']}?since={since_id}&per_page=100"
 
     result = None
     request_metrics = {
@@ -350,16 +388,16 @@ def fetch_users(
 
 
 @tracer.capture_method
-def crawl_users(
-    start_id: int, num_requests: int, github_token: str, context
+def crawl(
+    crawler_type: str, start_id: int, num_requests: int, github_token: str, context
 ) -> tuple[int, int, list[dict], list[dict]]:
     """
     Execute the crawl loop with pacing
-    Returns (last_processed_id, total_users_fetched, request_metrics_list, s3_files_list)
+    Returns (last_processed_id, total_items_fetched, request_metrics_list, s3_files_list)
     """
     current_id = start_id
-    total_users = 0
-    batch_users = []
+    total_items = 0
+    batch_items = []
     batch_start_id = start_id
 
     request_metrics_list = []
@@ -378,71 +416,92 @@ def crawl_users(
             )
             break
 
-        # Fetch users
-        users, req_metrics = fetch_users(current_id, github_token)
+        # Fetch data
+        items, req_metrics = fetch_data(crawler_type, current_id, github_token)
         request_metrics_list.append(req_metrics)
 
-        if users is None:
-            logger.warning("Failed to fetch users", extra={"current_id": current_id})
+        if items is None:
+            logger.warning(
+                f"Failed to fetch {crawler_type} items",
+                extra={"current_id": current_id},
+            )
             time.sleep(SLEEP_INTERVAL)
             continue
 
-        if len(users) == 0:
-            logger.info("No more users returned, reached end of dataset")
+        if len(items) == 0:
+            logger.info("No more items returned, reached end of dataset")
             metrics.add_metric(name="DatasetEndReached", unit=MetricUnit.Count, value=1)
             break
 
         # Add to batch
-        batch_users.extend(users)
-        total_users += len(users)
+        batch_items.extend(items)
+        total_items += len(items)
 
-        # Update current_id to the last user ID in this batch
-        last_user_id = users[-1]["id"]
-        current_id = last_user_id
+        # Update current_id to the last item ID in this batch
+        last_item_id = items[-1]["id"]
+        current_id = last_item_id
 
         logger.debug(
             "Fetched batch",
             extra={
                 "request_number": i + 1,
-                "users_count": len(users),
-                "last_id": last_user_id,
+                "items_count": len(items),
+                "last_id": last_item_id,
             },
         )
 
-        # Save batch to S3 every 10 requests (approximately 1000 users)
-        if (i + 1) % 10 == 0 and batch_users:
-            file_meta = save_to_s3_parquet(batch_users, batch_start_id, current_id)
+        # Save batch to S3 every 10 requests (approximately 1000 items)
+        if (i + 1) % 10 == 0 and batch_items:
+            file_meta = save_to_s3_parquet(
+                crawler_type, batch_items, batch_start_id, current_id
+            )
             s3_files_list.append(file_meta)
-            batch_users = []
+            batch_items = []
             batch_start_id = current_id + 1
 
         # Pace requests
         time.sleep(SLEEP_INTERVAL)
 
-    # Save any remaining users in the batch
-    if batch_users:
-        file_meta = save_to_s3_parquet(batch_users, batch_start_id, current_id)
+    # Save any remaining items in the batch
+    if batch_items:
+        file_meta = save_to_s3_parquet(
+            crawler_type, batch_items, batch_start_id, current_id
+        )
         s3_files_list.append(file_meta)
 
     metrics.add_metric(
-        name="TotalUsersFetched", unit=MetricUnit.Count, value=total_users
+        name="TotalItemsFetched", unit=MetricUnit.Count, value=total_items
     )
-    return current_id, total_users, request_metrics_list, s3_files_list
+    return current_id, total_items, request_metrics_list, s3_files_list
 
 
 @logger.inject_lambda_context(log_event=True)
 @tracer.capture_lambda_handler
 @metrics.log_metrics(capture_cold_start_metric=True)
-def lambda_handler(_event, context):
+def lambda_handler(event, context):
     """
     Main Lambda handler
+    Expects event to contain "crawler_type": "repo" or "user"
     """
+    crawler_type = event.get("crawler_type", "repo")  # Default to repo for safety
+
+    if crawler_type not in CRAWLER_CONFIG:
+        logger.error(f"Invalid crawler type: {crawler_type}")
+        return {
+            "statusCode": 400,
+            "body": {"message": f"Invalid crawler type: {crawler_type}"},
+        }
+
+    # Set metric dimension
+    metrics.add_dimension(name="CrawlerType", value=crawler_type)
     metrics.add_metric(name="CrawlerRuns", unit=MetricUnit.Count, value=1)
+
     logger.info(
-        "Starting GitHub user crawler",
+        f"Starting GitHub {crawler_type} crawler",
         extra={
             "requests_per_execution": REQUESTS_PER_EXECUTION,
             "sleep_interval": SLEEP_INTERVAL,
+            "crawler_type": crawler_type,
         },
     )
 
@@ -452,15 +511,15 @@ def lambda_handler(_event, context):
             raise ValueError("GitHub token is not configured.")
 
         # Get last processed ID
-        start_id = get_last_processed_id()
+        start_id = get_last_processed_id(crawler_type)
 
-        # Generate run_id
-        run_id = str(uuid.uuid4())
+        # Use AWS request ID as run_id
+        run_id = context.aws_request_id
         start_time = datetime.now(timezone.utc).isoformat()
 
         # Execute crawl
-        last_id, total_fetched, requests_metrics, s3_files = crawl_users(
-            start_id, REQUESTS_PER_EXECUTION, GITHUB_TOKEN, context
+        last_id, total_fetched, requests_metrics, s3_files = crawl(
+            crawler_type, start_id, REQUESTS_PER_EXECUTION, GITHUB_TOKEN, context
         )
 
         end_time = datetime.now(timezone.utc).isoformat()
@@ -471,12 +530,14 @@ def lambda_handler(_event, context):
         # Update bookmark
         if last_id > start_id:
             # Get current total from DynamoDB
-            table = dynamodb.Table(DYNAMODB_TABLE_NAME)
-            response = table.get_item(Key={"state_key": "user_bookmark"})
+            config = CRAWLER_CONFIG[crawler_type]
+            response = crawl_state_table.get_item(
+                Key={"state_key": config["bookmark_key"]}
+            )
             current_total = int(response.get("Item", {}).get("total_processed", 0))
             new_total = current_total + total_fetched
 
-            update_bookmark(last_id, new_total)
+            update_bookmark(crawler_type, last_id, new_total)
 
             logger.info(
                 "Crawl complete",
@@ -484,7 +545,7 @@ def lambda_handler(_event, context):
                     "run_id": run_id,
                     "start_id": start_id,
                     "end_id": last_id,
-                    "users_fetched": total_fetched,
+                    "items_fetched": total_fetched,
                     "total_processed": new_total,
                 },
             )
@@ -493,7 +554,7 @@ def lambda_handler(_event, context):
             try:
                 event_payload = {
                     "run_id": run_id,
-                    "crawler_type": "user",
+                    "crawler_type": crawler_type,
                     "run_metadata": {
                         "retrieval": total_fetched,
                         "request_count": len(requests_metrics),
@@ -535,7 +596,7 @@ def lambda_handler(_event, context):
             # Publish completion event to AppSync (Legacy)
             try:
                 publish_crawler_completed(
-                    crawler_type="user",
+                    crawler_type=crawler_type,
                     start_id=start_id,
                     end_id=last_id,
                     items_fetched=total_fetched,
@@ -543,9 +604,17 @@ def lambda_handler(_event, context):
                     success=True,
                 )
                 logger.info("Published crawler completion event to AppSync")
+                metrics.add_metric(
+                    name="AppSyncPublishSuccess", unit=MetricUnit.Count, value=1
+                )
             except Exception as e:
-                logger.error(f"Failed to publish to AppSync: {e}")
-                # Don't fail the crawler if AppSync publish fails
+                logger.error(
+                    "Failed to publish to AppSync",
+                    extra={"error": str(e)},
+                )
+                metrics.add_metric(
+                    name="AppSyncPublishFailure", unit=MetricUnit.Count, value=1
+                )
 
             return {
                 "statusCode": 200,
@@ -554,7 +623,7 @@ def lambda_handler(_event, context):
                     "run_id": run_id,
                     "start_id": start_id,
                     "end_id": last_id,
-                    "users_fetched": total_fetched,
+                    "items_fetched": total_fetched,
                     "total_processed": new_total,
                 },
             }

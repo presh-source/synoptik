@@ -5,20 +5,22 @@ endpoint and stores raw data in S3 as Parquet files
 Uses AWS Lambda Powertools for observability
 """
 
+import json
 import os
 import time
+import uuid
 from datetime import datetime, timezone
 from io import BytesIO
 
 import boto3
 import pandas as pd
 import requests
-
-# AppSync client for publishing completion events
-from appsync_client import publish_crawler_completed
 from aws_lambda_powertools import Logger, Metrics, Tracer
 from aws_lambda_powertools.metrics import MetricUnit
 from botocore.exceptions import ClientError
+
+# AppSync client for publishing completion events
+from utils.appsync_client import publish_crawler_completed
 
 # Environment variables
 PROJECT_NAME = os.environ["PROJECT_NAME"]
@@ -37,6 +39,7 @@ metrics.add_dimension(name="CrawlerType", value="repo")
 # AWS clients
 dynamodb = boto3.resource("dynamodb")
 s3_client = boto3.client("s3")
+eventbridge = boto3.client("events")
 
 # GitHub API configuration
 GITHUB_API_BASE = "https://api.github.com"
@@ -92,8 +95,8 @@ def update_bookmark(last_id: int, total_processed: int) -> None:
 
 
 @tracer.capture_method
-def save_to_s3_parquet(repositories: list[dict], start_id: int, end_id: int) -> None:
-    """Save data to S3 as Parquet with partitioning"""
+def save_to_s3_parquet(repositories: list[dict], start_id: int, end_id: int) -> dict:
+    """Save data to S3 as Parquet with partitioning. Returns file metadata."""
     now = datetime.now(timezone.utc)
     year = now.year
     month = f"{now.month:02d}"
@@ -167,6 +170,12 @@ def save_to_s3_parquet(repositories: list[dict], start_id: int, end_id: int) -> 
             value=len(parquet_buffer.getvalue()),
         )
 
+        return {
+            "s3_key": s3_key,
+            "size": len(parquet_buffer.getvalue()),
+            "row_count": len(repositories),
+        }
+
     except Exception as e:
         logger.error("Failed to write to S3", extra={"error": str(e), "s3_key": s3_key})
         metrics.add_metric(name="S3WriteErrors", unit=MetricUnit.Count, value=1)
@@ -220,10 +229,10 @@ def handle_response(response, retry_count, max_retries):
 @tracer.capture_method
 def fetch_repositories(
     since_id: int, github_token: str, max_retries: int = 3
-) -> list[dict] | None:
+) -> tuple[list[dict] | None, dict]:
     """
     Fetch repositories from GitHub API with exponential backoff retry
-    Returns list of repositories or None on error
+    Returns (list of repositories or None on error, request_metrics)
     """
     headers = {
         "Authorization": f"token {github_token}",
@@ -234,14 +243,34 @@ def fetch_repositories(
     url = f"{REPOSITORIES_ENDPOINT}?since={since_id}&per_page=100"
 
     result = None
+    request_metrics = {
+        "since_id": since_id,
+        "request_start": None,
+        "request_end": None,
+        "retrieval": 0,
+        "status_code": 0,
+        "rate_limit_remaining": 0,
+        "rate_limit_limit": 0,
+        "rate_limit_reset": 0,
+    }
+
     for retry_count in range(max_retries + 1):
         try:
             metrics.add_metric(name="APIRequests", unit=MetricUnit.Count, value=1)
+            request_metrics["request_start"] = datetime.now(timezone.utc).isoformat()
             response = requests.get(url, headers=headers, timeout=30)
+            request_metrics["request_end"] = datetime.now(timezone.utc).isoformat()
+            request_metrics["status_code"] = response.status_code
 
             # Log rate limit info
             rate_limit_remaining = response.headers.get("X-RateLimit-Remaining")
+            rate_limit_limit = response.headers.get("X-RateLimit-Limit")
             rate_limit_reset = response.headers.get("X-RateLimit-Reset")
+
+            request_metrics["rate_limit_remaining"] = int(rate_limit_remaining or 0)
+            request_metrics["rate_limit_limit"] = int(rate_limit_limit or 0)
+            request_metrics["rate_limit_reset"] = int(rate_limit_reset or 0)
+
             logger.info(
                 "GitHub API response",
                 extra={
@@ -265,6 +294,7 @@ def fetch_repositories(
                 continue
 
         except requests.exceptions.Timeout:
+            request_metrics["request_end"] = datetime.now(timezone.utc).isoformat()
             logger.warning("Request timeout")
             metrics.add_metric(name="APITimeouts", unit=MetricUnit.Count, value=1)
             if retry_count < max_retries:
@@ -277,6 +307,7 @@ def fetch_repositories(
                 continue
             break
         except requests.exceptions.RequestException as e:
+            request_metrics["request_end"] = datetime.now(timezone.utc).isoformat()
             logger.error("Request failed", extra={"error": str(e)})
             metrics.add_metric(name="APIRequestsError", unit=MetricUnit.Count, value=1)
             if retry_count < max_retries:
@@ -288,21 +319,28 @@ def fetch_repositories(
                 time.sleep(backoff_time)
                 continue
             break
-    return result
+
+    if result:
+        request_metrics["retrieval"] = len(result)
+
+    return result, request_metrics
 
 
 @tracer.capture_method
 def crawl_repositories(
     start_id: int, num_requests: int, github_token: str, context
-) -> tuple[int, int]:
+) -> tuple[int, int, list[dict], list[dict]]:
     """
     Execute the crawl loop with pacing
-    Returns (last_processed_id, total_repos_fetched)
+    Returns (last_processed_id, total_repos_fetched, request_metrics_list, s3_files_list)
     """
     current_id = start_id
     total_repos = 0
     batch_repos = []
     batch_start_id = start_id
+
+    request_metrics_list = []
+    s3_files_list = []
 
     for i in range(num_requests):
         # Check remaining time (stop 30 seconds before timeout)
@@ -318,7 +356,8 @@ def crawl_repositories(
             break
 
         # Fetch repositories
-        repos = fetch_repositories(current_id, github_token)
+        repos, req_metrics = fetch_repositories(current_id, github_token)
+        request_metrics_list.append(req_metrics)
 
         if repos is None:
             logger.warning(
@@ -351,7 +390,8 @@ def crawl_repositories(
 
         # Save batch to S3 every 10 requests (approximately 1000 repos)
         if (i + 1) % 10 == 0 and batch_repos:
-            save_to_s3_parquet(batch_repos, batch_start_id, current_id)
+            file_meta = save_to_s3_parquet(batch_repos, batch_start_id, current_id)
+            s3_files_list.append(file_meta)
             batch_repos = []
             batch_start_id = current_id + 1
 
@@ -360,12 +400,13 @@ def crawl_repositories(
 
     # Save any remaining repos in the batch
     if batch_repos:
-        save_to_s3_parquet(batch_repos, batch_start_id, current_id)
+        file_meta = save_to_s3_parquet(batch_repos, batch_start_id, current_id)
+        s3_files_list.append(file_meta)
 
     metrics.add_metric(
         name="TotalRepositoriesFetched", unit=MetricUnit.Count, value=total_repos
     )
-    return current_id, total_repos
+    return current_id, total_repos, request_metrics_list, s3_files_list
 
 
 @logger.inject_lambda_context(log_event=True)
@@ -392,10 +433,19 @@ def lambda_handler(_event, context):
         # Get last processed ID
         start_id = get_last_processed_id()
 
+        # Generate run_id
+        run_id = str(uuid.uuid4())
+        start_time = datetime.now(timezone.utc).isoformat()
+
         # Execute crawl
-        last_id, total_fetched = crawl_repositories(
+        last_id, total_fetched, requests_metrics, s3_files = crawl_repositories(
             start_id, REQUESTS_PER_EXECUTION, GITHUB_TOKEN, context
         )
+
+        end_time = datetime.now(timezone.utc).isoformat()
+        duration_ms = (
+            datetime.fromisoformat(end_time) - datetime.fromisoformat(start_time)
+        ).total_seconds() * 1000
 
         # Update bookmark
         if last_id > start_id:
@@ -410,6 +460,7 @@ def lambda_handler(_event, context):
             logger.info(
                 "Crawl complete",
                 extra={
+                    "run_id": run_id,
                     "start_id": start_id,
                     "end_id": last_id,
                     "repositories_fetched": total_fetched,
@@ -417,7 +468,50 @@ def lambda_handler(_event, context):
                 },
             )
 
-            # Publish completion event to AppSync
+            # Publish completion event to EventBridge
+            try:
+                event_payload = {
+                    "run_id": run_id,
+                    "crawler_type": "repo",
+                    "run_metadata": {
+                        "retrieval": total_fetched,
+                        "request_count": len(requests_metrics),
+                        "duration_ms": duration_ms,
+                        "start_time": start_time,
+                        "end_time": end_time,
+                    },
+                    "bookmark": {
+                        "last_processed_id": last_id,
+                        "total_processed": new_total,
+                    },
+                    "requests": requests_metrics,
+                    "s3_files": s3_files,
+                }
+
+                eventbridge.put_events(
+                    Entries=[
+                        {
+                            "Source": f"{PROJECT_NAME}.crawler",
+                            "DetailType": "CrawlerCompleted",
+                            "Detail": json.dumps(event_payload),
+                            "Time": datetime.now(timezone.utc),
+                        }
+                    ]
+                )
+                logger.info("Published crawler completion event to EventBridge")
+                metrics.add_metric(
+                    name="EventBridgePublishSuccess", unit=MetricUnit.Count, value=1
+                )
+            except Exception as e:
+                logger.error(
+                    "Failed to publish to EventBridge",
+                    extra={"error": str(e)},
+                )
+                metrics.add_metric(
+                    name="EventBridgePublishFailure", unit=MetricUnit.Count, value=1
+                )
+
+            # Publish completion event to AppSync (Legacy)
             try:
                 publish_crawler_completed(
                     crawler_type="repo",
@@ -439,12 +533,12 @@ def lambda_handler(_event, context):
                 metrics.add_metric(
                     name="AppSyncPublishFailure", unit=MetricUnit.Count, value=1
                 )
-                # Don't fail the crawler if AppSync publish fails
 
             return {
                 "statusCode": 200,
                 "body": {
                     "message": "Crawl completed successfully",
+                    "run_id": run_id,
                     "start_id": start_id,
                     "end_id": last_id,
                     "repositories_fetched": total_fetched,

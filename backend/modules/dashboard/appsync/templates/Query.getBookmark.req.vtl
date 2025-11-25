@@ -1,0 +1,8 @@
+{
+    "version": "2018-05-29",
+    "operation": "GetItem",
+    "key": {
+        "PK": $util.dynamodb.toDynamoDBJson("BOOKMARK#${ctx.args.crawler_type}"),
+        "SK": $util.dynamodb.toDynamoDBJson("BOOKMARK")
+    }
+}

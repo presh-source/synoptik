@@ -49,5 +49,7 @@ module "dashboard" {
   acm_certificate_arn                = var.acm_certificate_arn
   api_gateway_cloudwatch_role_arn    = module.iam.api_gateway_cloudwatch_role_arn
   appsync_lambda_invocation_role_arn = module.iam.appsync_lambda_invocation_role_arn
+  telemetry_table_name               = module.cold_path.telemetry_table_name
+  telemetry_table_arn                = module.cold_path.telemetry_table_arn
   tags                               = local.merged_tags
 }

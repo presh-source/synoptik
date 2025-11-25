@@ -9,11 +9,7 @@ import os
 from datetime import datetime, timedelta, timezone
 
 import boto3
-from utils.sentry_config import (
-    add_breadcrumb,
-    capture_lambda_error,
-    init_sentry,
-)
+from utils.sentry_config import add_breadcrumb, capture_lambda_error, init_sentry
 
 # Initialize Sentry
 init_sentry()

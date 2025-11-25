@@ -70,4 +70,14 @@ variable "appsync_lambda_invocation_role_arn" {
   type        = string
 }
 
+variable "telemetry_table_name" {
+  description = "The name of the DynamoDB table for crawler telemetry"
+  type        = string
+}
+
+variable "telemetry_table_arn" {
+  description = "The ARN of the DynamoDB table for crawler telemetry"
+  type        = string
+}
+
 
