@@ -130,5 +130,7 @@ resource "aws_dynamodb_table" "telemetry" {
     enabled = true
   }
 
+  deletion_protection_enabled = true
+
   tags = var.tags
 }

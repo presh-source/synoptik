@@ -316,6 +316,11 @@ module "pipeline_status_resolver_appsync_lambda" {
   iam_policy_document = data.aws_iam_policy_document.pipeline_status_resolver_appsync_lambda_policy.json
   managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
 
+  layers = [
+    module.dashboard_dependencies.arn,
+    local.powertools_layer
+  ]
+
   environment_variables = {
     DYNAMODB_TABLE_NAME = var.cold_path_dynamodb_table
     ENVIRONMENT         = var.environment
