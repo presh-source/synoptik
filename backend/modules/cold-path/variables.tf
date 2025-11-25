@@ -49,19 +49,6 @@ variable "sleep_interval" {
   default     = 1
 }
 
-variable "aws_sdk_pandas_layer_version" {
-  description = "Version of AWS SDK Pandas layer for us-east-1. Check https://aws-sdk-pandas.readthedocs.io/en/stable/layers.html for latest"
-  type        = number
-  default     = 23 # Known working version for Python 3.11
-}
-
-variable "aws_powertools_layer_version" {
-  description = "Version of AWS Lambda Powertools layer for Python 3.11. Check https://awslabs.github.io/aws-lambda-powertools-python/latest/core/layers/ for latest"
-  type        = number
-  default     = 28 # Known working version for Python 3.11
-
-}
-
 variable "dashboard_appsync_api_url" {
   description = "The AppSync GraphQL API endpoint for publishing crawler events"
   type        = string

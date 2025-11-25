@@ -1,6 +1,18 @@
 # Dashboard Module - Lambda Functions
 
 # ============================================================================
+# Local variables
+# ============================================================================
+
+locals {
+  runtime            = "python3.11"
+  timeout            = 900
+  memory_size        = 1024
+  awssdkpandas_layer = "arn:aws:lambda:${data.aws_region.current.name}:336392948345:layer:AWSSDKPandas-Python311:23"
+  powertools_layer   = "arn:aws:lambda:${data.aws_region.current.name}:017000801446:layer:AWSLambdaPowertoolsPythonV2:68"
+}
+
+# ============================================================================
 # Lambda Layer for Dependencies
 # ============================================================================
 
@@ -172,9 +184,9 @@ module "pipeline_status_lambda" {
   function_name        = "pipeline-status"
   function_description = "Gathers and returns the overall pipeline status."
   handler              = "pipeline_status.lambda_handler"
-  runtime              = "python3.11"
-  timeout              = 30
-  memory_size          = 256
+  runtime              = local.runtime
+  timeout              = local.timeout
+  memory_size          = local.memory_size
 
   filename         = data.archive_file.pipeline_status_lambda.output_path
   source_code_hash = data.archive_file.pipeline_status_lambda.output_base64sha256
@@ -184,7 +196,7 @@ module "pipeline_status_lambda" {
 
   layers = [
     module.dashboard_dependencies.arn,
-    "arn:aws:lambda:${data.aws_region.current.name}:017000801446:layer:AWSLambdaPowertoolsPythonV2:68"
+    local.powertools_layer
   ]
 
   environment_variables = {
@@ -217,7 +229,7 @@ module "cloudwatch_metrics_lambda" {
 
   layers = [
     module.dashboard_dependencies.arn,
-    "arn:aws:lambda:${data.aws_region.current.name}:017000801446:layer:AWSLambdaPowertoolsPythonV2:68"
+    local.powertools_layer
   ]
 
   environment_variables = {
@@ -241,9 +253,9 @@ module "crawler_metrics_resolver_appsync_lambda" {
   function_name        = "appsync-crawler-metrics-resolver"
   function_description = "AppSync resolver for crawler metrics."
   handler              = "crawler_metrics_resolver.lambda_handler"
-  runtime              = "python3.11"
-  timeout              = 30
-  memory_size          = 256
+  runtime              = local.runtime
+  timeout              = local.timeout
+  memory_size          = local.memory_size
 
   filename         = data.archive_file.crawler_metrics_resolver_appsync_lambda.output_path
   source_code_hash = data.archive_file.crawler_metrics_resolver_appsync_lambda.output_base64sha256
@@ -268,9 +280,9 @@ module "error_rates_resolver_appsync_lambda" {
   function_name        = "appsync-error-rates-resolver"
   function_description = "AppSync resolver for error rates."
   handler              = "error_rates_resolver.lambda_handler"
-  runtime              = "python3.11"
-  timeout              = 30
-  memory_size          = 256
+  runtime              = local.runtime
+  timeout              = local.timeout
+  memory_size          = local.memory_size
 
   filename         = data.archive_file.error_rates_resolver_appsync_lambda.output_path
   source_code_hash = data.archive_file.error_rates_resolver_appsync_lambda.output_base64sha256
@@ -294,9 +306,9 @@ module "pipeline_status_resolver_appsync_lambda" {
   function_name        = "appsync-pipeline-status-resolver"
   function_description = "AppSync resolver for pipeline status."
   handler              = "pipeline_status_resolver.lambda_handler"
-  runtime              = "python3.11"
-  timeout              = 30
-  memory_size          = 256
+  runtime              = local.runtime
+  timeout              = local.timeout
+  memory_size          = local.memory_size
 
   filename         = data.archive_file.pipeline_status_resolver_appsync_lambda.output_path
   source_code_hash = data.archive_file.pipeline_status_resolver_appsync_lambda.output_base64sha256
@@ -321,9 +333,9 @@ module "crawler_stats_resolver_appsync_lambda" {
   function_name        = "appsync-crawler-stats-resolver"
   function_description = "AppSync resolver for crawler stats."
   handler              = "crawler_stats.lambda_handler"
-  runtime              = "python3.11"
-  timeout              = 30
-  memory_size          = 256
+  runtime              = local.runtime
+  timeout              = local.timeout
+  memory_size          = local.memory_size
 
   filename         = data.archive_file.crawler_stats_resolver_appsync_lambda.output_path
   source_code_hash = data.archive_file.crawler_stats_resolver_appsync_lambda.output_base64sha256
@@ -333,7 +345,7 @@ module "crawler_stats_resolver_appsync_lambda" {
 
   layers = [
     module.dashboard_dependencies.arn,
-    "arn:aws:lambda:${data.aws_region.current.name}:017000801446:layer:AWSLambdaPowertoolsPythonV2:68"
+    local.powertools_layer
   ]
 
   environment_variables = {

@@ -1,6 +1,18 @@
 # Lambda Resources
 
 # ============================================================================
+# Local variables
+# ============================================================================
+
+locals {
+  runtime            = "python3.11"
+  timeout            = 900
+  memory_size        = 1024
+  awssdkpandas_layer = "arn:aws:lambda:${data.aws_region.current.name}:336392948345:layer:AWSSDKPandas-Python311:23"
+  powertools_layer   = "arn:aws:lambda:${data.aws_region.current.name}:017000801446:layer:AWSLambdaPowertoolsPythonV2:68"
+}
+
+# ============================================================================
 # Lambda Dependencies Layer
 # ============================================================================
 
@@ -222,20 +234,21 @@ module "repo_crawler" {
   function_name        = "repo-crawler"
   function_description = "Crawls GitHub repositories and stores data in S3"
   handler              = "repo_crawler.lambda_handler"
-  runtime              = "python3.11"
-  timeout              = var.lambda_timeout
-  memory_size          = var.lambda_memory
+  runtime              = local.runtime
+  timeout              = local.timeout
+  memory_size          = local.memory_size
 
   filename         = data.archive_file.repo_crawler_lambda.output_path
   source_code_hash = data.archive_file.repo_crawler_lambda.output_base64sha256
 
-  iam_policy_document = data.aws_iam_policy_document.repo_crawler_lambda_policy.json
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
+  iam_policy_document  = data.aws_iam_policy_document.repo_crawler_lambda_policy.json
+  create_custom_policy = true
+  managed_policy_arns  = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
 
   layers = [
     module.crawler_dependencies.arn,
-    "arn:aws:lambda:${data.aws_region.current.name}:336392948345:layer:AWSSDKPandas-Python311:${var.aws_sdk_pandas_layer_version}",
-    "arn:aws:lambda:${data.aws_region.current.name}:017000801446:layer:AWSLambdaPowertoolsPythonV2:68"
+    local.awssdkpandas_layer,
+    local.powertools_layer
   ]
 
   environment_variables = {
@@ -259,20 +272,21 @@ module "user_crawler" {
   function_name        = "user-crawler"
   function_description = "Crawls GitHub users and stores data in S3"
   handler              = "user_crawler.lambda_handler"
-  runtime              = "python3.11"
-  timeout              = var.lambda_timeout
-  memory_size          = var.lambda_memory
+  runtime              = local.runtime
+  timeout              = local.timeout
+  memory_size          = local.memory_size
 
   filename         = data.archive_file.user_crawler_lambda.output_path
   source_code_hash = data.archive_file.user_crawler_lambda.output_base64sha256
 
-  iam_policy_document = data.aws_iam_policy_document.user_crawler_lambda_policy.json
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
+  iam_policy_document  = data.aws_iam_policy_document.user_crawler_lambda_policy.json
+  create_custom_policy = true
+  managed_policy_arns  = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
 
   layers = [
     module.crawler_dependencies.arn,
-    "arn:aws:lambda:${data.aws_region.current.name}:336392948345:layer:AWSSDKPandas-Python311:${var.aws_sdk_pandas_layer_version}",
-    "arn:aws:lambda:${data.aws_region.current.name}:017000801446:layer:AWSLambdaPowertoolsPythonV2:68"
+    local.awssdkpandas_layer,
+    local.powertools_layer
   ]
 
   environment_variables = {
@@ -296,20 +310,21 @@ module "github_crawler" {
   function_name        = "github-crawler"
   function_description = "Unified GitHub crawler that handles both repos and users"
   handler              = "github_crawler.lambda_handler"
-  runtime              = "python3.11"
-  timeout              = var.lambda_timeout
-  memory_size          = var.lambda_memory
+  runtime              = local.runtime
+  timeout              = local.timeout
+  memory_size          = local.memory_size
 
   filename         = data.archive_file.github_crawler_lambda.output_path
   source_code_hash = data.archive_file.github_crawler_lambda.output_base64sha256
 
-  iam_policy_document = data.aws_iam_policy_document.github_crawler_lambda_policy.json
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
+  iam_policy_document  = data.aws_iam_policy_document.github_crawler_lambda_policy.json
+  create_custom_policy = true
+  managed_policy_arns  = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
 
   layers = [
     module.crawler_dependencies.arn,
-    "arn:aws:lambda:${data.aws_region.current.name}:336392948345:layer:AWSSDKPandas-Python311:${var.aws_sdk_pandas_layer_version}",
-    "arn:aws:lambda:${data.aws_region.current.name}:017000801446:layer:AWSLambdaPowertoolsPythonV2:68"
+    local.awssdkpandas_layer,
+    local.powertools_layer
   ]
 
   environment_variables = {
@@ -333,19 +348,20 @@ module "telemetry" {
   function_name        = "telemetry-processor"
   function_description = "Processes crawler completion events and stores telemetry data"
   handler              = "telemetry.lambda_handler"
-  runtime              = "python3.11"
-  timeout              = 60
-  memory_size          = 256
+  runtime              = local.runtime
+  timeout              = local.timeout
+  memory_size          = local.memory_size
 
   filename         = data.archive_file.telemetry_lambda.output_path
   source_code_hash = data.archive_file.telemetry_lambda.output_base64sha256
 
-  iam_policy_document = data.aws_iam_policy_document.telemetry_lambda_policy.json
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
+  iam_policy_document  = data.aws_iam_policy_document.telemetry_lambda_policy.json
+  create_custom_policy = true
+  managed_policy_arns  = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
 
   layers = [
-    "arn:aws:lambda:${data.aws_region.current.name}:336392948345:layer:AWSSDKPandas-Python311:${var.aws_sdk_pandas_layer_version}",
-    "arn:aws:lambda:${data.aws_region.current.name}:017000801446:layer:AWSLambdaPowertoolsPythonV2:68"
+    local.awssdkpandas_layer,
+    local.powertools_layer
   ]
 
   environment_variables = {
@@ -364,19 +380,20 @@ module "aggregator" {
   function_name        = "telemetry-aggregator"
   function_description = "Aggregates crawler telemetry hourly"
   handler              = "aggregator.lambda_handler"
-  runtime              = "python3.11"
-  timeout              = 120
-  memory_size          = 512
+  runtime              = local.runtime
+  timeout              = local.timeout
+  memory_size          = local.memory_size
 
   filename         = data.archive_file.aggregator_lambda.output_path
   source_code_hash = data.archive_file.aggregator_lambda.output_base64sha256
 
-  iam_policy_document = data.aws_iam_policy_document.aggregator_lambda_policy.json
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
+  iam_policy_document  = data.aws_iam_policy_document.aggregator_lambda_policy.json
+  create_custom_policy = true
+  managed_policy_arns  = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
 
   layers = [
-    "arn:aws:lambda:${data.aws_region.current.name}:336392948345:layer:AWSSDKPandas-Python311:${var.aws_sdk_pandas_layer_version}",
-    "arn:aws:lambda:${data.aws_region.current.name}:017000801446:layer:AWSLambdaPowertoolsPythonV2:68"
+    local.awssdkpandas_layer,
+    local.powertools_layer
   ]
 
   environment_variables = {
