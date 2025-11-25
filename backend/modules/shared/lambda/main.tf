@@ -47,7 +47,7 @@ resource "aws_iam_role_policy" "logging" {
 
 # Optional custom policy
 resource "aws_iam_role_policy" "custom" {
-  count = var.create_custom_policy ? 1 : 0
+  count = var.iam_policy_document != null ? 1 : 0
 
   name   = "${var.environment}-${var.project_name}-${var.function_name}-custom-policy"
   role   = aws_iam_role.lambda_exec.id

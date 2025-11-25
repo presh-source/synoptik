@@ -65,12 +65,6 @@ variable "iam_policy_document" {
   default     = null
 }
 
-variable "create_custom_policy" {
-  description = "Whether to create a custom IAM policy. Set to true when providing iam_policy_document."
-  type        = bool
-  default     = false
-}
-
 variable "managed_policy_arns" {
   description = "List of ARNs of IAM managed policies to attach to the Lambda function's execution role."
   type        = list(string)
