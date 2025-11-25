@@ -5,11 +5,13 @@
 # ============================================================================
 
 locals {
-  runtime            = "python3.11"
-  timeout            = 900
-  memory_size        = 1024
-  awssdkpandas_layer = "arn:aws:lambda:${data.aws_region.current.name}:336392948345:layer:AWSSDKPandas-Python311:23"
-  powertools_layer   = "arn:aws:lambda:${data.aws_region.current.name}:017000801446:layer:AWSLambdaPowertoolsPythonV2:68"
+  runtime                = "python3.11"
+  timeout                = 900
+  memory_size            = 1024
+  requests_per_execution = 700
+  sleep_interval         = 0.1
+  awssdkpandas_layer     = "arn:aws:lambda:${data.aws_region.current.name}:336392948345:layer:AWSSDKPandas-Python311:23"
+  powertools_layer       = "arn:aws:lambda:${data.aws_region.current.name}:017000801446:layer:AWSLambdaPowertoolsPythonV2:68"
 }
 
 # ============================================================================
@@ -255,8 +257,8 @@ module "repo_crawler" {
     DYNAMODB_TABLE_NAME       = aws_dynamodb_table.crawl_state.name
     S3_BUCKET_NAME            = var.data_lake_bucket_name
     GITHUB_TOKEN              = var.github_token
-    REQUESTS_PER_EXECUTION    = var.requests_per_execution
-    SLEEP_INTERVAL            = var.sleep_interval
+    REQUESTS_PER_EXECUTION    = local.requests_per_execution
+    SLEEP_INTERVAL            = local.sleep_interval
     PROJECT_NAME              = var.project_name
     DASHBOARD_APPSYNC_API_URL = var.dashboard_appsync_api_url
   }
@@ -293,8 +295,8 @@ module "user_crawler" {
     DYNAMODB_TABLE_NAME       = aws_dynamodb_table.crawl_state.name
     S3_BUCKET_NAME            = var.data_lake_bucket_name
     GITHUB_TOKEN              = var.github_token
-    REQUESTS_PER_EXECUTION    = var.requests_per_execution
-    SLEEP_INTERVAL            = var.sleep_interval
+    REQUESTS_PER_EXECUTION    = local.requests_per_execution
+    SLEEP_INTERVAL            = local.sleep_interval
     PROJECT_NAME              = var.project_name
     DASHBOARD_APPSYNC_API_URL = var.dashboard_appsync_api_url
   }
@@ -331,8 +333,8 @@ module "github_crawler" {
     CRAWL_STATE_TABLE_NAME    = aws_dynamodb_table.crawl_state.name
     S3_BUCKET_NAME            = var.data_lake_bucket_name
     GITHUB_TOKEN              = var.github_token
-    REQUESTS_PER_EXECUTION    = var.requests_per_execution
-    SLEEP_INTERVAL            = var.sleep_interval
+    REQUESTS_PER_EXECUTION    = local.requests_per_execution
+    SLEEP_INTERVAL            = local.sleep_interval
     PROJECT_NAME              = var.project_name
     DASHBOARD_APPSYNC_API_URL = var.dashboard_appsync_api_url
   }

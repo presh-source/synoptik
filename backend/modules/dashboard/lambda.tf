@@ -6,8 +6,8 @@
 
 locals {
   runtime            = "python3.11"
-  timeout            = 900
-  memory_size        = 1024
+  timeout            = 10
+  memory_size        = 512
   awssdkpandas_layer = "arn:aws:lambda:${data.aws_region.current.name}:336392948345:layer:AWSSDKPandas-Python311:23"
   powertools_layer   = "arn:aws:lambda:${data.aws_region.current.name}:017000801446:layer:AWSLambdaPowertoolsPythonV2:68"
 }

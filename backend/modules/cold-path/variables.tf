@@ -25,30 +25,6 @@ variable "tags" {
   default     = {}
 }
 
-variable "lambda_timeout" {
-  description = "The timeout for the Lambda function"
-  type        = number
-  default     = 300
-}
-
-variable "lambda_memory" {
-  description = "The memory size for the Lambda function"
-  type        = number
-  default     = 512
-}
-
-variable "requests_per_execution" {
-  description = "The number of requests per execution"
-  type        = number
-  default     = 10
-}
-
-variable "sleep_interval" {
-  description = "The sleep interval between requests"
-  type        = number
-  default     = 1
-}
-
 variable "dashboard_appsync_api_url" {
   description = "The AppSync GraphQL API endpoint for publishing crawler events"
   type        = string
