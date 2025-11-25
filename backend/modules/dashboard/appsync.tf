@@ -158,9 +158,9 @@ module "appsync" {
       response_template = file("${path.module}/appsync/templates/Query.listHourlyAggregations.res.vtl")
     }
     "Query.getCrawlerStats" = {
-      type       = "Query"
-      field      = "getCrawlerStats"
-      datasource = "CrawlerStatsLambda"
+      type              = "Query"
+      field             = "getCrawlerStats"
+      datasource        = "CrawlerStatsLambda"
       request_template  = "{ \"version\": \"2017-02-28\", \"operation\": \"Invoke\", \"payload\": $util.toJson($context.arguments) }"
       response_template = "$util.toJson($context.result)"
     }
