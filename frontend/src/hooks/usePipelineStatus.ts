@@ -3,9 +3,24 @@ import { useGetPipelineStatusQuery } from '@/graphql/generated/types'
 import { pipelineApi } from '@/api/endpoints'
 import type { PipelineStatus } from '@/types'
 import { logApiError, logInfo, logWarn } from '@/utils/logger'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 export const usePipelineStatus = (_refetchInterval = 0) => {
+  const [isWindowFocused, setIsWindowFocused] = useState(true);
+
+  useEffect(() => {
+    const onFocus = () => setIsWindowFocused(true);
+    const onBlur = () => setIsWindowFocused(false);
+
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('blur', onBlur);
+
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('blur', onBlur);
+    };
+  }, []);
+
   // Try GraphQL first with Apollo Client
   const {
     data: graphqlData,
@@ -16,8 +31,14 @@ export const usePipelineStatus = (_refetchInterval = 0) => {
     pollInterval: 0, // Disable polling as we use subscriptions
     fetchPolicy: 'cache-and-network',
     errorPolicy: 'all', // Return partial data even if there are errors
-    refetchOnWindowFocus: true, // Refetch when window regains focus
   })
+
+  // Refetch GraphQL data when window regains focus
+  useEffect(() => {
+    if (isWindowFocused && graphqlRefetch) {
+      graphqlRefetch();
+    }
+  }, [isWindowFocused, graphqlRefetch]);
 
   // Log successful GraphQL fetch
   useEffect(() => {

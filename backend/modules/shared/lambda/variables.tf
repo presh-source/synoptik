@@ -62,7 +62,7 @@ variable "environment_variables" {
 variable "iam_policy_document" {
   description = "Additional IAM policy document for the Lambda function's execution role. Will be combined with the default logging policy."
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "managed_policy_arns" {
