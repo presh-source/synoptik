@@ -17,7 +17,6 @@ telemetry_table = dynamodb.Table(TELEMETRY_TABLE_NAME)
 def get_aggregated_stats(
     crawler_type: str, start_time: datetime, end_time: datetime
 ) -> dict:
-
     # Query aggregations for "retrieval" metric
     pk = f"AGG#{crawler_type}#retrieval"
 
@@ -75,7 +74,7 @@ def get_aggregated_stats(
 
 @logger.inject_lambda_context
 @tracer.capture_lambda_handler
-def lambda_handler(event, context):
+def lambda_handler(event, _context):
     time_range = event.get("arguments", {}).get("timeRange", "24h")
 
     now = datetime.now(timezone.utc)

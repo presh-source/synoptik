@@ -22,13 +22,13 @@ module "crawler_dependencies" {
 
 data "archive_file" "repo_crawler_lambda" {
   type        = "zip"
-  source_dir  = "${path.module}/lambda/repo-crawler.py"
+  source_file = "${path.module}/lambda/repo_crawler.py"
   output_path = "${path.module}/repo_lambda_package.zip"
 }
 
 data "archive_file" "user_crawler_lambda" {
   type        = "zip"
-  source_dir  = "${path.module}/lambda/user-crawler.py"
+  source_file = "${path.module}/lambda/user_crawler.py"
   output_path = "${path.module}/user_lambda_package.zip"
 }
 
@@ -40,13 +40,13 @@ data "archive_file" "github_crawler_lambda" {
 
 data "archive_file" "telemetry_lambda" {
   type        = "zip"
-  source_dir  = "${path.module}/lambda/telemetry.py"
+  source_file = "${path.module}/lambda/telemetry.py"
   output_path = "${path.module}/telemetry_lambda_package.zip"
 }
 
 data "archive_file" "aggregator_lambda" {
   type        = "zip"
-  source_dir  = "${path.module}/lambda/aggregator.py"
+  source_file = "${path.module}/lambda/aggregator.py"
   output_path = "${path.module}/aggregator_lambda_package.zip"
 }
 

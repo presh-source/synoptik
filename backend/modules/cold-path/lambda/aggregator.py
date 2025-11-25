@@ -184,7 +184,7 @@ def publish_metrics(crawler_type: str, stats: dict):
 @logger.inject_lambda_context
 @tracer.capture_lambda_handler
 @metrics.log_metrics(capture_cold_start_metric=True)
-def lambda_handler(event, context):
+def lambda_handler(_event, _context):
     """
     Main handler for hourly aggregation.
     """

@@ -203,7 +203,7 @@ def publish_cloudwatch_metrics(crawler_type: str, run_data: dict, s3_files: list
 @logger.inject_lambda_context
 @tracer.capture_lambda_handler
 @metrics.log_metrics(capture_cold_start_metric=True)
-def lambda_handler(event, context):
+def lambda_handler(event, _context):
     """
     Main handler for telemetry processing.
     """

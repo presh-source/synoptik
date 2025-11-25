@@ -16,6 +16,7 @@ export const usePipelineStatus = (_refetchInterval = 0) => {
     pollInterval: 0, // Disable polling as we use subscriptions
     fetchPolicy: 'cache-and-network',
     errorPolicy: 'all', // Return partial data even if there are errors
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   })
 
   // Log successful GraphQL fetch
