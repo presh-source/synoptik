@@ -94,8 +94,6 @@ input CrawlerCompletedInput {
   success: Boolean!
   errorMessage: String
 }
-  errorMessage: String
-}
 
 # Telemetry Types
 

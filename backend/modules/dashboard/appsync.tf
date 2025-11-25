@@ -161,15 +161,6 @@ module "appsync" {
       type       = "Query"
       field      = "getCrawlerStats"
       datasource = "CrawlerStatsLambda"
-      # No VTL needed for Lambda direct resolver usually, but module might require it. 
-      # If module requires templates, we can use simple pass-through or None.
-      # Assuming module supports request/response templates for Lambda.
-      # Let's use simple pass-through VTLs or create them if needed.
-      # Actually, for Lambda resolvers in this module structure, we usually provide templates.
-      # I will create simple pass-through templates for this one in the next step if they don't exist.
-      # Wait, I didn't create templates for getCrawlerStats. I should have.
-      # I will use the "None" datasource templates as placeholders or create new ones.
-      # Let's assume I will create them in a moment.
       request_template  = "{ \"version\": \"2017-02-28\", \"operation\": \"Invoke\", \"payload\": $util.toJson($context.arguments) }"
       response_template = "$util.toJson($context.result)"
     }
