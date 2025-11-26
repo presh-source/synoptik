@@ -48,5 +48,4 @@ module "dashboard_api" {
   endpoint_type       = "EDGE"
 
   tags = var.tags
-
-
+}
