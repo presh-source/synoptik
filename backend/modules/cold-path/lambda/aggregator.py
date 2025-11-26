@@ -7,6 +7,10 @@ import boto3
 from aws_lambda_powertools import Logger, Metrics, Tracer
 from aws_lambda_powertools.metrics import MetricUnit
 from boto3.dynamodb.conditions import Key
+from utils.sentry_config import init_sentry
+
+# Initialize Sentry
+init_sentry()
 
 # Environment variables
 PROJECT_NAME = os.environ["PROJECT_NAME"]
@@ -47,7 +51,9 @@ def get_hour_boundary():
 
 
 @tracer.capture_method
-def query_items_by_type(crawler_type: str, entity_type: str, start_time: str, end_time: str):
+def query_items_by_type(
+    crawler_type: str, entity_type: str, start_time: str, end_time: str
+):
     """
     Query items (requests or runs) for a crawler type within the time range.
     Uses GSI1: EntityTypeIndex (entity_type + created_at)
@@ -109,7 +115,7 @@ def calculate_request_stats(requests: list):
         "min_retrieval": min_retrieval,
         "max_retrieval": max_retrieval,
         "error_count": error_count,
-        "error_rate": error_rate
+        "error_rate": error_rate,
     }
 
 
@@ -141,12 +147,18 @@ def calculate_run_stats(runs: list):
         "total_duration": total_duration,
         "avg_duration": avg_duration,
         "total_size": total_size,
-        "total_items": total_items
+        "total_items": total_items,
     }
 
 
 @tracer.capture_method
-def write_aggregation(crawler_type: str, metric_type: str, period_key: str, stats: dict, is_daily: bool = False):
+def write_aggregation(
+    crawler_type: str,
+    metric_type: str,
+    period_key: str,
+    stats: dict,
+    is_daily: bool = False,
+):
     """
     Write aggregated stats to DynamoDB.
     period_key: "HOUR#..." or "DAY#..."
@@ -167,25 +179,31 @@ def write_aggregation(crawler_type: str, metric_type: str, period_key: str, stat
 
     # Add metric-specific fields
     if metric_type == "retrievals":
-        item.update({
-            "total": stats["total_retrieval"],
-            "average": stats["avg_retrieval"],
-            "min": stats["min_retrieval"],
-            "max": stats["max_retrieval"]
-        })
+        item.update(
+            {
+                "total": stats["total_retrieval"],
+                "average": stats["avg_retrieval"],
+                "min": stats["min_retrieval"],
+                "max": stats["max_retrieval"],
+            }
+        )
     elif metric_type == "requests":
-        item.update({
-            "total": stats["count"],
-            "error_count": stats["error_count"],
-            "error_rate": stats["error_rate"]
-        })
+        item.update(
+            {
+                "total": stats["count"],
+                "error_count": stats["error_count"],
+                "error_rate": stats["error_rate"],
+            }
+        )
     elif metric_type == "runs":
-        item.update({
-            "total_duration": stats["total_duration"],
-            "avg_duration": stats["avg_duration"],
-            "total_size": stats["total_size"],
-            "total_items": stats["total_items"]
-        })
+        item.update(
+            {
+                "total_duration": stats["total_duration"],
+                "avg_duration": stats["avg_duration"],
+                "total_size": stats["total_size"],
+                "total_items": stats["total_items"],
+            }
+        )
 
     # Convert floats to Decimal
     item = json.loads(json.dumps(item), parse_float=Decimal)
@@ -213,7 +231,8 @@ def perform_daily_rollup(crawler_type: str, day_str: str):
         try:
             # Query all hours for this day
             response = telemetry_table.query(
-                KeyConditionExpression=Key("PK").eq(pk) & Key("SK").begins_with(f"HOUR#{day_str}")
+                KeyConditionExpression=Key("PK").eq(pk)
+                & Key("SK").begins_with(f"HOUR#{day_str}")
             )
 
             hourly_items = response.get("Items", [])
@@ -231,8 +250,12 @@ def perform_daily_rollup(crawler_type: str, day_str: str):
                     "count": count,
                     "total_retrieval": total_retrieval,
                     "avg_retrieval": total_retrieval / count if count > 0 else 0,
-                    "min_retrieval": min(float(i["min"]) for i in hourly_items) if hourly_items else 0,
-                    "max_retrieval": max(float(i["max"]) for i in hourly_items) if hourly_items else 0
+                    "min_retrieval": min(float(i["min"]) for i in hourly_items)
+                    if hourly_items
+                    else 0,
+                    "max_retrieval": max(float(i["max"]) for i in hourly_items)
+                    if hourly_items
+                    else 0,
                 }
             elif metric_type == "requests":
                 count = sum(int(i["count"]) for i in hourly_items)
@@ -240,7 +263,7 @@ def perform_daily_rollup(crawler_type: str, day_str: str):
                 daily_stats = {
                     "count": count,
                     "error_count": error_count,
-                    "error_rate": (error_count / count) * 100 if count > 0 else 0
+                    "error_rate": (error_count / count) * 100 if count > 0 else 0,
                 }
             elif metric_type == "runs":
                 count = sum(int(i["count"]) for i in hourly_items)
@@ -250,11 +273,13 @@ def perform_daily_rollup(crawler_type: str, day_str: str):
                     "total_duration": total_duration,
                     "avg_duration": total_duration / count if count > 0 else 0,
                     "total_size": sum(float(i["total_size"]) for i in hourly_items),
-                    "total_items": sum(float(i["total_items"]) for i in hourly_items)
+                    "total_items": sum(float(i["total_items"]) for i in hourly_items),
                 }
 
             # Write daily aggregation
-            write_aggregation(crawler_type, metric_type, f"DAY#{day_str}", daily_stats, is_daily=True)
+            write_aggregation(
+                crawler_type, metric_type, f"DAY#{day_str}", daily_stats, is_daily=True
+            )
 
         except Exception as e:
             logger.error(f"Failed daily rollup for {metric_type}: {e}")
@@ -270,7 +295,9 @@ def publish_metrics(crawler_type: str, req_stats: dict, run_stats: dict):
             name="HourlyRequests", unit=MetricUnit.Count, value=req_stats["count"]
         )
         metrics.add_metric(
-            name="HourlyRetrievals", unit=MetricUnit.Count, value=req_stats["total_retrieval"]
+            name="HourlyRetrievals",
+            unit=MetricUnit.Count,
+            value=req_stats["total_retrieval"],
         )
         metrics.add_metric(
             name="AvgRetrievalPerRequest",
@@ -288,7 +315,9 @@ def publish_metrics(crawler_type: str, req_stats: dict, run_stats: dict):
             name="HourlyRuns", unit=MetricUnit.Count, value=run_stats["count"]
         )
         metrics.add_metric(
-            name="AvgRunDuration", unit=MetricUnit.Milliseconds, value=run_stats["avg_duration"]
+            name="AvgRunDuration",
+            unit=MetricUnit.Milliseconds,
+            value=run_stats["avg_duration"],
         )
         metrics.add_metric(
             name="HourlyDataSize", unit=MetricUnit.Bytes, value=run_stats["total_size"]
@@ -314,7 +343,9 @@ def lambda_handler(_event, _context):
     for crawler_type in crawler_types:
         try:
             # 1. Process Requests
-            requests = query_items_by_type(crawler_type, "request", start_time, end_time)
+            requests = query_items_by_type(
+                crawler_type, "request", start_time, end_time
+            )
             req_stats = None
 
             if requests:
@@ -322,10 +353,14 @@ def lambda_handler(_event, _context):
                 req_stats = calculate_request_stats(requests)
 
                 # Write Retrieval Stats
-                write_aggregation(crawler_type, "retrievals", f"HOUR#{hour_str}", req_stats)
+                write_aggregation(
+                    crawler_type, "retrievals", f"HOUR#{hour_str}", req_stats
+                )
 
                 # Write Request Stats (with errors)
-                write_aggregation(crawler_type, "requests", f"HOUR#{hour_str}", req_stats)
+                write_aggregation(
+                    crawler_type, "requests", f"HOUR#{hour_str}", req_stats
+                )
             else:
                 logger.info(f"No requests for {crawler_type}")
 
@@ -348,7 +383,7 @@ def lambda_handler(_event, _context):
 
             # 4. Daily Rollup (if end of day)
             if is_end_of_day:
-                day_str = hour_str[:10] # YYYY-MM-DD
+                day_str = hour_str[:10]  # YYYY-MM-DD
                 perform_daily_rollup(crawler_type, day_str)
 
         except Exception as e:

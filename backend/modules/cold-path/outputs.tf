@@ -43,3 +43,13 @@ output "telemetry_dlq_arn" {
   description = "ARN of the telemetry Dead Letter Queue"
   value       = aws_sqs_queue.telemetry_dlq.arn
 }
+
+output "aggregator_dlq_url" {
+  description = "URL of the aggregator Dead Letter Queue"
+  value       = aws_sqs_queue.aggregator_dlq.url
+}
+
+output "aggregator_dlq_arn" {
+  description = "ARN of the aggregator Dead Letter Queue"
+  value       = aws_sqs_queue.aggregator_dlq.arn
+}

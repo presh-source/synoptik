@@ -17,6 +17,10 @@ import requests
 from aws_lambda_powertools import Logger, Metrics, Tracer
 from aws_lambda_powertools.metrics import MetricUnit
 from botocore.exceptions import ClientError
+from utils.sentry_config import init_sentry
+
+# Initialize Sentry
+init_sentry()
 
 # Environment variables
 PROJECT_NAME = os.environ["PROJECT_NAME"]

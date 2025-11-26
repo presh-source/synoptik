@@ -26,6 +26,7 @@ module "cold_path" {
   data_lake_bucket_name     = module.data_lake.bucket_name
   tags                      = local.merged_tags
   dashboard_appsync_api_url = module.dashboard.appsync_api_url
+  sentry_dsn_backend        = var.sentry_dsn_backend
   appsync_api_id            = module.dashboard.appsync_api_id
   depends_on                = [module.data_lake]
 }

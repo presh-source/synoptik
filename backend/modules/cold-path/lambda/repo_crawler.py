@@ -19,6 +19,10 @@ from botocore.exceptions import ClientError
 
 # AppSync client for publishing completion events
 from utils.appsync_client import publish_crawler_completed
+from utils.sentry_config import init_sentry
+
+# Initialize Sentry
+init_sentry()
 
 # Environment variables
 PROJECT_NAME = os.environ["PROJECT_NAME"]

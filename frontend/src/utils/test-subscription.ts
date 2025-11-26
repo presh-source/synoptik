@@ -91,16 +91,11 @@ class SubscriptionTester {
     console.log('📨 Crawler Event Received!')
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
     console.log('🔹 Crawler Type:', event.crawlerType)
-    console.log('🔹 Success:', event.success ? '✅' : '❌')
     console.log('🔹 Items Fetched:', event.itemsFetched.toLocaleString())
     console.log('🔹 Total Processed:', event.totalProcessed.toLocaleString())
     console.log('🔹 Start ID:', event.startId)
     console.log('🔹 End ID:', event.endId)
     console.log('🔹 Completed At:', new Date(event.completedAt).toLocaleString())
-
-    if (event.errorMessage) {
-      console.log('🔹 Error Message:', event.errorMessage)
-    }
 
     console.log('🔹 Latency:', `${latency}ms`)
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
@@ -123,17 +118,13 @@ class SubscriptionTester {
     if (this.events.length > 0) {
       const repoEvents = this.events.filter(e => e.crawlerType === 'repo')
       const userEvents = this.events.filter(e => e.crawlerType === 'user')
-      const successEvents = this.events.filter(e => e.success)
-      const failureEvents = this.events.filter(e => !e.success)
 
       console.log('  - Repo Crawler Events:', repoEvents.length)
       console.log('  - User Crawler Events:', userEvents.length)
-      console.log('  - Successful:', successEvents.length)
-      console.log('  - Failed:', failureEvents.length)
 
       console.log('\nEvent Details:')
       this.events.forEach((event, index) => {
-        console.log(`  ${index + 1}. ${event.crawlerType} - ${event.itemsFetched} items - ${event.success ? '✅' : '❌'}`)
+        console.log(`  ${index + 1}. ${event.crawlerType} - ${event.itemsFetched} items`)
       })
     }
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')

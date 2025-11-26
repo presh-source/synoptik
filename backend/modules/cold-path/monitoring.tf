@@ -205,3 +205,99 @@ resource "aws_cloudwatch_metric_alarm" "user_crawler_stalled" {
 
   tags = var.tags
 }
+
+# --------------------------------------------------------------------------------------------------
+# Aggregator Monitoring
+# --------------------------------------------------------------------------------------------------
+
+resource "aws_cloudwatch_metric_alarm" "aggregator_errors" {
+  alarm_name          = "${var.environment}-${var.project_name}-aggregator-errors"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "Errors"
+  namespace           = "AWS/Lambda"
+  period              = 3600 # 1 hour
+  statistic           = "Sum"
+  threshold           = 0
+  alarm_description   = "Alert when aggregator Lambda has errors"
+  treat_missing_data  = "notBreaching"
+
+  dimensions = {
+    FunctionName = module.aggregator.function_name
+  }
+
+  alarm_actions = [aws_sns_topic.repo_crawler_alerts.arn] # Reusing repo alerts topic for now
+
+  tags = var.tags
+}
+
+# --------------------------------------------------------------------------------------------------
+# Telemetry Monitoring
+# --------------------------------------------------------------------------------------------------
+
+resource "aws_cloudwatch_metric_alarm" "telemetry_errors" {
+  alarm_name          = "${var.environment}-${var.project_name}-telemetry-errors"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "Errors"
+  namespace           = "AWS/Lambda"
+  period              = 300 # 5 minutes
+  statistic           = "Sum"
+  threshold           = 5
+  alarm_description   = "Alert when telemetry Lambda has excessive errors"
+  treat_missing_data  = "notBreaching"
+
+  dimensions = {
+    FunctionName = module.telemetry.function_name
+  }
+
+  alarm_actions = [aws_sns_topic.repo_crawler_alerts.arn]
+
+  tags = var.tags
+}
+
+# --------------------------------------------------------------------------------------------------
+# DLQ Monitoring
+# --------------------------------------------------------------------------------------------------
+
+resource "aws_cloudwatch_metric_alarm" "telemetry_dlq_depth" {
+  alarm_name          = "${var.environment}-${var.project_name}-telemetry-dlq-depth"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "ApproximateNumberOfMessagesVisible"
+  namespace           = "AWS/SQS"
+  period              = 300 # 5 minutes
+  statistic           = "Maximum"
+  threshold           = 0
+  alarm_description   = "Alert when Telemetry DLQ is not empty"
+  treat_missing_data  = "notBreaching"
+
+  dimensions = {
+    QueueName = aws_sqs_queue.telemetry_dlq.name
+  }
+
+  alarm_actions = [aws_sns_topic.repo_crawler_alerts.arn]
+
+  tags = var.tags
+}
+
+resource "aws_cloudwatch_metric_alarm" "aggregator_dlq_depth" {
+  alarm_name          = "${var.environment}-${var.project_name}-aggregator-dlq-depth"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  metric_name         = "ApproximateNumberOfMessagesVisible"
+  namespace           = "AWS/SQS"
+  period              = 300 # 5 minutes
+  statistic           = "Maximum"
+  threshold           = 0
+  alarm_description   = "Alert when Aggregator DLQ is not empty"
+  treat_missing_data  = "notBreaching"
+
+  dimensions = {
+    QueueName = aws_sqs_queue.aggregator_dlq.name
+  }
+
+  alarm_actions = [aws_sns_topic.repo_crawler_alerts.arn]
+
+  tags = var.tags
+}

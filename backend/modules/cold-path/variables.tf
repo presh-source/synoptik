@@ -36,3 +36,8 @@ variable "appsync_api_id" {
   type        = string
   default     = ""
 }
+
+variable "sentry_dsn_backend" {
+  description = "Sentry DSN for backend (Lambda functions)"
+  type        = string
+}
