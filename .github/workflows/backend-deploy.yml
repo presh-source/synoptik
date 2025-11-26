@@ -51,28 +51,28 @@ jobs:
         with:
           python-version: '3.11'
 
-      # - name: Install Ruff
-      #   run: pip install ruff
+      - name: Install Ruff
+        run: pip install ruff
 
-      # - name: Ruff Check (Linting)
-      #   run: |
-      #     echo "### Ruff Linting Results" >> $GITHUB_STEP_SUMMARY
-      #     echo "" >> $GITHUB_STEP_SUMMARY
-      #     ruff check backend/ --output-format=github || {
-      #       echo "Ruff linting failed. Please fix the issues before deploying." >> $GITHUB_STEP_SUMMARY
-      #       exit 1
-      #     }
-      #     echo "Ruff linting passed" >> $GITHUB_STEP_SUMMARY
+      - name: Ruff Check (Linting)
+        run: |
+          echo "### Ruff Linting Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          ruff check backend/ --output-format=github || {
+            echo "Ruff linting failed. Please fix the issues before deploying." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          }
+          echo "Ruff linting passed" >> $GITHUB_STEP_SUMMARY
 
-      # - name: Ruff Format Check
-      #   run: |
-      #     echo "### Ruff Format Check Results" >> $GITHUB_STEP_SUMMARY
-      #     echo "" >> $GITHUB_STEP_SUMMARY
-      #     ruff format --check backend/ || {
-      #       echo "Ruff format check failed. Please run 'ruff format backend/' to fix formatting." >> $GITHUB_STEP_SUMMARY
-      #       exit 1
-      #     }
-      #     echo "Ruff format check passed" >> $GITHUB_STEP_SUMMARY
+      - name: Ruff Format Check
+        run: |
+          echo "### Ruff Format Check Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          ruff format --check backend/ || {
+            echo "Ruff format check failed. Please run 'ruff format backend/' to fix formatting." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          }
+          echo "Ruff format check passed" >> $GITHUB_STEP_SUMMARY
 
       - name: Build Lambda Layers
         run: |
@@ -89,7 +89,6 @@ jobs:
             backend/modules/cold-path/lambda-layer/build-output
           
           echo "Lambda layers built successfully" >> $GITHUB_STEP_SUMMARY
-
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
