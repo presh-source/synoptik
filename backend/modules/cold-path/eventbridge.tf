@@ -57,30 +57,30 @@ resource "aws_lambda_permission" "allow_eventbridge_repo_crawler" {
 # --------------------------------------------------------------------------------------------------
 
 # Repo Crawling Schedule
-# resource "aws_cloudwatch_event_rule" "github_repo_crawler_schedule" {
-#   name                = "${var.environment}-${var.project_name}-github-repo-crawler-schedule"
+# resource "aws_cloudwatch_event_rule" "github_crawler_schedule" {
+#   name                = "${var.environment}-${var.project_name}-github-repository-crawler-schedule"
 #   description         = "Trigger GitHub unified crawler for repositories every 15 minutes"
 #   schedule_expression = "cron(0/15 * * * ? *)"
 
 #   tags = var.tags
 # }
 
-# resource "aws_cloudwatch_event_target" "github_repo_crawler_lambda" {
-#   rule      = aws_cloudwatch_event_rule.github_repo_crawler_schedule.name
-#   target_id = "GitHubRepoCrawlerLambdaTarget"
+# resource "aws_cloudwatch_event_target" "github_crawler_lambda" {
+#   rule      = aws_cloudwatch_event_rule.github_crawler_schedule.name
+#   target_id = "GitHubRepositoryCrawlerLambdaTarget"
 #   arn       = module.github_crawler.function_arn
 
 #   input = jsonencode({
-#     crawler_type = "repo"
+#     state_key = "U1RBVEUjZ2l0aHViI3JlcG9zaXRvcnk="
 #   })
 # }
 
-# resource "aws_lambda_permission" "allow_eventbridge_github_repo_crawler" {
-#   statement_id  = "AllowExecutionFromEventBridgeGitHubRepo"
+# resource "aws_lambda_permission" "allow_eventbridge_github_crawler" {
+#   statement_id  = "AllowExecutionFromEventBridgeGitHubRepository"
 #   action        = "lambda:InvokeFunction"
 #   function_name = module.github_crawler.function_name
 #   principal     = "events.amazonaws.com"
-#   source_arn    = aws_cloudwatch_event_rule.github_repo_crawler_schedule.arn
+#   source_arn    = aws_cloudwatch_event_rule.github_crawler_schedule.arn
 # }
 
 # # User Crawling Schedule
@@ -98,7 +98,7 @@ resource "aws_lambda_permission" "allow_eventbridge_repo_crawler" {
 #   arn       = module.github_crawler.function_arn
 
 #   input = jsonencode({
-#     crawler_type = "user"
+#     state_key = "U1RBVEUjZ2l0aHViI3VzZXI="
 #   })
 # }
 
@@ -126,20 +126,20 @@ resource "aws_cloudwatch_event_rule" "crawler_events" {
   tags = var.tags
 }
 
-resource "aws_cloudwatch_event_target" "telemetry_lambda" {
+resource "aws_cloudwatch_event_target" "telemetry_processor_lambda" {
   rule      = aws_cloudwatch_event_rule.crawler_events.name
-  target_id = "TelemetryLambdaTarget"
-  arn       = module.telemetry.function_arn
+  target_id = "TelemetryProcessorLambdaTarget"
+  arn       = module.telemetry_processor.function_arn
 
   dead_letter_config {
-    arn = aws_sqs_queue.telemetry_dlq.arn
+    arn = aws_sqs_queue.telemetry_processor_dlq.arn
   }
 }
 
-resource "aws_lambda_permission" "allow_eventbridge_telemetry" {
-  statement_id  = "AllowExecutionFromEventBridgeTelemetry"
+resource "aws_lambda_permission" "allow_eventbridge_telemetry_processor" {
+  statement_id  = "AllowExecutionFromEventBridgeTelemetryProcessor"
   action        = "lambda:InvokeFunction"
-  function_name = module.telemetry.function_name
+  function_name = module.telemetry_processor.function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.crawler_events.arn
 }
@@ -162,7 +162,7 @@ resource "aws_lambda_permission" "allow_eventbridge_telemetry" {
 #   arn       = module.aggregator.function_arn
 
 #   dead_letter_config {
-#     arn = aws_sqs_queue.aggregator_dlq.arn
+#     arn = aws_sqs_queue.telemetry_aggregator_dlq.arn
 #   }
 # }
 

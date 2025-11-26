@@ -10,10 +10,8 @@ resource "aws_iam_role_policy" "appsync_lambda_invocation" {
         Action = "lambda:InvokeFunction"
         Effect = "Allow"
         Resource = [
-          module.pipeline_status_resolver_appsync_lambda.function_arn,
           module.crawler_metrics_resolver_appsync_lambda.function_arn,
-          module.error_rates_resolver_appsync_lambda.function_arn,
-          module.crawler_stats_resolver_appsync_lambda.function_arn,
+
         ]
       }
     ]
@@ -42,10 +40,10 @@ resource "aws_iam_role_policy" "appsync_dynamodb_access" {
   })
 }
 
-
 # ============================================================================
 # AppSync GraphQL API
 # ============================================================================
+
 module "appsync" {
   source = "../shared/appsync"
 
@@ -55,13 +53,7 @@ module "appsync" {
   tags         = var.tags
 
   datasources = {
-    PipelineStatusLambda = {
-      type             = "AWS_LAMBDA"
-      service_role_arn = var.appsync_lambda_invocation_role_arn
-      lambda_config = {
-        function_arn = module.pipeline_status_resolver_appsync_lambda.function_arn
-      }
-    }
+
     CrawlerMetricsLambda = {
       type             = "AWS_LAMBDA"
       service_role_arn = var.appsync_lambda_invocation_role_arn
@@ -69,20 +61,7 @@ module "appsync" {
         function_arn = module.crawler_metrics_resolver_appsync_lambda.function_arn
       }
     }
-    ErrorRatesLambda = {
-      type             = "AWS_LAMBDA"
-      service_role_arn = var.appsync_lambda_invocation_role_arn
-      lambda_config = {
-        function_arn = module.error_rates_resolver_appsync_lambda.function_arn
-      }
-    }
-    CrawlerStatsLambda = {
-      type             = "AWS_LAMBDA"
-      service_role_arn = var.appsync_lambda_invocation_role_arn
-      lambda_config = {
-        function_arn = module.crawler_stats_resolver_appsync_lambda.function_arn
-      }
-    }
+
     TelemetryTable = {
       type             = "AMAZON_DYNAMODB"
       service_role_arn = var.appsync_lambda_invocation_role_arn
@@ -97,72 +76,12 @@ module "appsync" {
   }
 
   resolvers = {
-    "Query.pipelineStatus" = {
+    "Query.getCrawlerState" = {
       type              = "Query"
-      field             = "pipelineStatus"
-      datasource        = "PipelineStatusLambda"
-      request_template  = file("${path.module}/appsync/templates/Query.pipelineStatus.req.vtl")
-      response_template = file("${path.module}/appsync/templates/Query.pipelineStatus.res.vtl")
-      caching_config    = { ttl = 30 }
-    }
-    "Query.repoCrawler" = {
-      type              = "Query"
-      field             = "repoCrawler"
-      datasource        = "CrawlerMetricsLambda"
-      request_template  = file("${path.module}/appsync/templates/Query.repoCrawler.req.vtl")
-      response_template = file("${path.module}/appsync/templates/Query.repoCrawler.res.vtl")
-      caching_config    = { ttl = 30 }
-    }
-    "Query.userCrawler" = {
-      type              = "Query"
-      field             = "userCrawler"
-      datasource        = "CrawlerMetricsLambda"
-      request_template  = file("${path.module}/appsync/templates/Query.userCrawler.req.vtl")
-      response_template = file("${path.module}/appsync/templates/Query.userCrawler.res.vtl")
-      caching_config    = { ttl = 30 }
-    }
-    "Query.errorRates" = {
-      type              = "Query"
-      field             = "errorRates"
-      datasource        = "ErrorRatesLambda"
-      request_template  = file("${path.module}/appsync/templates/Query.errorRates.req.vtl")
-      response_template = file("${path.module}/appsync/templates/Query.errorRates.res.vtl")
-      caching_config    = { ttl = 30 }
-    }
-    "Query.getBookmark" = {
-      type              = "Query"
-      field             = "getBookmark"
+      field             = "getCrawlerState"
       datasource        = "TelemetryTable"
-      request_template  = file("${path.module}/appsync/templates/Query.getBookmark.req.vtl")
-      response_template = file("${path.module}/appsync/templates/Query.getBookmark.res.vtl")
-    }
-    "Query.listRunsByType" = {
-      type              = "Query"
-      field             = "listRunsByType"
-      datasource        = "TelemetryTable"
-      request_template  = file("${path.module}/appsync/templates/Query.listRunsByType.req.vtl")
-      response_template = file("${path.module}/appsync/templates/Query.listRunsByType.res.vtl")
-    }
-    "Query.getRunRequests" = {
-      type              = "Query"
-      field             = "getRunRequests"
-      datasource        = "TelemetryTable"
-      request_template  = file("${path.module}/appsync/templates/Query.getRunRequests.req.vtl")
-      response_template = file("${path.module}/appsync/templates/Query.getRunRequests.res.vtl")
-    }
-    "Query.listHourlyAggregations" = {
-      type              = "Query"
-      field             = "listHourlyAggregations"
-      datasource        = "TelemetryTable"
-      request_template  = file("${path.module}/appsync/templates/Query.listHourlyAggregations.req.vtl")
-      response_template = file("${path.module}/appsync/templates/Query.listHourlyAggregations.res.vtl")
-    }
-    "Query.getCrawlerStats" = {
-      type              = "Query"
-      field             = "getCrawlerStats"
-      datasource        = "CrawlerStatsLambda"
-      request_template  = "{ \"version\": \"2017-02-28\", \"operation\": \"Invoke\", \"payload\": $util.toJson($context.arguments) }"
-      response_template = "$util.toJson($context.result)"
+      request_template  = file("${path.module}/appsync/templates/Query.getCrawlerState.req.vtl")
+      response_template = file("${path.module}/appsync/templates/Query.getCrawlerState.res.vtl")
     }
     "Mutation.publishCrawlerCompleted" = {
       type              = "Mutation"

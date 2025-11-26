@@ -16,32 +16,6 @@ output "api_url" {
   value       = module.dashboard_api.api_url
 }
 
-# Lambda outputs
-output "pipeline_status_lambda_arn" {
-  description = "ARN of the pipeline status Lambda function"
-  value       = module.pipeline_status_lambda.function_arn
-}
-
-output "cloudwatch_metrics_lambda_arn" {
-  description = "ARN of the CloudWatch metrics Lambda function"
-  value       = module.cloudwatch_metrics_lambda.function_arn
-}
-
-output "crawler_metrics_resolver_appsync_lambda_arn" {
-  description = "ARN of the crawler metrics resolver Lambda function for AppSync"
-  value       = module.crawler_metrics_resolver_appsync_lambda.function_arn
-}
-
-output "error_rates_resolver_appsync_lambda_arn" {
-  description = "ARN of the error rates resolver Lambda function for AppSync"
-  value       = module.error_rates_resolver_appsync_lambda.function_arn
-}
-
-output "pipeline_status_resolver_appsync_lambda_arn" {
-  description = "ARN of the pipeline status resolver Lambda function for AppSync"
-  value       = module.pipeline_status_resolver_appsync_lambda.function_arn
-}
-
 # Frontend outputs
 output "dashboard_bucket_name" {
   description = "Name of the S3 bucket hosting the dashboard"

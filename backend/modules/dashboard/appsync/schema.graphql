@@ -8,24 +8,7 @@ schema {
 }
 
 type Query {
-  """Get complete pipeline status including all crawlers and error rates"""
-  pipelineStatus: PipelineStatus!
-  
-  """Get repository crawler metrics for a specific time period"""
-  repoCrawler(timePeriodHours: Int = 1): CrawlerMetrics!
-  
-  """Get user crawler metrics for a specific time period"""
-  userCrawler(timePeriodHours: Int = 1): CrawlerMetrics!
-  
-  """Get error rates for the cold path pipeline"""
-  errorRates: ErrorRates!
-
-  # Telemetry Queries
-  getBookmark(crawler_type: String!): BookmarkData
-  listRunsByType(crawler_type: String!, limit: Int, nextToken: String): RunDataConnection
-  getRunRequests(run_id: ID!): [RequestData!]!
-  listHourlyAggregations(crawler_type: String!, metric_type: String!, startHour: String!, endHour: String!): [HourlyAggregation!]!
-  getCrawlerStats(timeRange: String!): CrawlerStats
+  getCrawlerState(organisation: String!, entity: String!): CrawlerCompleted
 }
 
 type Mutation {
@@ -34,125 +17,25 @@ type Mutation {
 }
 
 type Subscription {
-  """Subscribe to crawler completion events, optionally filtered by crawler type"""
-  onCrawlerCompleted(crawlerType: String): CrawlerCompleted
+  onCrawlerCompleted(organisation: String, entity: String): CrawlerCompleted
     @aws_subscribe(mutations: ["publishCrawlerCompleted"])
-}
-
-# Object Types
-
-type PipelineStatus {
-  coldPath: ColdPathStatus!
-  errorRates: ErrorRates!
-}
-
-type ColdPathStatus {
-  lastProcessedId: Int!
-  totalProcessed: Int!
-  updatedAt: AWSDateTime!
-  repoCrawler: CrawlerMetrics!
-  userCrawler: CrawlerMetrics!
-}
-
-type CrawlerMetrics {
-  lastProcessedId: Int!
-  totalProcessed: Int!
-  totalCrawled: Int!
-  ratePerHour: Float!
-  ratePerMinute: Float!
-  ratePerSecond: Float!
-  requestCount: Int!
-  runCount: Int!
-}
-
-type ErrorRates {
-  coldPath: Float!
 }
 
 type CrawlerCompleted 
   @aws_iam {
-	crawlerType: String!
-	startId: Int!
-	endId: Int!
-	itemsFetched: Int!
-	totalProcessed: Int!
-	completedAt: AWSDateTime!
+	organisation: String
+	entity: String
+	itemsFetched: Int
+	lastProcessedId: Int
+  totalProcessed: Int
+	updatedAt: AWSDateTime
 }
-
-
-# Input Types
 
 input CrawlerCompletedInput {
-  crawlerType: String!
-  startId: Int!
-  endId: Int!
+  organisation: String!
+  entity: String!
   itemsFetched: Int!
+  lastProcessedId: Int!
   totalProcessed: Int!
-  completedAt: AWSDateTime
-}
-
-# Telemetry Types
-
-type BookmarkData {
-  crawler_type: String!
-  last_processed_id: Int!
-  total_runs: Int!
-  total_requests: Int!
-  total_processed: Int!
-  total_size: Int!
-  updated_at: AWSDateTime!
-}
-
-type RunData {
-  run_id: ID!
-  crawler_type: String!
-  created_at: AWSDateTime!
-  retrieval: Int!
-  size: Int!
-  request_count: Int!
-  duration_ms: Int!
-}
-
-type RequestData {
-  run_id: ID!
-  crawler_type: String!
-  created_at: AWSDateTime!
-  since_id: Int!
-  request_start: AWSDateTime!
-  request_end: AWSDateTime!
-  retrieval: Int!
-  status_code: Int!
-  rate_limit_remaining: Int!
-  rate_limit: Int!
-  rate_limit_reset: Int!
-}
-
-type HourlyAggregation {
-  crawler_type: String!
-  metric_type: String!
-  hour: String!
-  total: Int!
-  average: Float!
-  min: Int!
-  max: Int!
-  count: Int!
-  created_at: AWSDateTime!
-}
-
-type CrawlerStats {
-  repo: CrawlerTypeStats!
-  user: CrawlerTypeStats!
-}
-
-type CrawlerTypeStats {
-  total_runs: Int!
-  total_processed: Int!
-  total_size: Int!
-  avg_items_per_hour: Float!
-  last_run: AWSDateTime
-}
-
-type RunDataConnection {
-  items: [RunData!]!
-  nextToken: String
+  updatedAt: AWSDateTime!
 }

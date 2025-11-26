@@ -1,8 +1,8 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import { Box } from '@mui/material'
 import { useEffect } from 'react'
 import Layout from './components/Layout'
-import PipelineStatusPage from './pages/PipelineStatusPage'
+import HomePage from './pages/HomePage'
 import { logNavigation } from './utils/logger'
 
 // Component to track navigation
@@ -28,8 +28,7 @@ function App() {
       <Box sx={{ display: 'flex', minHeight: '100vh' }}>
         <Layout>
           <Routes>
-            <Route path="/" element={<Navigate to="/pipeline-status" replace />} />
-            <Route path="/pipeline-status" element={<PipelineStatusPage />} />
+            <Route path="/" element={<HomePage />} />
           </Routes>
         </Layout>
       </Box>

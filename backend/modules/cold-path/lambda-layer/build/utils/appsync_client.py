@@ -25,84 +25,81 @@ AWS_REGION = os.environ.get("AWS_REGION", "us-east-1")
 # Initialize logger
 logger = Logger(service="appsync-client")
 
-# GraphQL mutation for publishing crawler completion events
-PUBLISH_CRAWLER_COMPLETED_MUTATION = """
-mutation PublishCrawlerCompleted($input: CrawlerCompletedInput!) {
-  publishCrawlerCompleted(input: $input) {
-    crawlerType
-    startId
-    endId
-    itemsFetched
-    totalProcessed
-    completedAt
-  }
-}
-"""
-
 
 def publish_crawler_completed(
-    crawler_type: str,
-    start_id: int,
-    end_id: int,
+    organisation: str,
+    entity: str,
     items_fetched: int,
     total_processed: int,
-    error_message: str | None = None,
+    last_processed_id: int,
     max_retries: int = 3,
 ) -> dict:
     """
     Publish crawler completion event to AppSync with retry logic
 
     Args:
-        crawler_type: Type of crawler ("repo" or "user")
-        start_id: Starting ID for this crawl execution
-        end_id: Ending ID for this crawl execution
+        organisation: Organisation name (e.g. "github")
+        entity: Entity type (e.g. "repository", "user")
         items_fetched: Number of items fetched in this run
         total_processed: Total items processed across all runs
-        error_message: Error message if failed (default: None)
+        last_processed_id: Last processed ID
         max_retries: Maximum number of retry attempts (default: 3)
 
     Returns:
         dict: Response from AppSync API
-
-    Raises:
-        ValueError: If dashboard_appsync_api_url is not configured
-        Exception: If all retry attempts fail
     """
-
-    if not DASHBOARD_APPSYNC_API_URL:
-        error_msg = "dashboard_appsync_api_url environment variable not set"
-        logger.error(error_msg)
-        raise ValueError(error_msg)
-
-    # Prepare GraphQL request payload
-    variables = {
-        "input": {
-            "crawlerType": crawler_type,
-            "startId": start_id,
-            "endId": end_id,
-            "itemsFetched": items_fetched,
-            "totalProcessed": total_processed,
-            "completedAt": datetime.now(timezone.utc)
-            .isoformat()
-            .replace("+00:00", "Z")
+    mutation = """
+    mutation PublishCrawlerCompleted($input: CrawlerCompletedInput!) {
+        publishCrawlerCompleted(input: $input) {
+            organisation
+            entity
+            itemsFetched
+            totalProcessed
+            lastProcessedId
+            updatedAt
         }
     }
+    """
 
-    payload = {
-        "query": PUBLISH_CRAWLER_COMPLETED_MUTATION,
-        "variables": variables,
+    variables = {
+        "input": {
+            "organisation": organisation,
+            "entity": entity,
+            "itemsFetched": items_fetched,
+            "totalProcessed": total_processed,
+            "lastProcessedId": last_processed_id,
+            "updatedAt": datetime.now(timezone.utc)
+            .isoformat()
+            .replace("+00:00", "Z"),
+        }
     }
 
     logger.info(
         "Publishing crawler completion event",
         extra={
-            "crawler_type": crawler_type,
-            "start_id": start_id,
-            "end_id": end_id,
+            "organisation": organisation,
+            "entity": entity,
             "items_fetched": items_fetched,
-            "total_processed": total_processed
+            "total_processed": total_processed,
         },
     )
+
+    return execute_graphql(mutation, variables, max_retries)
+
+
+def execute_graphql(query: str, variables: dict, max_retries: int = 3) -> dict:
+    """
+    Executes a GraphQL query against the AppSync API with retry logic and SigV4 authentication.
+    """
+    if not DASHBOARD_APPSYNC_API_URL:
+        error_msg = "dashboard_appsync_api_url environment variable not set"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
+
+    payload = {
+        "query": query,
+        "variables": variables,
+    }
 
     # Retry loop with exponential backoff
     last_exception = None
@@ -154,9 +151,8 @@ def publish_crawler_completed(
                     raise Exception(f"GraphQL errors: {errors_json}")
 
                 logger.info(
-                    "Successfully published crawler completion event",
+                    "Successfully executed GraphQL request",
                     extra={
-                        "crawler_type": crawler_type,
                         "attempt": attempt + 1,
                     },
                 )
@@ -228,7 +224,6 @@ def publish_crawler_completed(
     logger.error(
         error_msg,
         extra={
-            "crawler_type": crawler_type,
             "last_exception": str(last_exception),
         },
     )

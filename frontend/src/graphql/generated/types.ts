@@ -27,88 +27,23 @@ export type Scalars = {
   AWSURL: { input: any; output: any; }
 };
 
-export type BookmarkData = {
-  __typename?: 'BookmarkData';
-  crawler_type: Scalars['String']['output'];
-  last_processed_id: Scalars['Int']['output'];
-  total_processed: Scalars['Int']['output'];
-  total_requests: Scalars['Int']['output'];
-  total_runs: Scalars['Int']['output'];
-  total_size: Scalars['Int']['output'];
-  updated_at: Scalars['AWSDateTime']['output'];
-};
-
-export type ColdPathStatus = {
-  __typename?: 'ColdPathStatus';
-  lastProcessedId: Scalars['Int']['output'];
-  repoCrawler: CrawlerMetrics;
-  totalProcessed: Scalars['Int']['output'];
-  updatedAt: Scalars['AWSDateTime']['output'];
-  userCrawler: CrawlerMetrics;
-};
-
 export type CrawlerCompleted = {
   __typename?: 'CrawlerCompleted';
-  completedAt: Scalars['AWSDateTime']['output'];
-  crawlerType: Scalars['String']['output'];
-  endId: Scalars['Int']['output'];
-  itemsFetched: Scalars['Int']['output'];
-  startId: Scalars['Int']['output'];
-  totalProcessed: Scalars['Int']['output'];
+  entity?: Maybe<Scalars['String']['output']>;
+  itemsFetched?: Maybe<Scalars['Int']['output']>;
+  lastProcessedId?: Maybe<Scalars['Int']['output']>;
+  organisation?: Maybe<Scalars['String']['output']>;
+  totalProcessed?: Maybe<Scalars['Int']['output']>;
+  updatedAt?: Maybe<Scalars['AWSDateTime']['output']>;
 };
 
 export type CrawlerCompletedInput = {
-  completedAt?: InputMaybe<Scalars['AWSDateTime']['input']>;
-  crawlerType: Scalars['String']['input'];
-  endId: Scalars['Int']['input'];
+  entity: Scalars['String']['input'];
   itemsFetched: Scalars['Int']['input'];
-  startId: Scalars['Int']['input'];
+  lastProcessedId: Scalars['Int']['input'];
+  organisation: Scalars['String']['input'];
   totalProcessed: Scalars['Int']['input'];
-};
-
-export type CrawlerMetrics = {
-  __typename?: 'CrawlerMetrics';
-  lastProcessedId: Scalars['Int']['output'];
-  ratePerHour: Scalars['Float']['output'];
-  ratePerMinute: Scalars['Float']['output'];
-  ratePerSecond: Scalars['Float']['output'];
-  requestCount: Scalars['Int']['output'];
-  runCount: Scalars['Int']['output'];
-  totalCrawled: Scalars['Int']['output'];
-  totalProcessed: Scalars['Int']['output'];
-};
-
-export type CrawlerStats = {
-  __typename?: 'CrawlerStats';
-  repo: CrawlerTypeStats;
-  user: CrawlerTypeStats;
-};
-
-export type CrawlerTypeStats = {
-  __typename?: 'CrawlerTypeStats';
-  avg_items_per_hour: Scalars['Float']['output'];
-  last_run?: Maybe<Scalars['AWSDateTime']['output']>;
-  total_processed: Scalars['Int']['output'];
-  total_runs: Scalars['Int']['output'];
-  total_size: Scalars['Int']['output'];
-};
-
-export type ErrorRates = {
-  __typename?: 'ErrorRates';
-  coldPath: Scalars['Float']['output'];
-};
-
-export type HourlyAggregation = {
-  __typename?: 'HourlyAggregation';
-  average: Scalars['Float']['output'];
-  count: Scalars['Int']['output'];
-  crawler_type: Scalars['String']['output'];
-  created_at: Scalars['AWSDateTime']['output'];
-  hour: Scalars['String']['output'];
-  max: Scalars['Int']['output'];
-  metric_type: Scalars['String']['output'];
-  min: Scalars['Int']['output'];
-  total: Scalars['Int']['output'];
+  updatedAt: Scalars['AWSDateTime']['input'];
 };
 
 export type Mutation = {
@@ -121,110 +56,26 @@ export type MutationPublishCrawlerCompletedArgs = {
   input: CrawlerCompletedInput;
 };
 
-export type PipelineStatus = {
-  __typename?: 'PipelineStatus';
-  coldPath: ColdPathStatus;
-  errorRates: ErrorRates;
-};
-
 export type Query = {
   __typename?: 'Query';
-  /** Get error rates for the cold path pipeline */
-  errorRates: ErrorRates;
-  getBookmark?: Maybe<BookmarkData>;
-  getCrawlerStats?: Maybe<CrawlerStats>;
-  getRunRequests: Array<RequestData>;
-  listHourlyAggregations: Array<HourlyAggregation>;
-  listRunsByType?: Maybe<RunDataConnection>;
-  /** Get complete pipeline status including all crawlers and error rates */
-  pipelineStatus: PipelineStatus;
-  /** Get repository crawler metrics for a specific time period */
-  repoCrawler: CrawlerMetrics;
-  /** Get user crawler metrics for a specific time period */
-  userCrawler: CrawlerMetrics;
+  getCrawlerState?: Maybe<CrawlerCompleted>;
 };
 
 
-export type QueryGetBookmarkArgs = {
-  crawler_type: Scalars['String']['input'];
-};
-
-
-export type QueryGetCrawlerStatsArgs = {
-  timeRange: Scalars['String']['input'];
-};
-
-
-export type QueryGetRunRequestsArgs = {
-  run_id: Scalars['ID']['input'];
-};
-
-
-export type QueryListHourlyAggregationsArgs = {
-  crawler_type: Scalars['String']['input'];
-  endHour: Scalars['String']['input'];
-  metric_type: Scalars['String']['input'];
-  startHour: Scalars['String']['input'];
-};
-
-
-export type QueryListRunsByTypeArgs = {
-  crawler_type: Scalars['String']['input'];
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  nextToken?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type QueryRepoCrawlerArgs = {
-  timePeriodHours?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type QueryUserCrawlerArgs = {
-  timePeriodHours?: InputMaybe<Scalars['Int']['input']>;
-};
-
-export type RequestData = {
-  __typename?: 'RequestData';
-  crawler_type: Scalars['String']['output'];
-  created_at: Scalars['AWSDateTime']['output'];
-  rate_limit: Scalars['Int']['output'];
-  rate_limit_remaining: Scalars['Int']['output'];
-  rate_limit_reset: Scalars['Int']['output'];
-  request_end: Scalars['AWSDateTime']['output'];
-  request_start: Scalars['AWSDateTime']['output'];
-  retrieval: Scalars['Int']['output'];
-  run_id: Scalars['ID']['output'];
-  since_id: Scalars['Int']['output'];
-  status_code: Scalars['Int']['output'];
-};
-
-export type RunData = {
-  __typename?: 'RunData';
-  crawler_type: Scalars['String']['output'];
-  created_at: Scalars['AWSDateTime']['output'];
-  duration_ms: Scalars['Int']['output'];
-  request_count: Scalars['Int']['output'];
-  retrieval: Scalars['Int']['output'];
-  run_id: Scalars['ID']['output'];
-  size: Scalars['Int']['output'];
-};
-
-export type RunDataConnection = {
-  __typename?: 'RunDataConnection';
-  items: Array<RunData>;
-  nextToken?: Maybe<Scalars['String']['output']>;
+export type QueryGetCrawlerStateArgs = {
+  entity: Scalars['String']['input'];
+  organisation: Scalars['String']['input'];
 };
 
 export type Subscription = {
   __typename?: 'Subscription';
-  /** Subscribe to crawler completion events, optionally filtered by crawler type */
   onCrawlerCompleted?: Maybe<CrawlerCompleted>;
 };
 
 
 export type SubscriptionOnCrawlerCompletedArgs = {
-  crawlerType?: InputMaybe<Scalars['String']['input']>;
+  entity?: InputMaybe<Scalars['String']['input']>;
+  organisation?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type PublishCrawlerCompletedMutationVariables = Exact<{
@@ -232,49 +83,34 @@ export type PublishCrawlerCompletedMutationVariables = Exact<{
 }>;
 
 
-export type PublishCrawlerCompletedMutation = { __typename?: 'Mutation', publishCrawlerCompleted: { __typename?: 'CrawlerCompleted', crawlerType: string, startId: number, endId: number, itemsFetched: number, totalProcessed: number, completedAt: string } };
+export type PublishCrawlerCompletedMutation = { __typename?: 'Mutation', publishCrawlerCompleted: { __typename?: 'CrawlerCompleted', organisation?: string | null, entity?: string | null, itemsFetched?: number | null, lastProcessedId?: number | null, totalProcessed?: number | null, updatedAt?: string | null } };
 
-export type GetPipelineStatusQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetPipelineStatusQuery = { __typename?: 'Query', pipelineStatus: { __typename?: 'PipelineStatus', coldPath: { __typename?: 'ColdPathStatus', lastProcessedId: number, totalProcessed: number, updatedAt: string, repoCrawler: { __typename?: 'CrawlerMetrics', lastProcessedId: number, totalProcessed: number, totalCrawled: number, ratePerHour: number, ratePerMinute: number, ratePerSecond: number, requestCount: number, runCount: number }, userCrawler: { __typename?: 'CrawlerMetrics', lastProcessedId: number, totalProcessed: number, totalCrawled: number, ratePerHour: number, ratePerMinute: number, ratePerSecond: number, requestCount: number, runCount: number } }, errorRates: { __typename?: 'ErrorRates', coldPath: number } } };
-
-export type GetRepoCrawlerMetricsQueryVariables = Exact<{
-  timePeriodHours?: InputMaybe<Scalars['Int']['input']>;
+export type GetCrawlerStateQueryVariables = Exact<{
+  organisation: Scalars['String']['input'];
+  entity: Scalars['String']['input'];
 }>;
 
 
-export type GetRepoCrawlerMetricsQuery = { __typename?: 'Query', repoCrawler: { __typename?: 'CrawlerMetrics', lastProcessedId: number, totalProcessed: number, totalCrawled: number, ratePerHour: number, ratePerMinute: number, ratePerSecond: number, requestCount: number, runCount: number } };
-
-export type GetUserCrawlerMetricsQueryVariables = Exact<{
-  timePeriodHours?: InputMaybe<Scalars['Int']['input']>;
-}>;
-
-
-export type GetUserCrawlerMetricsQuery = { __typename?: 'Query', userCrawler: { __typename?: 'CrawlerMetrics', lastProcessedId: number, totalProcessed: number, totalCrawled: number, ratePerHour: number, ratePerMinute: number, ratePerSecond: number, requestCount: number, runCount: number } };
-
-export type GetErrorRatesQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetErrorRatesQuery = { __typename?: 'Query', errorRates: { __typename?: 'ErrorRates', coldPath: number } };
+export type GetCrawlerStateQuery = { __typename?: 'Query', getCrawlerState?: { __typename?: 'CrawlerCompleted', lastProcessedId?: number | null, totalProcessed?: number | null, itemsFetched?: number | null, updatedAt?: string | null } | null };
 
 export type OnCrawlerCompletedSubscriptionVariables = Exact<{
-  crawlerType?: InputMaybe<Scalars['String']['input']>;
+  organisation?: InputMaybe<Scalars['String']['input']>;
+  entity?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type OnCrawlerCompletedSubscription = { __typename?: 'Subscription', onCrawlerCompleted?: { __typename?: 'CrawlerCompleted', crawlerType: string, startId: number, endId: number, itemsFetched: number, totalProcessed: number, completedAt: string } | null };
+export type OnCrawlerCompletedSubscription = { __typename?: 'Subscription', onCrawlerCompleted?: { __typename?: 'CrawlerCompleted', organisation?: string | null, entity?: string | null, itemsFetched?: number | null, lastProcessedId?: number | null, totalProcessed?: number | null, updatedAt?: string | null } | null };
 
 
 export const PublishCrawlerCompletedDocument = gql`
     mutation PublishCrawlerCompleted($input: CrawlerCompletedInput!) {
   publishCrawlerCompleted(input: $input) {
-    crawlerType
-    startId
-    endId
+    organisation
+    entity
     itemsFetched
+    lastProcessedId
     totalProcessed
-    completedAt
+    updatedAt
   }
 }
     `;
@@ -303,194 +139,54 @@ export function usePublishCrawlerCompletedMutation(baseOptions?: ApolloReactHook
 export type PublishCrawlerCompletedMutationHookResult = ReturnType<typeof usePublishCrawlerCompletedMutation>;
 export type PublishCrawlerCompletedMutationResult = ApolloReactCommon.MutationResult<PublishCrawlerCompletedMutation>;
 export type PublishCrawlerCompletedMutationOptions = ApolloReactCommon.MutationHookOptions<PublishCrawlerCompletedMutation, PublishCrawlerCompletedMutationVariables>;
-export const GetPipelineStatusDocument = gql`
-    query GetPipelineStatus {
-  pipelineStatus {
-    coldPath {
-      lastProcessedId
-      totalProcessed
-      updatedAt
-      repoCrawler {
-        lastProcessedId
-        totalProcessed
-        totalCrawled
-        ratePerHour
-        ratePerMinute
-        ratePerSecond
-        requestCount
-        runCount
-      }
-      userCrawler {
-        lastProcessedId
-        totalProcessed
-        totalCrawled
-        ratePerHour
-        ratePerMinute
-        ratePerSecond
-        requestCount
-        runCount
-      }
-    }
-    errorRates {
-      coldPath
-    }
-  }
-}
-    `;
-
-/**
- * __useGetPipelineStatusQuery__
- *
- * To run a query within a React component, call `useGetPipelineStatusQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetPipelineStatusQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetPipelineStatusQuery({
- *   variables: {
- *   },
- * });
- */
-export function useGetPipelineStatusQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetPipelineStatusQuery, GetPipelineStatusQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetPipelineStatusQuery, GetPipelineStatusQueryVariables>(GetPipelineStatusDocument, options);
-      }
-export function useGetPipelineStatusLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetPipelineStatusQuery, GetPipelineStatusQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetPipelineStatusQuery, GetPipelineStatusQueryVariables>(GetPipelineStatusDocument, options);
-        }
-export type GetPipelineStatusQueryHookResult = ReturnType<typeof useGetPipelineStatusQuery>;
-export type GetPipelineStatusLazyQueryHookResult = ReturnType<typeof useGetPipelineStatusLazyQuery>;
-export type GetPipelineStatusQueryResult = ApolloReactCommon.QueryResult<GetPipelineStatusQuery, GetPipelineStatusQueryVariables>;
-export const GetRepoCrawlerMetricsDocument = gql`
-    query GetRepoCrawlerMetrics($timePeriodHours: Int) {
-  repoCrawler(timePeriodHours: $timePeriodHours) {
+export const GetCrawlerStateDocument = gql`
+    query GetCrawlerState($organisation: String!, $entity: String!) {
+  getCrawlerState(organisation: $organisation, entity: $entity) {
     lastProcessedId
     totalProcessed
-    totalCrawled
-    ratePerHour
-    ratePerMinute
-    ratePerSecond
-    requestCount
-    runCount
-  }
-}
-    `;
-
-/**
- * __useGetRepoCrawlerMetricsQuery__
- *
- * To run a query within a React component, call `useGetRepoCrawlerMetricsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetRepoCrawlerMetricsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetRepoCrawlerMetricsQuery({
- *   variables: {
- *      timePeriodHours: // value for 'timePeriodHours'
- *   },
- * });
- */
-export function useGetRepoCrawlerMetricsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetRepoCrawlerMetricsQuery, GetRepoCrawlerMetricsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetRepoCrawlerMetricsQuery, GetRepoCrawlerMetricsQueryVariables>(GetRepoCrawlerMetricsDocument, options);
-      }
-export function useGetRepoCrawlerMetricsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetRepoCrawlerMetricsQuery, GetRepoCrawlerMetricsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetRepoCrawlerMetricsQuery, GetRepoCrawlerMetricsQueryVariables>(GetRepoCrawlerMetricsDocument, options);
-        }
-export type GetRepoCrawlerMetricsQueryHookResult = ReturnType<typeof useGetRepoCrawlerMetricsQuery>;
-export type GetRepoCrawlerMetricsLazyQueryHookResult = ReturnType<typeof useGetRepoCrawlerMetricsLazyQuery>;
-export type GetRepoCrawlerMetricsQueryResult = ApolloReactCommon.QueryResult<GetRepoCrawlerMetricsQuery, GetRepoCrawlerMetricsQueryVariables>;
-export const GetUserCrawlerMetricsDocument = gql`
-    query GetUserCrawlerMetrics($timePeriodHours: Int) {
-  userCrawler(timePeriodHours: $timePeriodHours) {
-    lastProcessedId
-    totalProcessed
-    totalCrawled
-    ratePerHour
-    ratePerMinute
-    ratePerSecond
-    requestCount
-    runCount
-  }
-}
-    `;
-
-/**
- * __useGetUserCrawlerMetricsQuery__
- *
- * To run a query within a React component, call `useGetUserCrawlerMetricsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetUserCrawlerMetricsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetUserCrawlerMetricsQuery({
- *   variables: {
- *      timePeriodHours: // value for 'timePeriodHours'
- *   },
- * });
- */
-export function useGetUserCrawlerMetricsQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetUserCrawlerMetricsQuery, GetUserCrawlerMetricsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetUserCrawlerMetricsQuery, GetUserCrawlerMetricsQueryVariables>(GetUserCrawlerMetricsDocument, options);
-      }
-export function useGetUserCrawlerMetricsLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetUserCrawlerMetricsQuery, GetUserCrawlerMetricsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetUserCrawlerMetricsQuery, GetUserCrawlerMetricsQueryVariables>(GetUserCrawlerMetricsDocument, options);
-        }
-export type GetUserCrawlerMetricsQueryHookResult = ReturnType<typeof useGetUserCrawlerMetricsQuery>;
-export type GetUserCrawlerMetricsLazyQueryHookResult = ReturnType<typeof useGetUserCrawlerMetricsLazyQuery>;
-export type GetUserCrawlerMetricsQueryResult = ApolloReactCommon.QueryResult<GetUserCrawlerMetricsQuery, GetUserCrawlerMetricsQueryVariables>;
-export const GetErrorRatesDocument = gql`
-    query GetErrorRates {
-  errorRates {
-    coldPath
-  }
-}
-    `;
-
-/**
- * __useGetErrorRatesQuery__
- *
- * To run a query within a React component, call `useGetErrorRatesQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetErrorRatesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetErrorRatesQuery({
- *   variables: {
- *   },
- * });
- */
-export function useGetErrorRatesQuery(baseOptions?: ApolloReactHooks.QueryHookOptions<GetErrorRatesQuery, GetErrorRatesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return ApolloReactHooks.useQuery<GetErrorRatesQuery, GetErrorRatesQueryVariables>(GetErrorRatesDocument, options);
-      }
-export function useGetErrorRatesLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetErrorRatesQuery, GetErrorRatesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return ApolloReactHooks.useLazyQuery<GetErrorRatesQuery, GetErrorRatesQueryVariables>(GetErrorRatesDocument, options);
-        }
-export type GetErrorRatesQueryHookResult = ReturnType<typeof useGetErrorRatesQuery>;
-export type GetErrorRatesLazyQueryHookResult = ReturnType<typeof useGetErrorRatesLazyQuery>;
-export type GetErrorRatesQueryResult = ApolloReactCommon.QueryResult<GetErrorRatesQuery, GetErrorRatesQueryVariables>;
-export const OnCrawlerCompletedDocument = gql`
-    subscription OnCrawlerCompleted($crawlerType: String) {
-  onCrawlerCompleted(crawlerType: $crawlerType) {
-    crawlerType
-    startId
-    endId
     itemsFetched
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useGetCrawlerStateQuery__
+ *
+ * To run a query within a React component, call `useGetCrawlerStateQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCrawlerStateQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCrawlerStateQuery({
+ *   variables: {
+ *      organisation: // value for 'organisation'
+ *      entity: // value for 'entity'
+ *   },
+ * });
+ */
+export function useGetCrawlerStateQuery(baseOptions: ApolloReactHooks.QueryHookOptions<GetCrawlerStateQuery, GetCrawlerStateQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return ApolloReactHooks.useQuery<GetCrawlerStateQuery, GetCrawlerStateQueryVariables>(GetCrawlerStateDocument, options);
+      }
+export function useGetCrawlerStateLazyQuery(baseOptions?: ApolloReactHooks.LazyQueryHookOptions<GetCrawlerStateQuery, GetCrawlerStateQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return ApolloReactHooks.useLazyQuery<GetCrawlerStateQuery, GetCrawlerStateQueryVariables>(GetCrawlerStateDocument, options);
+        }
+export type GetCrawlerStateQueryHookResult = ReturnType<typeof useGetCrawlerStateQuery>;
+export type GetCrawlerStateLazyQueryHookResult = ReturnType<typeof useGetCrawlerStateLazyQuery>;
+export type GetCrawlerStateQueryResult = ApolloReactCommon.QueryResult<GetCrawlerStateQuery, GetCrawlerStateQueryVariables>;
+export const OnCrawlerCompletedDocument = gql`
+    subscription OnCrawlerCompleted($organisation: String, $entity: String) {
+  onCrawlerCompleted(organisation: $organisation, entity: $entity) {
+    organisation
+    entity
+    itemsFetched
+    lastProcessedId
     totalProcessed
-    completedAt
+    updatedAt
   }
 }
     `;
@@ -507,7 +203,8 @@ export const OnCrawlerCompletedDocument = gql`
  * @example
  * const { data, loading, error } = useOnCrawlerCompletedSubscription({
  *   variables: {
- *      crawlerType: // value for 'crawlerType'
+ *      organisation: // value for 'organisation'
+ *      entity: // value for 'entity'
  *   },
  * });
  */

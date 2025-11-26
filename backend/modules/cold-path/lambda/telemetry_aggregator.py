@@ -4,8 +4,7 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 import boto3
-from aws_lambda_powertools import Logger, Metrics, Tracer
-from aws_lambda_powertools.metrics import MetricUnit
+from aws_lambda_powertools import Logger, Tracer
 from boto3.dynamodb.conditions import Key
 from utils.sentry_config import init_sentry
 
@@ -20,7 +19,6 @@ TELEMETRY_TABLE_NAME = os.environ["TELEMETRY_TABLE_NAME"]
 # Initialize Powertools
 logger = Logger(service=f"{PROJECT_NAME}-github-aggregator")
 tracer = Tracer(service=f"{PROJECT_NAME}-github-aggregator")
-metrics = Metrics(namespace=f"{PROJECT_NAME.title()}/ColdPath", service="aggregator")
 
 
 # Initialize AWS clients
@@ -51,19 +49,17 @@ def get_hour_boundary():
 
 
 @tracer.capture_method
-def query_items_by_type(
-    crawler_type: str, entity_type: str, start_time: str, end_time: str
-):
+def query_items_by_type(crawler_type: str, entity: str, start_time: str, end_time: str):
     """
     Query items (requests or runs) for a crawler type within the time range.
-    Uses GSI1: EntityTypeIndex (entity_type + created_at)
+    Uses GSI1: EntityIndex (entity + created_at)
     """
     items = []
 
     try:
         response = telemetry_table.query(
-            IndexName="EntityTypeIndex",
-            KeyConditionExpression=Key("entity_type").eq(entity_type)
+            IndexName="EntityIndex",
+            KeyConditionExpression=Key("entity").eq(entity)
             & Key("created_at").between(start_time, end_time),
             FilterExpression=Key("crawler_type").eq(crawler_type),
         )
@@ -72,8 +68,8 @@ def query_items_by_type(
 
         while "LastEvaluatedKey" in response:
             response = telemetry_table.query(
-                IndexName="EntityTypeIndex",
-                KeyConditionExpression=Key("entity_type").eq(entity_type)
+                IndexName="EntityIndex",
+                KeyConditionExpression=Key("entity").eq(entity)
                 & Key("created_at").between(start_time, end_time),
                 FilterExpression=Key("crawler_type").eq(crawler_type),
                 ExclusiveStartKey=response["LastEvaluatedKey"],
@@ -82,7 +78,7 @@ def query_items_by_type(
 
         return items
     except Exception as e:
-        logger.error(f"Failed to query {entity_type}: {e}")
+        logger.error(f"Failed to query {entity}: {e}")
         raise
 
 
@@ -169,7 +165,7 @@ def write_aggregation(
     item = {
         "PK": pk,
         "SK": sk,
-        "entity_type": "aggregation",
+        "entity": "aggregation",
         "crawler_type": crawler_type,
         "metric_type": metric_type,
         "period": "day" if is_daily else "hour",
@@ -250,12 +246,16 @@ def perform_daily_rollup(crawler_type: str, day_str: str):
                     "count": count,
                     "total_retrieval": total_retrieval,
                     "avg_retrieval": total_retrieval / count if count > 0 else 0,
-                    "min_retrieval": min(float(i["min"]) for i in hourly_items)
-                    if hourly_items
-                    else 0,
-                    "max_retrieval": max(float(i["max"]) for i in hourly_items)
-                    if hourly_items
-                    else 0,
+                    "min_retrieval": (
+                        min(float(i["min"]) for i in hourly_items)
+                        if hourly_items
+                        else 0
+                    ),
+                    "max_retrieval": (
+                        max(float(i["max"]) for i in hourly_items)
+                        if hourly_items
+                        else 0
+                    ),
                 }
             elif metric_type == "requests":
                 count = sum(int(i["count"]) for i in hourly_items)
@@ -285,50 +285,8 @@ def perform_daily_rollup(crawler_type: str, day_str: str):
             logger.error(f"Failed daily rollup for {metric_type}: {e}")
 
 
-@tracer.capture_method
-def publish_metrics(crawler_type: str, req_stats: dict, run_stats: dict):
-    """
-    Publish aggregated metrics to CloudWatch.
-    """
-    if req_stats:
-        metrics.add_metric(
-            name="HourlyRequests", unit=MetricUnit.Count, value=req_stats["count"]
-        )
-        metrics.add_metric(
-            name="HourlyRetrievals",
-            unit=MetricUnit.Count,
-            value=req_stats["total_retrieval"],
-        )
-        metrics.add_metric(
-            name="AvgRetrievalPerRequest",
-            unit=MetricUnit.Count,
-            value=req_stats["avg_retrieval"],
-        )
-        metrics.add_metric(
-            name="ErrorRate",
-            unit=MetricUnit.Percent,
-            value=req_stats["error_rate"],
-        )
-
-    if run_stats:
-        metrics.add_metric(
-            name="HourlyRuns", unit=MetricUnit.Count, value=run_stats["count"]
-        )
-        metrics.add_metric(
-            name="AvgRunDuration",
-            unit=MetricUnit.Milliseconds,
-            value=run_stats["avg_duration"],
-        )
-        metrics.add_metric(
-            name="HourlyDataSize", unit=MetricUnit.Bytes, value=run_stats["total_size"]
-        )
-
-    metrics.add_dimension(name="CrawlerType", value=crawler_type)
-
-
 @logger.inject_lambda_context
 @tracer.capture_lambda_handler
-@metrics.log_metrics(capture_cold_start_metric=True)
 def lambda_handler(_event, _context):
     """
     Main handler for hourly aggregation.
@@ -338,7 +296,7 @@ def lambda_handler(_event, _context):
     hour_str, start_time, end_time, is_end_of_day = get_hour_boundary()
     logger.info(f"Processing hour: {hour_str} ({start_time} to {end_time})")
 
-    crawler_types = ["repo", "user"]
+    crawler_types = ["repository", "user"]
 
     for crawler_type in crawler_types:
         try:
@@ -377,11 +335,7 @@ def lambda_handler(_event, _context):
             else:
                 logger.info(f"No runs for {crawler_type}")
 
-            # 3. Publish CloudWatch Metrics
-            if req_stats or run_stats:
-                publish_metrics(crawler_type, req_stats, run_stats)
-
-            # 4. Daily Rollup (if end of day)
+            # 3 Daily Rollup (if end of day)
             if is_end_of_day:
                 day_str = hour_str[:10]  # YYYY-MM-DD
                 perform_daily_rollup(crawler_type, day_str)

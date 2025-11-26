@@ -52,16 +52,16 @@ data "archive_file" "github_crawler_lambda" {
   output_path = "${path.module}/github_lambda_package.zip"
 }
 
-data "archive_file" "telemetry_lambda" {
+data "archive_file" "telemetry_processor_lambda" {
   type        = "zip"
-  source_file = "${path.module}/lambda/telemetry.py"
-  output_path = "${path.module}/telemetry_lambda_package.zip"
+  source_file = "${path.module}/lambda/telemetry_processor.py"
+  output_path = "${path.module}/telemetry_processor_lambda_package.zip"
 }
 
-data "archive_file" "aggregator_lambda" {
+data "archive_file" "telemetry_aggregator_lambda" {
   type        = "zip"
-  source_file = "${path.module}/lambda/aggregator.py"
-  output_path = "${path.module}/aggregator_lambda_package.zip"
+  source_file = "${path.module}/lambda/telemetry_aggregator.py"
+  output_path = "${path.module}/telemetry_aggregator_lambda_package.zip"
 }
 
 # ============================================================================
@@ -163,7 +163,7 @@ data "aws_iam_policy_document" "github_crawler_lambda_policy" {
   }
 }
 
-data "aws_iam_policy_document" "telemetry_lambda_policy" {
+data "aws_iam_policy_document" "telemetry_processor_lambda_policy" {
   statement {
     effect = "Allow"
     actions = [
@@ -215,11 +215,11 @@ data "aws_iam_policy_document" "telemetry_lambda_policy" {
     actions = [
       "sqs:SendMessage"
     ]
-    resources = [aws_sqs_queue.telemetry_dlq.arn]
+    resources = [aws_sqs_queue.telemetry_processor_dlq.arn]
   }
 }
 
-data "aws_iam_policy_document" "aggregator_lambda_policy" {
+data "aws_iam_policy_document" "telemetry_aggregator_lambda_policy" {
   statement {
     effect = "Allow"
     actions = [
@@ -351,22 +351,19 @@ module "github_crawler" {
   ]
 
   environment_variables = {
-    CRAWL_STATE_TABLE_NAME    = aws_dynamodb_table.crawl_state.name
-    S3_BUCKET_NAME            = var.data_lake_bucket_name
-    GITHUB_TOKEN              = var.github_token
-    REQUESTS_PER_EXECUTION    = local.requests_per_execution
-    SLEEP_INTERVAL            = local.sleep_interval
-    PROJECT_NAME              = var.project_name
-    DASHBOARD_APPSYNC_API_URL = var.dashboard_appsync_api_url
-    SENTRY_DSN                = var.sentry_dsn_backend
-    ENVIRONMENT               = var.environment
-    VERSION                   = "1.0.0"
+    CRAWL_STATE_TABLE_NAME = aws_dynamodb_table.crawl_state.name
+    S3_BUCKET_NAME         = var.data_lake_bucket_name
+    GITHUB_TOKEN           = var.github_token
+    PROJECT_NAME           = var.project_name
+    SENTRY_DSN             = var.sentry_dsn_backend
+    ENVIRONMENT            = var.environment
+    VERSION                = "1.0.0"
   }
 
   tags = var.tags
 }
 
-module "telemetry" {
+module "telemetry_processor" {
   source = "../shared/lambda"
 
   project_name         = var.project_name
@@ -378,15 +375,16 @@ module "telemetry" {
   timeout              = local.timeout
   memory_size          = local.memory_size
 
-  filename         = data.archive_file.telemetry_lambda.output_path
-  source_code_hash = data.archive_file.telemetry_lambda.output_base64sha256
+  filename         = data.archive_file.telemetry_processor_lambda.output_path
+  source_code_hash = data.archive_file.telemetry_processor_lambda.output_base64sha256
 
-  iam_policy_document = data.aws_iam_policy_document.telemetry_lambda_policy.json
+  iam_policy_document = data.aws_iam_policy_document.telemetry_processor_lambda_policy.json
   managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
 
   layers = [
     local.awssdkpandas_layer,
-    local.powertools_layer
+    local.powertools_layer,
+    module.crawler_dependencies.arn
   ]
 
   environment_variables = {
@@ -401,22 +399,22 @@ module "telemetry" {
   tags = var.tags
 }
 
-module "aggregator" {
+module "telemetry_aggregator" {
   source = "../shared/lambda"
 
   project_name         = var.project_name
   environment          = var.environment
   function_name        = "telemetry-aggregator"
   function_description = "Aggregates crawler telemetry hourly"
-  handler              = "aggregator.lambda_handler"
+  handler              = "telemetry_aggregator.lambda_handler"
   runtime              = local.runtime
   timeout              = local.timeout
   memory_size          = local.memory_size
 
-  filename         = data.archive_file.aggregator_lambda.output_path
-  source_code_hash = data.archive_file.aggregator_lambda.output_base64sha256
+  filename         = data.archive_file.telemetry_aggregator_lambda.output_path
+  source_code_hash = data.archive_file.telemetry_aggregator_lambda.output_base64sha256
 
-  iam_policy_document = data.aws_iam_policy_document.aggregator_lambda_policy.json
+  iam_policy_document = data.aws_iam_policy_document.telemetry_aggregator_lambda_policy.json
   managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
 
   layers = [

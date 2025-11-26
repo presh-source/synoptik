@@ -11,6 +11,51 @@ resource "aws_dynamodb_table" "crawl_state" {
     type = "S"
   }
 
+  attribute {
+    name = "last_processed_id"
+    type = "N"
+  }
+
+  attribute {
+    name = "total_processed"
+    type = "N"
+  }
+
+  attribute {
+    name = "updated_at"
+    type = "S"
+  }
+
+  attribute {
+    name = "organisation"
+    type = "S"
+  }
+
+  attribute {
+    name = "entity"
+    type = "S"
+  }
+
+  attribute {
+    name = "s3_prefix"
+    type = "S"
+  }
+
+  attribute {
+    name = "endpoint"
+    type = "S"
+  }
+
+  attribute {
+    name = "requests_per_execution"
+    type = "N"
+  }
+
+  attribute {
+    name = "sleep_interval"
+    type = "N"
+  }
+
   point_in_time_recovery {
     enabled = true
   }
@@ -25,13 +70,13 @@ resource "aws_dynamodb_table" "crawl_state" {
 }
 
 # Initialize the bookmark with last_processed_id = 0
-resource "aws_dynamodb_table_item" "initial_bookmark" {
+resource "aws_dynamodb_table_item" "initial_github_repository_bookmark" {
   table_name = aws_dynamodb_table.crawl_state.name
   hash_key   = aws_dynamodb_table.crawl_state.hash_key
 
   item = jsonencode({
     state_key = {
-      S = "bookmark"
+      S = "U1RBVEUjZ2l0aHViI3JlcG9zaXRvcnk=" # STATE#github#repository
     }
     last_processed_id = {
       N = "0"
@@ -41,6 +86,24 @@ resource "aws_dynamodb_table_item" "initial_bookmark" {
     }
     updated_at = {
       S = timestamp()
+    }
+    organisation = {
+      S = "github"
+    }
+    entity = {
+      S = "repository"
+    }
+    s3_prefix = {
+      S = "cold-path/github/repositories"
+    }
+    endpoint = {
+      S = "https://api.github.com/repositories"
+    }
+    requests_per_execution = {
+      N = "1200"
+    }
+    sleep_interval = {
+      N = "0.1"
     }
   })
 
@@ -50,13 +113,13 @@ resource "aws_dynamodb_table_item" "initial_bookmark" {
 }
 
 # Initialize the user bookmark with last_processed_id = 0
-resource "aws_dynamodb_table_item" "initial_user_bookmark" {
+resource "aws_dynamodb_table_item" "initial_github_user_bookmark" {
   table_name = aws_dynamodb_table.crawl_state.name
   hash_key   = aws_dynamodb_table.crawl_state.hash_key
 
   item = jsonencode({
     state_key = {
-      S = "user_bookmark"
+      S = "U1RBVEUjZ2l0aHViI3VzZXI=" # STATE#github#user
     }
     last_processed_id = {
       N = "0"
@@ -66,6 +129,24 @@ resource "aws_dynamodb_table_item" "initial_user_bookmark" {
     }
     updated_at = {
       S = timestamp()
+    }
+    organisation = {
+      S = "github"
+    }
+    entity = {
+      S = "user"
+    }
+    s3_prefix = {
+      S = "cold-path/github/users"
+    }
+    endpoint = {
+      S = "https://api.github.com/users"
+    }
+    requests_per_execution = {
+      N = "1200"
+    }
+    sleep_interval = {
+      N = "0.1"
     }
   })
 
@@ -92,7 +173,7 @@ resource "aws_dynamodb_table" "telemetry" {
   }
 
   attribute {
-    name = "entity_type"
+    name = "entity"
     type = "S"
   }
 
@@ -108,8 +189,8 @@ resource "aws_dynamodb_table" "telemetry" {
 
   # GSI1: Query by entity type and time
   global_secondary_index {
-    name            = "EntityTypeIndex"
-    hash_key        = "entity_type"
+    name            = "EntityIndex"
+    hash_key        = "entity"
     range_key       = "created_at"
     projection_type = "ALL"
   }

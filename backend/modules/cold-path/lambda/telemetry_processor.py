@@ -6,10 +6,10 @@ from datetime import datetime, timezone
 from decimal import Decimal
 
 import boto3
-from aws_lambda_powertools import Logger, Metrics, Tracer
-from aws_lambda_powertools.metrics import MetricUnit
+from aws_lambda_powertools import Logger, Tracer
 from botocore.exceptions import ClientError
 from utils.appsync_client import publish_crawler_completed
+from utils.crawler_utils import decode_state_key
 from utils.sentry_config import init_sentry
 
 # Initialize Sentry
@@ -20,11 +20,8 @@ PROJECT_NAME = os.environ["PROJECT_NAME"]
 TELEMETRY_TABLE_NAME = os.environ["TELEMETRY_TABLE_NAME"]
 
 # Initialize Powertools
-logger = Logger(service=f"{PROJECT_NAME}-github-telemetry")
-tracer = Tracer(service=f"{PROJECT_NAME}-github-telemetry")
-metrics = Metrics(
-    namespace=f"{PROJECT_NAME.title()}/ColdPath", service="crawler-telemetry"
-)
+logger = Logger(service=f"{PROJECT_NAME}-telemetry")
+tracer = Tracer(service=f"{PROJECT_NAME}-telemetry")
 
 # Initialize AWS clients
 dynamodb = boto3.resource("dynamodb")
@@ -72,12 +69,12 @@ def get_lambda_execution_metrics(request_id: str, function_name: str) -> dict:
         metrics = {
             "duration_ms": float(duration_match.group(1)) if duration_match else 0,
             "billed_duration_ms": int(billed_match.group(1)) if billed_match else 0,
-            "memory_size_mb": int(memory_size_match.group(1))
-            if memory_size_match
-            else 0,
-            "max_memory_used_mb": int(max_memory_match.group(1))
-            if max_memory_match
-            else 0,
+            "memory_size_mb": (
+                int(memory_size_match.group(1)) if memory_size_match else 0
+            ),
+            "max_memory_used_mb": (
+                int(max_memory_match.group(1)) if max_memory_match else 0
+            ),
             "init_duration_ms": float(init_match.group(1)) if init_match else None,
         }
 
@@ -90,11 +87,12 @@ def get_lambda_execution_metrics(request_id: str, function_name: str) -> dict:
 
 
 @tracer.capture_method
-def update_bookmark(crawler_type: str, run_data: dict, s3_files: list):
+def update_bookmark(organisation: str, entity: str, run_data: dict, s3_files: list):
     """
     Atomically update the bookmark with cumulative stats.
     """
-    pk = f"BOOKMARK#{crawler_type.upper()}"
+    crawler_type = entity
+    pk = f"BOOKMARK#{organisation}#{entity}"
     sk = "CURRENT"
 
     # Calculate increments
@@ -103,7 +101,7 @@ def update_bookmark(crawler_type: str, run_data: dict, s3_files: list):
     inc_processed = run_data.get("retrieval", 0)
     inc_size = sum(f.get("size", 0) for f in s3_files)
 
-    last_processed_id = run_data.get("end_id", 0)
+    last_processed_id = run_data.get("last_processed_id", 0)
 
     try:
         telemetry_table.update_item(
@@ -114,8 +112,9 @@ def update_bookmark(crawler_type: str, run_data: dict, s3_files: list):
                     total_processed = if_not_exists(total_processed, :zero) + :inc_processed,
                     total_size = if_not_exists(total_size, :zero) + :inc_size,
                     last_processed_id = :last_id,
+                    last_run_retrieval = :inc_processed,
                     updated_at = :timestamp,
-                    entity_type = :entity_type,
+                    entity = :entity,
                     crawler_type = :crawler_type
             """,
             ExpressionAttributeValues={
@@ -126,7 +125,7 @@ def update_bookmark(crawler_type: str, run_data: dict, s3_files: list):
                 ":inc_size": inc_size,
                 ":last_id": last_processed_id,
                 ":timestamp": datetime.now(timezone.utc).isoformat(),
-                ":entity_type": "bookmark",
+                ":entity": "bookmark",
                 ":crawler_type": crawler_type,
             },
         )
@@ -155,7 +154,7 @@ def write_run_data(
     item = {
         "PK": pk,
         "SK": sk,
-        "entity_type": "run",
+        "entity": "run",
         "run_id": run_id,
         "crawler_type": crawler_type,
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -204,7 +203,7 @@ def write_request_data(run_id: str, crawler_type: str, requests: list):
             item = {
                 "PK": pk,
                 "SK": sk,
-                "entity_type": "request",
+                "entity": "request",
                 "run_id": run_id,
                 "crawler_type": crawler_type,
                 "created_at": timestamp,
@@ -243,7 +242,7 @@ def write_s3_data(run_id: str, crawler_type: str, s3_files: list):
             item = {
                 "PK": pk,
                 "SK": sk,
-                "entity_type": "s3",
+                "entity": "s3",
                 "run_id": run_id,
                 "crawler_type": crawler_type,
                 "created_at": timestamp,
@@ -259,43 +258,8 @@ def write_s3_data(run_id: str, crawler_type: str, s3_files: list):
     logger.info(f"Saved {len(s3_files)} S3 file records for run {run_id}")
 
 
-@tracer.capture_method
-def publish_cloudwatch_metrics(
-    crawler_type: str,
-    run_data: dict,
-    s3_files: list,
-    lambda_metrics: dict | None = None,
-):
-    """
-    Publish operational metrics to CloudWatch.
-    """
-    total_size = sum(f.get("size", 0) for f in s3_files)
-
-    metrics.add_metric(name="CrawlerRuns", unit=MetricUnit.Count, value=1)
-    metrics.add_metric(
-        name="ItemsProcessed", unit=MetricUnit.Count, value=run_data.get("retrieval", 0)
-    )
-    metrics.add_metric(name="S3StorageSize", unit=MetricUnit.Bytes, value=total_size)
-
-    # Use CloudWatch duration if available, otherwise fall back to run_data
-    duration = (
-        lambda_metrics.get("duration_ms", 0)
-        if lambda_metrics
-        else run_data.get("duration_ms", 0)
-    )
-    metrics.add_metric(
-        name="RequestDuration",
-        unit=MetricUnit.Milliseconds,
-        value=duration,
-    )
-
-    # Add dimensions
-    metrics.add_dimension(name="CrawlerType", value=crawler_type)
-
-
 @logger.inject_lambda_context
 @tracer.capture_lambda_handler
-@metrics.log_metrics(capture_cold_start_metric=True)
 def lambda_handler(event, _context):
     """
     Main handler for telemetry processing.
@@ -307,10 +271,14 @@ def lambda_handler(event, _context):
         detail = event.get("detail", {})
         run_id = detail.get("run_id")
         metadata_s3_key = detail.get("metadata_s3_key")
+        state_key = detail.get("state_key")
 
-        if not run_id or not metadata_s3_key:
-            logger.warning("Missing run_id or metadata_s3_key in event")
+        if not run_id or not metadata_s3_key or not state_key:
+            logger.warning("Missing run_id or metadata_s3_key or state_key in event")
             return
+
+        # Validate state_key format
+        organisation, entity = decode_state_key(state_key)
 
         # Read full metadata from S3
         logger.info(f"Reading metadata from S3: {metadata_s3_key}")
@@ -331,12 +299,10 @@ def lambda_handler(event, _context):
         s3_files = full_metadata.get("s3_files", [])
 
         # Query CloudWatch Logs for Lambda execution metrics (if function_name available)
-        lambda_metrics = {}
-        if function_name:
-            lambda_metrics = get_lambda_execution_metrics(run_id, function_name)
+        lambda_metrics = get_lambda_execution_metrics(run_id, function_name)
 
         # 1. Update Bookmark
-        update_bookmark(crawler_type, run_metadata, s3_files)
+        update_bookmark(organisation, entity, run_metadata, s3_files)
 
         # 2. Write Run Metadata (including Lambda metrics)
         write_run_data(run_id, crawler_type, run_metadata, s3_files, lambda_metrics)
@@ -347,17 +313,14 @@ def lambda_handler(event, _context):
         # 4. Write S3 Data
         write_s3_data(run_id, crawler_type, s3_files)
 
-        # 5. Publish Metrics
-        publish_cloudwatch_metrics(crawler_type, run_metadata, s3_files, lambda_metrics)
-
-        # 6. Publish to AppSync for real-time frontend updates
+        # 5. Publish to AppSync for real-time frontend updates
         try:
             publish_crawler_completed(
-                crawler_type=crawler_type,
-                start_id=run_metadata.get("start_id", 0),
-                end_id=run_metadata.get("end_id", 0),
+                organisation=organisation,
+                entity=entity,
                 items_fetched=run_metadata.get("retrieval", 0),
                 total_processed=run_metadata.get("total_processed", 0),
+                last_processed_id=run_metadata.get("last_processed_id", 0),
             )
             logger.info("Published crawler completion event to AppSync")
         except Exception as e:

@@ -1,11 +1,11 @@
 {
   "version": "2018-05-29",
   "payload": {
-    "crawlerType": "$context.arguments.input.crawlerType",
-    "startId": $context.arguments.input.startId,
-    "endId": $context.arguments.input.endId,
+    "organisation": "$context.arguments.input.organisation",
+    "entity": $context.arguments.input.entity,
     "itemsFetched": $context.arguments.input.itemsFetched,
+    "lastProcessedId": $context.arguments.input.lastProcessedId,
     "totalProcessed": $context.arguments.input.totalProcessed,
-    "completedAt": "$util.time.nowISO8601()"
+    "updatedAt": $context.arguments.input.updatedAt
   }
 }

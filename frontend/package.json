@@ -11,7 +11,7 @@
     "codegen": "graphql-codegen --config codegen.yml && node scripts/fix-types.cjs"
   },
   "dependencies": {
-    "@apollo/client": "^4.0.9",
+    "@apollo/client": "^3.11.8",
     "@aws-amplify/api-graphql": "^4.8.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",

@@ -26,30 +26,30 @@ output "telemetry_table_arn" {
 
 output "telemetry_lambda_arn" {
   description = "ARN of the telemetry processor Lambda"
-  value       = module.telemetry.function_arn
+  value       = module.telemetry_processor.function_arn
 }
 
-output "aggregator_lambda_arn" {
-  description = "ARN of the aggregator Lambda"
-  value       = module.aggregator.function_arn
+output "telemetry_aggregator_lambda_arn" {
+  description = "ARN of the telemetry aggregator Lambda"
+  value       = module.telemetry_aggregator.function_arn
 }
 
-output "telemetry_dlq_url" {
-  description = "URL of the telemetry Dead Letter Queue"
-  value       = aws_sqs_queue.telemetry_dlq.url
+output "telemetry_processor_dlq_url" {
+  description = "URL of the telemetry processor Dead Letter Queue"
+  value       = aws_sqs_queue.telemetry_processor_dlq.url
 }
 
-output "telemetry_dlq_arn" {
-  description = "ARN of the telemetry Dead Letter Queue"
-  value       = aws_sqs_queue.telemetry_dlq.arn
+output "telemetry_processor_dlq_arn" {
+  description = "ARN of the telemetry processor Dead Letter Queue"
+  value       = aws_sqs_queue.telemetry_processor_dlq.arn
 }
 
-output "aggregator_dlq_url" {
-  description = "URL of the aggregator Dead Letter Queue"
-  value       = aws_sqs_queue.aggregator_dlq.url
+output "telemetry_aggregator_dlq_url" {
+  description = "URL of the telemetry aggregator Dead Letter Queue"
+  value       = aws_sqs_queue.telemetry_aggregator_dlq.url
 }
 
-output "aggregator_dlq_arn" {
-  description = "ARN of the aggregator Dead Letter Queue"
-  value       = aws_sqs_queue.aggregator_dlq.arn
+output "telemetry_aggregator_dlq_arn" {
+  description = "ARN of the telemetry aggregator Dead Letter Queue"
+  value       = aws_sqs_queue.telemetry_aggregator_dlq.arn
 }

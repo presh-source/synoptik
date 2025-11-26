@@ -95,7 +95,7 @@ class SubscriptionTester {
     console.log('🔹 Total Processed:', event.totalProcessed.toLocaleString())
     console.log('🔹 Start ID:', event.startId)
     console.log('🔹 End ID:', event.endId)
-    console.log('🔹 Completed At:', new Date(event.completedAt).toLocaleString())
+    console.log('🔹 Completed At:', new Date(event.updatedAt).toLocaleString())
 
     console.log('🔹 Latency:', `${latency}ms`)
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')

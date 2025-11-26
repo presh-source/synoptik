@@ -179,7 +179,7 @@ type CrawlerCompleted {
   endId: Int!
   itemsFetched: Int!
   totalProcessed: Int!
-  completedAt: AWSDateTime!
+  updatedAt: AWSDateTime!
   success: Boolean!
   errorMessage: String
 }
@@ -251,7 +251,7 @@ $util.toJson($context.result)
     "endId": $context.arguments.input.endId,
     "itemsFetched": $context.arguments.input.itemsFetched,
     "totalProcessed": $context.arguments.input.totalProcessed,
-    "completedAt": "$util.time.nowISO8601()",
+    "updatedAt": "$util.time.nowISO8601()",
     "success": $context.arguments.input.success,
     "errorMessage": "$util.defaultIfNull($context.arguments.input.errorMessage, null)"
   }
@@ -381,7 +381,7 @@ def publish_crawler_completed(
     mutation PublishCrawlerCompleted($input: CrawlerCompletedInput!) {
       publishCrawlerCompleted(input: $input) {
         crawlerType
-        completedAt
+        updatedAt
       }
     }
     """
@@ -468,8 +468,8 @@ import { getMainDefinition } from '@apollo/client/utilities';
 import { createClient } from 'graphql-ws';
 
 const DASHBOARD_APPSYNC_API_URL = import.meta.env.VITE_DASHBOARD_APPSYNC_API_URL;
-const APPSYNC_API_KEY = import.meta.env.VITE_APPSYNC_API_KEY;
-const appsync_realtime_url = import.meta.env.VITE_APPSYNC_REALTIME_URL;
+const APPSYNC_API_KEY = import.meta.env.DASHBOARD_APPSYNC_API_KEY;
+const appsync_realtime_url = import.meta.env.DASHBOARD_APPSYNC_REALTIME_URL;
 
 // HTTP link for queries and mutations
 const httpLink = new HttpLink({
@@ -588,7 +588,7 @@ export const ON_CRAWLER_COMPLETED = gql`
       endId
       itemsFetched
       totalProcessed
-      completedAt
+      updatedAt
       success
       errorMessage
     }
@@ -663,7 +663,7 @@ export type CrawlerCompleted = {
   endId: number;
   itemsFetched: number;
   totalProcessed: number;
-  completedAt: string;
+  updatedAt: string;
   success: boolean;
   errorMessage?: Maybe<string>;
 };

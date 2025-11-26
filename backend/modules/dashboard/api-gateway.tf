@@ -14,50 +14,27 @@ module "dashboard_api" {
 
   # Define API resources (URL paths)
   root_resources = {
-    "pipeline-status" = {
-      path_part = "pipeline-status"
-    }
+
     "metrics" = {
       path_part = "metrics"
     }
   }
 
   child_resources = {
-    "metrics-cloudwatch" = {
-      path_part   = "cloudwatch"
-      parent_path = "metrics"
-    }
+
   }
 
   # Define API methods
   api_methods = {
-    "pipeline-status-get" = {
-      resource_path      = "pipeline-status"
-      http_method        = "GET"
-      authorization      = "NONE"
-      request_parameters = {}
-    }
-    "metrics-cloudwatch-get" = {
-      resource_path      = "metrics-cloudwatch"
-      http_method        = "GET"
-      authorization      = "NONE"
-      request_parameters = {}
-    }
+
+
   }
 
   # Define Lambda integrations
   lambda_integrations = {
-    "pipeline-status-get" = {
-      resource_path        = "pipeline-status"
-      lambda_invoke_arn    = module.pipeline_status_lambda.invoke_arn
-      lambda_function_name = module.pipeline_status_lambda.function_name
-    }
 
-    "metrics-cloudwatch-get" = {
-      resource_path        = "metrics-cloudwatch"
-      lambda_invoke_arn    = module.cloudwatch_metrics_lambda.invoke_arn
-      lambda_function_name = module.cloudwatch_metrics_lambda.function_name
-    }
+
+
   }
 
   # Configuration - only use custom domain if we have a certificate

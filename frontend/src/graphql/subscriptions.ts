@@ -14,14 +14,14 @@ import { gql } from '@apollo/client';
  * ```
  */
 export const ON_CRAWLER_COMPLETED = gql`
-  subscription OnCrawlerCompleted($crawlerType: String) {
-    onCrawlerCompleted(crawlerType: $crawlerType) {
-      crawlerType
-      startId
-      endId
+  subscription OnCrawlerCompleted($organisation: String, $entity: String) {
+    onCrawlerCompleted(organisation: $organisation, entity: $entity) {
+      organisation
+      entity
       itemsFetched
+      lastProcessedId
       totalProcessed
-      completedAt
+      updatedAt
     }
   }
 `;

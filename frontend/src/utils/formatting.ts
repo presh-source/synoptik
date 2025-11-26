@@ -102,19 +102,4 @@ export function formatTimestamp(isoTimestamp: string): string {
   })
 }
 
-/**
- * Checks if a timestamp is stale (older than 5 minutes)
- * 
- * @param isoTimestamp - ISO 8601 timestamp string
- * @returns true if the timestamp is older than 5 minutes from now
- * 
- * @example
- * isStale("2025-11-20T04:30:00Z") // true (if current time is > 5 minutes later)
- * isStale("2025-11-20T04:40:00Z") // false (if current time is < 5 minutes later)
- */
-export function isStale(isoTimestamp: string): boolean {
-  const timestamp = new Date(isoTimestamp).getTime()
-  const now = Date.now()
-  const fiveMinutesInMs = 5 * 60 * 1000
-  return now - timestamp > fiveMinutesInMs
-}
+

@@ -13,12 +13,12 @@ import { gql } from '@apollo/client';
 export const PUBLISH_CRAWLER_COMPLETED = gql`
   mutation PublishCrawlerCompleted($input: CrawlerCompletedInput!) {
     publishCrawlerCompleted(input: $input) {
-      crawlerType
-      startId
-      endId
+      organisation
+      entity
       itemsFetched
+      lastProcessedId
       totalProcessed
-      completedAt
+      updatedAt
     }
   }
 `;

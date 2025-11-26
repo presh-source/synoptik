@@ -1,0 +1,13 @@
+#if($ctx.result)
+    #set($result = $ctx.result)
+    {
+        "organisation": "$context.arguments.organisation",
+        "entity": "$context.arguments.entity",
+        "itemsFetched": $util.defaultIfNull($result.last_run_retrieval, 0),
+        "lastProcessedId": $util.defaultIfNull($result.last_processed_id, 0),
+        "totalProcessed": $util.defaultIfNull($result.total_processed, 0),
+        "updatedAt": "$util.defaultIfNull($result.updated_at, $util.time.nowISO8601())"
+    }
+#else
+    #return
+#end

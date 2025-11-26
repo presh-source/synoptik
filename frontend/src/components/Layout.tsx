@@ -25,7 +25,7 @@ interface LayoutProps {
 }
 
 const menuItems = [
-  { text: 'Pipeline Status', icon: <DashboardIcon />, path: '/pipeline-status' },
+  { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
 ]
 
 export default function Layout({ children }: LayoutProps) {
