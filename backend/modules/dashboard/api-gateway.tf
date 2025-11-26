@@ -49,5 +49,4 @@ module "dashboard_api" {
 
   tags = var.tags
 
-  depends_on = [module.frontend_certificate]
-}
+

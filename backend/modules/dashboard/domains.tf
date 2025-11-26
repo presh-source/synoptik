@@ -51,7 +51,6 @@ module "frontend_dns" {
   enable_ipv6 = true
   tags        = var.tags
 
-  depends_on = [aws_cloudfront_distribution.dashboard]
 }
 
 # ============================================================================
@@ -77,5 +76,4 @@ module "api_dns" {
   enable_ipv6 = true
   tags        = var.tags
 
-  depends_on = [module.dashboard_api]
 }
