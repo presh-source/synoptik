@@ -15,7 +15,8 @@ import boto3
 import pandas as pd
 import requests
 from aws_lambda_powertools import Logger, Tracer
-from utils.crawler_utils import get_crawler_config, update_bookmark
+from botocore.exceptions import ClientError
+from utils.crawler_utils import decode_state_key, get_crawler_config
 from utils.sentry_config import init_sentry
 
 # Initialize Sentry
@@ -349,6 +350,48 @@ def crawl(
         s3_files_list.append(file_meta)
 
     return current_id, total_items, request_metrics_list, s3_files_list
+
+
+@tracer.capture_method
+def update_bookmark(
+    state_key: str,
+    last_processed_id: int,
+    total_processed: int,
+) -> dict:
+    """Synchronously update the bookmark in DynamoDB"""
+
+    # Validate state_key format
+    organisation, entity = decode_state_key(state_key)
+
+    if not crawl_state_table:
+        raise ValueError("CRAWL_STATE_TABLE_NAME not configured")
+
+    try:
+        response = crawl_state_table.update_item(
+            Key={"state_key": state_key},
+            UpdateExpression="SET last_processed_id = :lid, total_processed = :tp, updated_at = :ua",
+            ExpressionAttributeValues={
+                ":lid": last_processed_id,
+                ":tp": total_processed,
+                ":ua": datetime.now(timezone.utc).isoformat(),
+            },
+            ReturnValues="UPDATED_NEW",
+        )
+
+        logger.info(
+            f"Updated bookmark for {organisation}/{entity}",
+            extra={
+                "last_processed_id": last_processed_id,
+                "total_processed": total_processed,
+                "updated_attributes": response.get("Attributes"),
+            },
+        )
+
+        return response
+
+    except ClientError as e:
+        logger.error("Failed to update DynamoDB bookmark", extra={"error": str(e)})
+        raise
 
 
 @logger.inject_lambda_context(log_event=True)
