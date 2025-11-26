@@ -26,7 +26,7 @@ PROJECT_NAME = os.environ["PROJECT_NAME"]
 CRAWL_STATE_TABLE_NAME = os.environ["CRAWL_STATE_TABLE_NAME"]
 S3_BUCKET_NAME = os.environ["S3_BUCKET_NAME"]
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
-REQUESTS_PER_EXECUTION = int(os.environ.get("REQUESTS_PER_EXECUTION", "700"))
+REQUESTS_PER_EXECUTION = int(os.environ.get("REQUESTS_PER_EXECUTION", "1200"))
 SLEEP_INTERVAL = float(os.environ.get("SLEEP_INTERVAL", "0.1"))
 
 # Initialize Powertools
@@ -38,7 +38,7 @@ metrics = Metrics(
 
 # Initialize AWS clients
 dynamodb = boto3.resource("dynamodb")
-crawl_state_table = dynamodb.Table("CRAWL_STATE_TABLE_NAME")
+crawl_state_table = dynamodb.Table(CRAWL_STATE_TABLE_NAME)
 s3_client = boto3.client("s3")
 eventbridge = boto3.client("events")
 
