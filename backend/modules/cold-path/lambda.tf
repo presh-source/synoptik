@@ -373,7 +373,7 @@ module "telemetry_processor" {
   environment          = var.environment
   function_name        = "telemetry-processor"
   function_description = "Processes crawler completion events and stores telemetry data"
-  handler              = "telemetry.lambda_handler"
+  handler              = "telemetry_processor.lambda_handler"
   runtime              = local.runtime
   timeout              = local.timeout
   memory_size          = local.memory_size
