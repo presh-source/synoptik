@@ -261,8 +261,9 @@ module "repo_crawler" {
   filename         = data.archive_file.repo_crawler_lambda.output_path
   source_code_hash = data.archive_file.repo_crawler_lambda.output_base64sha256
 
-  iam_policy_document = data.aws_iam_policy_document.repo_crawler_lambda_policy.json
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
+  iam_policy_document  = data.aws_iam_policy_document.repo_crawler_lambda_policy.json
+  create_custom_policy = true
+  managed_policy_arns  = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
 
   layers = [
     module.crawler_dependencies.arn,
@@ -301,8 +302,9 @@ module "user_crawler" {
   filename         = data.archive_file.user_crawler_lambda.output_path
   source_code_hash = data.archive_file.user_crawler_lambda.output_base64sha256
 
-  iam_policy_document = data.aws_iam_policy_document.user_crawler_lambda_policy.json
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
+  iam_policy_document  = data.aws_iam_policy_document.user_crawler_lambda_policy.json
+  create_custom_policy = true
+  managed_policy_arns  = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
 
   layers = [
     module.crawler_dependencies.arn,
@@ -341,8 +343,9 @@ module "github_crawler" {
   filename         = data.archive_file.github_crawler_lambda.output_path
   source_code_hash = data.archive_file.github_crawler_lambda.output_base64sha256
 
-  iam_policy_document = data.aws_iam_policy_document.github_crawler_lambda_policy.json
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
+  iam_policy_document  = data.aws_iam_policy_document.github_crawler_lambda_policy.json
+  create_custom_policy = true
+  managed_policy_arns  = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
 
   layers = [
     module.crawler_dependencies.arn,
@@ -378,8 +381,9 @@ module "telemetry_processor" {
   filename         = data.archive_file.telemetry_processor_lambda.output_path
   source_code_hash = data.archive_file.telemetry_processor_lambda.output_base64sha256
 
-  iam_policy_document = data.aws_iam_policy_document.telemetry_processor_lambda_policy.json
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
+  iam_policy_document  = data.aws_iam_policy_document.telemetry_processor_lambda_policy.json
+  create_custom_policy = true
+  managed_policy_arns  = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
 
   layers = [
     local.awssdkpandas_layer,
@@ -414,8 +418,9 @@ module "telemetry_aggregator" {
   filename         = data.archive_file.telemetry_aggregator_lambda.output_path
   source_code_hash = data.archive_file.telemetry_aggregator_lambda.output_base64sha256
 
-  iam_policy_document = data.aws_iam_policy_document.telemetry_aggregator_lambda_policy.json
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
+  iam_policy_document  = data.aws_iam_policy_document.telemetry_aggregator_lambda_policy.json
+  create_custom_policy = true
+  managed_policy_arns  = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
 
   layers = [
     local.awssdkpandas_layer,

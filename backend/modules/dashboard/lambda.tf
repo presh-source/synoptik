@@ -92,8 +92,9 @@ module "crawler_metrics_resolver_appsync_lambda" {
   filename         = data.archive_file.crawler_metrics_resolver_appsync_lambda.output_path
   source_code_hash = data.archive_file.crawler_metrics_resolver_appsync_lambda.output_base64sha256
 
-  iam_policy_document = data.aws_iam_policy_document.crawler_metrics_resolver_appsync_lambda_policy.json
-  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
+  iam_policy_document  = data.aws_iam_policy_document.crawler_metrics_resolver_appsync_lambda_policy.json
+  create_custom_policy = true
+  managed_policy_arns  = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
 
   environment_variables = {
     DYNAMODB_TABLE_NAME = var.cold_path_dynamodb_table

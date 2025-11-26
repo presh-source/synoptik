@@ -46,7 +46,7 @@ class SubscriptionTester {
     this.subscription = apolloClient
       .subscribe<OnCrawlerCompletedSubscription>({
         query: ON_CRAWLER_COMPLETED,
-        variables: crawlerType ? { crawlerType } : {},
+        variables: crawlerType ? { entity: crawlerType } : {},
       })
       .subscribe({
         next: ({ data }) => {
@@ -90,12 +90,12 @@ class SubscriptionTester {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
     console.log('📨 Crawler Event Received!')
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-    console.log('🔹 Crawler Type:', event.crawlerType)
-    console.log('🔹 Items Fetched:', event.itemsFetched.toLocaleString())
-    console.log('🔹 Total Processed:', event.totalProcessed.toLocaleString())
-    console.log('🔹 Start ID:', event.startId)
-    console.log('🔹 End ID:', event.endId)
-    console.log('🔹 Completed At:', new Date(event.updatedAt).toLocaleString())
+    console.log('🔹 Organisation:', event.organisation)
+    console.log('🔹 Entity:', event.entity)
+    console.log('🔹 Items Fetched:', (event.itemsFetched || 0).toLocaleString())
+    console.log('🔹 Total Processed:', (event.totalProcessed || 0).toLocaleString())
+    console.log('🔹 Last Processed ID:', event.lastProcessedId)
+    console.log('🔹 Updated At:', event.updatedAt ? new Date(event.updatedAt).toLocaleString() : 'N/A')
 
     console.log('🔹 Latency:', `${latency}ms`)
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
@@ -116,15 +116,15 @@ class SubscriptionTester {
     console.log('Total Events Received:', this.events.length)
 
     if (this.events.length > 0) {
-      const repoEvents = this.events.filter(e => e.crawlerType === 'repo')
-      const userEvents = this.events.filter(e => e.crawlerType === 'user')
+      const repoEvents = this.events.filter(e => e.entity === 'repository')
+      const userEvents = this.events.filter(e => e.entity === 'user')
 
       console.log('  - Repo Crawler Events:', repoEvents.length)
       console.log('  - User Crawler Events:', userEvents.length)
 
       console.log('\nEvent Details:')
       this.events.forEach((event, index) => {
-        console.log(`  ${index + 1}. ${event.crawlerType} - ${event.itemsFetched} items`)
+        console.log(`  ${index + 1}. ${event.organisation}/${event.entity} - ${event.itemsFetched} items`)
       })
     }
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n')

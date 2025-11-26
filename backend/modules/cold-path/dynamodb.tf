@@ -11,50 +11,7 @@ resource "aws_dynamodb_table" "crawl_state" {
     type = "S"
   }
 
-  attribute {
-    name = "last_processed_id"
-    type = "N"
-  }
 
-  attribute {
-    name = "total_processed"
-    type = "N"
-  }
-
-  attribute {
-    name = "updated_at"
-    type = "S"
-  }
-
-  attribute {
-    name = "organisation"
-    type = "S"
-  }
-
-  attribute {
-    name = "entity"
-    type = "S"
-  }
-
-  attribute {
-    name = "s3_prefix"
-    type = "S"
-  }
-
-  attribute {
-    name = "endpoint"
-    type = "S"
-  }
-
-  attribute {
-    name = "requests_per_execution"
-    type = "N"
-  }
-
-  attribute {
-    name = "sleep_interval"
-    type = "N"
-  }
 
   point_in_time_recovery {
     enabled = true
