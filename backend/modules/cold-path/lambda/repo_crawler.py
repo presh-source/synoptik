@@ -428,8 +428,7 @@ def lambda_handler(_event, context):
                     start_id=start_id,
                     end_id=last_id,
                     items_fetched=total_fetched,
-                    total_processed=new_total,
-                    success=True,
+                    total_processed=new_total
                 )
                 logger.info("Published crawler completion event to AppSync")
                 metrics.add_metric(
