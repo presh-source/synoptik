@@ -27,6 +27,17 @@ export type Scalars = {
   AWSURL: { input: any; output: any; }
 };
 
+export type BookmarkData = {
+  __typename?: 'BookmarkData';
+  crawler_type: Scalars['String']['output'];
+  last_processed_id: Scalars['Int']['output'];
+  total_processed: Scalars['Int']['output'];
+  total_requests: Scalars['Int']['output'];
+  total_runs: Scalars['Int']['output'];
+  total_size: Scalars['Int']['output'];
+  updated_at: Scalars['AWSDateTime']['output'];
+};
+
 export type ColdPathStatus = {
   __typename?: 'ColdPathStatus';
   lastProcessedId: Scalars['Int']['output'];
@@ -41,10 +52,8 @@ export type CrawlerCompleted = {
   completedAt: Scalars['AWSDateTime']['output'];
   crawlerType: Scalars['String']['output'];
   endId: Scalars['Int']['output'];
-  errorMessage?: Maybe<Scalars['String']['output']>;
   itemsFetched: Scalars['Int']['output'];
   startId: Scalars['Int']['output'];
-  success: Scalars['Boolean']['output'];
   totalProcessed: Scalars['Int']['output'];
 };
 
@@ -52,10 +61,8 @@ export type CrawlerCompletedInput = {
   completedAt?: InputMaybe<Scalars['AWSDateTime']['input']>;
   crawlerType: Scalars['String']['input'];
   endId: Scalars['Int']['input'];
-  errorMessage?: InputMaybe<Scalars['String']['input']>;
   itemsFetched: Scalars['Int']['input'];
   startId: Scalars['Int']['input'];
-  success: Scalars['Boolean']['input'];
   totalProcessed: Scalars['Int']['input'];
 };
 
@@ -71,14 +78,41 @@ export type CrawlerMetrics = {
   totalProcessed: Scalars['Int']['output'];
 };
 
+export type CrawlerStats = {
+  __typename?: 'CrawlerStats';
+  repo: CrawlerTypeStats;
+  user: CrawlerTypeStats;
+};
+
+export type CrawlerTypeStats = {
+  __typename?: 'CrawlerTypeStats';
+  avg_items_per_hour: Scalars['Float']['output'];
+  last_run?: Maybe<Scalars['AWSDateTime']['output']>;
+  total_processed: Scalars['Int']['output'];
+  total_runs: Scalars['Int']['output'];
+  total_size: Scalars['Int']['output'];
+};
+
 export type ErrorRates = {
   __typename?: 'ErrorRates';
   coldPath: Scalars['Float']['output'];
 };
 
+export type HourlyAggregation = {
+  __typename?: 'HourlyAggregation';
+  average: Scalars['Float']['output'];
+  count: Scalars['Int']['output'];
+  crawler_type: Scalars['String']['output'];
+  created_at: Scalars['AWSDateTime']['output'];
+  hour: Scalars['String']['output'];
+  max: Scalars['Int']['output'];
+  metric_type: Scalars['String']['output'];
+  min: Scalars['Int']['output'];
+  total: Scalars['Int']['output'];
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
-  /** Publish crawler completion event (called by crawler Lambdas) */
   publishCrawlerCompleted: CrawlerCompleted;
 };
 
@@ -97,12 +131,47 @@ export type Query = {
   __typename?: 'Query';
   /** Get error rates for the cold path pipeline */
   errorRates: ErrorRates;
+  getBookmark?: Maybe<BookmarkData>;
+  getCrawlerStats?: Maybe<CrawlerStats>;
+  getRunRequests: Array<RequestData>;
+  listHourlyAggregations: Array<HourlyAggregation>;
+  listRunsByType?: Maybe<RunDataConnection>;
   /** Get complete pipeline status including all crawlers and error rates */
   pipelineStatus: PipelineStatus;
   /** Get repository crawler metrics for a specific time period */
   repoCrawler: CrawlerMetrics;
   /** Get user crawler metrics for a specific time period */
   userCrawler: CrawlerMetrics;
+};
+
+
+export type QueryGetBookmarkArgs = {
+  crawler_type: Scalars['String']['input'];
+};
+
+
+export type QueryGetCrawlerStatsArgs = {
+  timeRange: Scalars['String']['input'];
+};
+
+
+export type QueryGetRunRequestsArgs = {
+  run_id: Scalars['ID']['input'];
+};
+
+
+export type QueryListHourlyAggregationsArgs = {
+  crawler_type: Scalars['String']['input'];
+  endHour: Scalars['String']['input'];
+  metric_type: Scalars['String']['input'];
+  startHour: Scalars['String']['input'];
+};
+
+
+export type QueryListRunsByTypeArgs = {
+  crawler_type: Scalars['String']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  nextToken?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -113,6 +182,38 @@ export type QueryRepoCrawlerArgs = {
 
 export type QueryUserCrawlerArgs = {
   timePeriodHours?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type RequestData = {
+  __typename?: 'RequestData';
+  crawler_type: Scalars['String']['output'];
+  created_at: Scalars['AWSDateTime']['output'];
+  rate_limit: Scalars['Int']['output'];
+  rate_limit_remaining: Scalars['Int']['output'];
+  rate_limit_reset: Scalars['Int']['output'];
+  request_end: Scalars['AWSDateTime']['output'];
+  request_start: Scalars['AWSDateTime']['output'];
+  retrieval: Scalars['Int']['output'];
+  run_id: Scalars['ID']['output'];
+  since_id: Scalars['Int']['output'];
+  status_code: Scalars['Int']['output'];
+};
+
+export type RunData = {
+  __typename?: 'RunData';
+  crawler_type: Scalars['String']['output'];
+  created_at: Scalars['AWSDateTime']['output'];
+  duration_ms: Scalars['Int']['output'];
+  request_count: Scalars['Int']['output'];
+  retrieval: Scalars['Int']['output'];
+  run_id: Scalars['ID']['output'];
+  size: Scalars['Int']['output'];
+};
+
+export type RunDataConnection = {
+  __typename?: 'RunDataConnection';
+  items: Array<RunData>;
+  nextToken?: Maybe<Scalars['String']['output']>;
 };
 
 export type Subscription = {
@@ -131,7 +232,7 @@ export type PublishCrawlerCompletedMutationVariables = Exact<{
 }>;
 
 
-export type PublishCrawlerCompletedMutation = { __typename?: 'Mutation', publishCrawlerCompleted: { __typename?: 'CrawlerCompleted', crawlerType: string, startId: number, endId: number, itemsFetched: number, totalProcessed: number, completedAt: string, success: boolean, errorMessage?: string | null } };
+export type PublishCrawlerCompletedMutation = { __typename?: 'Mutation', publishCrawlerCompleted: { __typename?: 'CrawlerCompleted', crawlerType: string, startId: number, endId: number, itemsFetched: number, totalProcessed: number, completedAt: string } };
 
 export type GetPipelineStatusQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -162,7 +263,7 @@ export type OnCrawlerCompletedSubscriptionVariables = Exact<{
 }>;
 
 
-export type OnCrawlerCompletedSubscription = { __typename?: 'Subscription', onCrawlerCompleted?: { __typename?: 'CrawlerCompleted', crawlerType: string, startId: number, endId: number, itemsFetched: number, totalProcessed: number, completedAt: string, success: boolean, errorMessage?: string | null } | null };
+export type OnCrawlerCompletedSubscription = { __typename?: 'Subscription', onCrawlerCompleted?: { __typename?: 'CrawlerCompleted', crawlerType: string, startId: number, endId: number, itemsFetched: number, totalProcessed: number, completedAt: string } | null };
 
 
 export const PublishCrawlerCompletedDocument = gql`
@@ -174,8 +275,6 @@ export const PublishCrawlerCompletedDocument = gql`
     itemsFetched
     totalProcessed
     completedAt
-    success
-    errorMessage
   }
 }
     `;
@@ -392,8 +491,6 @@ export const OnCrawlerCompletedDocument = gql`
     itemsFetched
     totalProcessed
     completedAt
-    success
-    errorMessage
   }
 }
     `;

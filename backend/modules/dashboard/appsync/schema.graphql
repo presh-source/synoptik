@@ -77,8 +77,6 @@ type CrawlerCompleted
 	itemsFetched: Int!
 	totalProcessed: Int!
 	completedAt: AWSDateTime!
-	success: Boolean!
-	errorMessage: String
 }
 
 
@@ -91,8 +89,6 @@ input CrawlerCompletedInput {
   itemsFetched: Int!
   totalProcessed: Int!
   completedAt: AWSDateTime
-  success: Boolean!
-  errorMessage: String
 }
 
 # Telemetry Types
@@ -127,7 +123,7 @@ type RequestData {
   retrieval: Int!
   status_code: Int!
   rate_limit_remaining: Int!
-  rate_limit_limit: Int!
+  rate_limit: Int!
   rate_limit_reset: Int!
 }
 

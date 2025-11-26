@@ -157,13 +157,6 @@ data "aws_iam_policy_document" "github_crawler_lambda_policy" {
   statement {
     effect = "Allow"
     actions = [
-      "appsync:GraphQL"
-    ]
-    resources = ["arn:aws:appsync:${data.aws_region.current.name}:*:apis/${var.appsync_api_id}/types/Mutation/fields/publishCrawlerCompleted"]
-  }
-  statement {
-    effect = "Allow"
-    actions = [
       "events:PutEvents"
     ]
     resources = ["arn:aws:events:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:event-bus/default"]
@@ -191,6 +184,31 @@ data "aws_iam_policy_document" "telemetry_lambda_policy" {
       "cloudwatch:PutMetricData"
     ]
     resources = ["*"]
+  }
+  statement {
+    effect = "Allow"
+    actions = [
+      "appsync:GraphQL"
+    ]
+    resources = ["arn:aws:appsync:${data.aws_region.current.name}:*:apis/${var.appsync_api_id}/types/Mutation/fields/publishCrawlerCompleted"]
+  }
+  statement {
+    effect = "Allow"
+    actions = [
+      "logs:FilterLogEvents"
+    ]
+    resources = [
+      "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/*"
+    ]
+  }
+  statement {
+    effect = "Allow"
+    actions = [
+      "s3:GetObject"
+    ]
+    resources = [
+      "arn:aws:s3:::${var.data_lake_bucket_name}/cold-path/github/telemetry/*"
+    ]
   }
   statement {
     effect = "Allow"
@@ -365,6 +383,7 @@ module "telemetry" {
   environment_variables = {
     PROJECT_NAME         = var.project_name
     TELEMETRY_TABLE_NAME = aws_dynamodb_table.telemetry.name
+    S3_BUCKET_NAME       = var.data_lake_bucket_name
   }
 
   tags = var.tags

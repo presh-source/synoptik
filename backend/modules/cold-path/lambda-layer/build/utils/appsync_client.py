@@ -35,8 +35,6 @@ mutation PublishCrawlerCompleted($input: CrawlerCompletedInput!) {
     itemsFetched
     totalProcessed
     completedAt
-    success
-    errorMessage
   }
 }
 """
@@ -48,7 +46,6 @@ def publish_crawler_completed(
     end_id: int,
     items_fetched: int,
     total_processed: int,
-    success: bool = True,
     error_message: str | None = None,
     max_retries: int = 3,
 ) -> dict:
@@ -61,7 +58,6 @@ def publish_crawler_completed(
         end_id: Ending ID for this crawl execution
         items_fetched: Number of items fetched in this run
         total_processed: Total items processed across all runs
-        success: Whether the crawl succeeded (default: True)
         error_message: Error message if failed (default: None)
         max_retries: Maximum number of retry attempts (default: 3)
 
@@ -88,9 +84,7 @@ def publish_crawler_completed(
             "totalProcessed": total_processed,
             "completedAt": datetime.now(timezone.utc)
             .isoformat()
-            .replace("+00:00", "Z"),
-            "success": success,
-            "errorMessage": error_message,
+            .replace("+00:00", "Z")
         }
     }
 
@@ -106,8 +100,7 @@ def publish_crawler_completed(
             "start_id": start_id,
             "end_id": end_id,
             "items_fetched": items_fetched,
-            "total_processed": total_processed,
-            "success": success,
+            "total_processed": total_processed
         },
     )
 

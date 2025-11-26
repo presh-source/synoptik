@@ -6,8 +6,6 @@
     "endId": $context.arguments.input.endId,
     "itemsFetched": $context.arguments.input.itemsFetched,
     "totalProcessed": $context.arguments.input.totalProcessed,
-    "completedAt": "$util.time.nowISO8601()",
-    "success": $context.arguments.input.success,
-    "errorMessage": $util.toJson($util.defaultIfNull($context.arguments.input.errorMessage, null))
+    "completedAt": "$util.time.nowISO8601()"
   }
 }

@@ -273,7 +273,7 @@ def fetch_users(
         "retrieval": 0,
         "status_code": 0,
         "rate_limit_remaining": 0,
-        "rate_limit_limit": 0,
+        "rate_limit": 0,
         "rate_limit_reset": 0,
     }
 
@@ -287,11 +287,11 @@ def fetch_users(
 
             # Log rate limit info
             rate_limit_remaining = response.headers.get("X-RateLimit-Remaining")
-            rate_limit_limit = response.headers.get("X-RateLimit-Limit")
+            rate_limit = response.headers.get("X-RateLimit-Limit")
             rate_limit_reset = response.headers.get("X-RateLimit-Reset")
 
             request_metrics["rate_limit_remaining"] = int(rate_limit_remaining or 0)
-            request_metrics["rate_limit_limit"] = int(rate_limit_limit or 0)
+            request_metrics["rate_limit"] = int(rate_limit or 0)
             request_metrics["rate_limit_reset"] = int(rate_limit_reset or 0)
 
             logger.info(

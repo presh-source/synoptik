@@ -11,6 +11,13 @@ resource "aws_sqs_queue" "telemetry_dlq" {
   tags = var.tags
 }
 
+resource "aws_sqs_queue" "aggregator_dlq" {
+  name                      = "${var.environment}-${var.project_name}-aggregator-dlq"
+  message_retention_seconds = 1209600 # 14 days
+
+  tags = var.tags
+}
+
 # --------------------------------------------------------------------------------------------------
 # Repo Crawler Monitoring
 # --------------------------------------------------------------------------------------------------

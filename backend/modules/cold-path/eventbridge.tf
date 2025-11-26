@@ -7,7 +7,7 @@
 resource "aws_cloudwatch_event_rule" "repo_crawler_schedule" {
   name                = "${var.environment}-${var.project_name}-repo-crawler-schedule"
   description         = "Trigger ${var.project_name} repo crawler Lambda every 15 minutes"
-  schedule_expression = "rate(15 minutes)"
+  schedule_expression = "cron(0/15 * * * ? *)"
 
   tags = var.tags
 }
@@ -60,7 +60,7 @@ resource "aws_lambda_permission" "allow_eventbridge_repo_crawler" {
 # resource "aws_cloudwatch_event_rule" "github_repo_crawler_schedule" {
 #   name                = "${var.environment}-${var.project_name}-github-repo-crawler-schedule"
 #   description         = "Trigger GitHub unified crawler for repositories every 15 minutes"
-#   schedule_expression = "rate(15 minutes)"
+#   schedule_expression = "cron(0/15 * * * ? *)"
 
 #   tags = var.tags
 # }
@@ -87,7 +87,7 @@ resource "aws_lambda_permission" "allow_eventbridge_repo_crawler" {
 # resource "aws_cloudwatch_event_rule" "github_user_crawler_schedule" {
 #   name                = "${var.environment}-${var.project_name}-github-user-crawler-schedule"
 #   description         = "Trigger GitHub unified crawler for users every 15 minutes"
-#   schedule_expression = "rate(15 minutes)"
+#   schedule_expression = "cron(0/15 * * * ? *)"
 
 #   tags = var.tags
 # }
@@ -160,6 +160,10 @@ resource "aws_lambda_permission" "allow_eventbridge_telemetry" {
 #   rule      = aws_cloudwatch_event_rule.aggregator_schedule.name
 #   target_id = "AggregatorLambdaTarget"
 #   arn       = module.aggregator.function_arn
+
+#   dead_letter_config {
+#     arn = aws_sqs_queue.aggregator_dlq.arn
+#   }
 # }
 
 # resource "aws_lambda_permission" "allow_eventbridge_aggregator" {

@@ -18,9 +18,6 @@ from aws_lambda_powertools import Logger, Metrics, Tracer
 from aws_lambda_powertools.metrics import MetricUnit
 from botocore.exceptions import ClientError
 
-# AppSync client for publishing completion events
-from utils.appsync_client import publish_crawler_completed
-
 # Environment variables
 PROJECT_NAME = os.environ["PROJECT_NAME"]
 CRAWL_STATE_TABLE_NAME = os.environ["CRAWL_STATE_TABLE_NAME"]
@@ -311,7 +308,7 @@ def fetch_data(
         "retrieval": 0,
         "status_code": 0,
         "rate_limit_remaining": 0,
-        "rate_limit_limit": 0,
+        "rate_limit": 0,
         "rate_limit_reset": 0,
     }
 
@@ -325,11 +322,11 @@ def fetch_data(
 
             # Log rate limit info
             rate_limit_remaining = response.headers.get("X-RateLimit-Remaining")
-            rate_limit_limit = response.headers.get("X-RateLimit-Limit")
+            rate_limit = response.headers.get("X-RateLimit-Limit")
             rate_limit_reset = response.headers.get("X-RateLimit-Reset")
 
             request_metrics["rate_limit_remaining"] = int(rate_limit_remaining or 0)
-            request_metrics["rate_limit_limit"] = int(rate_limit_limit or 0)
+            request_metrics["rate_limit"] = int(rate_limit or 0)
             request_metrics["rate_limit_reset"] = int(rate_limit_reset or 0)
 
             logger.info(
@@ -515,17 +512,11 @@ def lambda_handler(event, context):
 
         # Use AWS request ID as run_id
         run_id = context.aws_request_id
-        start_time = datetime.now(timezone.utc).isoformat()
 
         # Execute crawl
         last_id, total_fetched, requests_metrics, s3_files = crawl(
             crawler_type, start_id, REQUESTS_PER_EXECUTION, GITHUB_TOKEN, context
         )
-
-        end_time = datetime.now(timezone.utc).isoformat()
-        duration_ms = (
-            datetime.fromisoformat(end_time) - datetime.fromisoformat(start_time)
-        ).total_seconds() * 1000
 
         # Update bookmark
         if last_id > start_id:
@@ -552,23 +543,38 @@ def lambda_handler(event, context):
 
             # Publish completion event to EventBridge
             try:
-                event_payload = {
+                # Save detailed metadata to S3 to avoid EventBridge 256KB limit
+                now = datetime.now(timezone.utc)
+                metadata_key = (
+                    f"cold-path/github/telemetry/{crawler_type}/"
+                    f"year={now.year}/month={now.month:02d}/day={now.day:02d}/"
+                    f"{run_id}.json"
+                )
+
+                full_metadata = {
                     "run_id": run_id,
+                    "function_name": context.function_name,
                     "crawler_type": crawler_type,
                     "run_metadata": {
                         "retrieval": total_fetched,
                         "request_count": len(requests_metrics),
-                        "duration_ms": duration_ms,
-                        "start_time": start_time,
-                        "end_time": end_time,
-                    },
-                    "bookmark": {
-                        "last_processed_id": last_id,
+                        "start_id": start_id,
+                        "end_id": last_id,
                         "total_processed": new_total,
                     },
                     "requests": requests_metrics,
                     "s3_files": s3_files,
                 }
+
+                s3_client.put_object(
+                    Bucket=S3_BUCKET_NAME,
+                    Key=metadata_key,
+                    Body=json.dumps(full_metadata),
+                    ContentType="application/json",
+                )
+
+                # Send minimal EventBridge event - just reference to S3 metadata
+                event_payload = {"run_id": run_id, "metadata_s3_key": metadata_key}
 
                 eventbridge.put_events(
                     Entries=[
@@ -591,29 +597,6 @@ def lambda_handler(event, context):
                 )
                 metrics.add_metric(
                     name="EventBridgePublishFailure", unit=MetricUnit.Count, value=1
-                )
-
-            # Publish completion event to AppSync (Legacy)
-            try:
-                publish_crawler_completed(
-                    crawler_type=crawler_type,
-                    start_id=start_id,
-                    end_id=last_id,
-                    items_fetched=total_fetched,
-                    total_processed=new_total,
-                    success=True,
-                )
-                logger.info("Published crawler completion event to AppSync")
-                metrics.add_metric(
-                    name="AppSyncPublishSuccess", unit=MetricUnit.Count, value=1
-                )
-            except Exception as e:
-                logger.error(
-                    "Failed to publish to AppSync",
-                    extra={"error": str(e)},
-                )
-                metrics.add_metric(
-                    name="AppSyncPublishFailure", unit=MetricUnit.Count, value=1
                 )
 
             return {

@@ -22,8 +22,7 @@ export const ON_CRAWLER_COMPLETED = gql`
       itemsFetched
       totalProcessed
       completedAt
-      success
-      errorMessage
     }
   }
 `;
+
