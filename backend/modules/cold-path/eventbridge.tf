@@ -114,35 +114,35 @@ resource "aws_lambda_permission" "allow_eventbridge_repo_crawler" {
 # Telemetry Event Rule
 # --------------------------------------------------------------------------------------------------
 
-# resource "aws_cloudwatch_event_rule" "crawler_events" {
-#   name        = "${var.environment}-${var.project_name}-crawler-completion"
-#   description = "Capture crawler completion events"
+resource "aws_cloudwatch_event_rule" "crawler_events" {
+  name        = "${var.environment}-${var.project_name}-crawler-completion"
+  description = "Capture crawler completion events"
 
-#   event_pattern = jsonencode({
-#     source      = ["${var.project_name}.crawler"]
-#     detail-type = ["CrawlerCompleted"]
-#   })
+  event_pattern = jsonencode({
+    source      = ["${var.project_name}.crawler"]
+    detail-type = ["CrawlerCompleted"]
+  })
 
-#   tags = var.tags
-# }
+  tags = var.tags
+}
 
-# resource "aws_cloudwatch_event_target" "telemetry_lambda" {
-#   rule      = aws_cloudwatch_event_rule.crawler_events.name
-#   target_id = "TelemetryLambdaTarget"
-#   arn       = module.telemetry.function_arn
+resource "aws_cloudwatch_event_target" "telemetry_lambda" {
+  rule      = aws_cloudwatch_event_rule.crawler_events.name
+  target_id = "TelemetryLambdaTarget"
+  arn       = module.telemetry.function_arn
 
-#   dead_letter_config {
-#     arn = aws_sqs_queue.telemetry_dlq.arn
-#   }
-# }
+  dead_letter_config {
+    arn = aws_sqs_queue.telemetry_dlq.arn
+  }
+}
 
-# resource "aws_lambda_permission" "allow_eventbridge_telemetry" {
-#   statement_id  = "AllowExecutionFromEventBridgeTelemetry"
-#   action        = "lambda:InvokeFunction"
-#   function_name = module.telemetry.function_name
-#   principal     = "events.amazonaws.com"
-#   source_arn    = aws_cloudwatch_event_rule.crawler_events.arn
-# }
+resource "aws_lambda_permission" "allow_eventbridge_telemetry" {
+  statement_id  = "AllowExecutionFromEventBridgeTelemetry"
+  action        = "lambda:InvokeFunction"
+  function_name = module.telemetry.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.crawler_events.arn
+}
 
 # --------------------------------------------------------------------------------------------------
 # Aggregator Hourly Schedule
