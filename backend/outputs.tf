@@ -9,11 +9,6 @@ output "data_lake_bucket_name" {
   value       = module.data_lake.bucket_name
 }
 
-output "dashboard_api_url" {
-  description = "URL of the Dashboard API Gateway"
-  value       = module.dashboard.api_gateway_url
-}
-
 output "dashboard_bucket_name" {
   description = "Name of the S3 bucket hosting the dashboard"
   value       = module.dashboard.dashboard_bucket_name
