@@ -54,26 +54,5 @@ module "frontend_dns" {
 }
 
 # ============================================================================
-# API DNS Records (created after API Gateway)
+# API DNS Records
 # ============================================================================
-
-module "api_dns" {
-  count  = var.api_gateway_domain_name != "" ? 1 : 0
-  source = "../shared/certificate-manager"
-
-  project_name     = var.project_name
-  certificate_name = "api"
-  domain_name      = var.api_gateway_domain_name
-  hosted_zone_name = var.hosted_zone_name
-
-  # Don't create certificate, only DNS records
-  create_certificate = false
-
-  # API Gateway distribution details
-  target_domain_name = module.dashboard_api.custom_domain_cloudfront_domain_name
-  target_zone_id     = module.dashboard_api.custom_domain_cloudfront_zone_id
-
-  enable_ipv6 = true
-  tags        = var.tags
-
-}

@@ -1,21 +1,5 @@
 # Dashboard Module Outputs
 
-# API Gateway outputs (from api-gateway module)
-output "api_gateway_id" {
-  description = "ID of the API Gateway REST API"
-  value       = module.dashboard_api.rest_api_id
-}
-
-output "api_gateway_url" {
-  description = "URL of the API Gateway"
-  value       = module.dashboard_api.invoke_url
-}
-
-output "api_url" {
-  description = "Full URL of the API (custom domain or invoke URL)"
-  value       = module.dashboard_api.api_url
-}
-
 # Frontend outputs
 output "dashboard_bucket_name" {
   description = "Name of the S3 bucket hosting the dashboard"

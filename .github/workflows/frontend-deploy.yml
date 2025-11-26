@@ -95,7 +95,6 @@ jobs:
           DASHBOARD_APPSYNC_API_URL=$(terraform output -raw dashboard_appsync_api_url)
           DASHBOARD_APPSYNC_API_KEY=$(terraform output -raw dashboard_appsync_api_key)
           DASHBOARD_APPSYNC_REALTIME_URL=$(terraform output -raw dashboard_appsync_realtime_url)
-          DASHBOARD_API_URL=$(terraform output -raw dashboard_api_url)
           
           if [ -z "$BUCKET_NAME" ] || [ "$BUCKET_NAME" = "null" ]; then
             echo "::error::Dashboard bucket not found in Terraform state"
@@ -105,7 +104,6 @@ jobs:
           # Output to GitHub Actions
           echo "bucket_name=$BUCKET_NAME" >> $GITHUB_OUTPUT
           echo "distribution_id=$DISTRIBUTION_ID" >> $GITHUB_OUTPUT
-          echo "dashboard_api_url=$DASHBOARD_API_URL" >> $GITHUB_OUTPUT
           echo "dashboard_appsync_api_url=$DASHBOARD_APPSYNC_API_URL" >> $GITHUB_OUTPUT
           echo "dashboard_appsync_api_key=$DASHBOARD_APPSYNC_API_KEY" >> $GITHUB_OUTPUT
           echo "dashboard_appsync_realtime_url=$DASHBOARD_APPSYNC_REALTIME_URL" >> $GITHUB_OUTPUT
@@ -114,7 +112,6 @@ jobs:
           echo "  S3: $BUCKET_NAME"
           echo "  CloudFront: $DISTRIBUTION_ID"
           echo "  AppSync: $DASHBOARD_APPSYNC_API_URL"
-          echo "  API Gateway: $DASHBOARD_API_URL"
 
       - name: Build application
         working-directory: frontend
@@ -123,7 +120,6 @@ jobs:
           VITE_AWS_REGION: ${{ env.AWS_REGION }}
           VITE_APP_VERSION: ${{ github.sha }}
           VITE_PROJECT_NAME: ${{ env.PROJECT_NAME }}
-          VITE_API_URL: ${{ steps.targets.outputs.dashboard_api_url }}
           VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN_FRONTEND }}
           VITE_DASHBOARD_APPSYNC_API_URL: ${{ steps.targets.outputs.dashboard_appsync_api_url }}
           VITE_DASHBOARD_APPSYNC_API_KEY: ${{ steps.targets.outputs.dashboard_appsync_api_key }}
