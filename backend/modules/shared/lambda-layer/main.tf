@@ -23,7 +23,7 @@ resource "null_resource" "build" {
   triggers = {
     source_hash = local.source_files_hash
     # Force rebuild if build output doesn't exist
-    always_build = fileexists("${var.build_path}/python") ? "exists" : timestamp()
+    # always_build = fileexists("${var.build_path}/python") ? "exists" : timestamp()
   }
 
   provisioner "local-exec" {
