@@ -514,7 +514,7 @@ def lambda_handler(event, context):
                     "message": "Crawl completed successfully",
                     "run_id": run_id,
                     "start_id": start_id,
-                    "end_id": last_processed_id,
+                    "last_processed_id": last_processed_id,
                     "items_fetched": total_fetched,
                     "total_processed": new_total,
                 },

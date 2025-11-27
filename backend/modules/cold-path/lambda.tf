@@ -428,11 +428,12 @@ module "telemetry_aggregator" {
   ]
 
   environment_variables = {
-    PROJECT_NAME         = var.project_name
-    TELEMETRY_TABLE_NAME = aws_dynamodb_table.telemetry.name
-    SENTRY_DSN           = var.sentry_dsn_backend
-    ENVIRONMENT          = var.environment
-    VERSION              = "1.0.0"
+    PROJECT_NAME           = var.project_name
+    CRAWL_STATE_TABLE_NAME = aws_dynamodb_table.crawl_state.name
+    TELEMETRY_TABLE_NAME   = aws_dynamodb_table.telemetry.name
+    SENTRY_DSN             = var.sentry_dsn_backend
+    ENVIRONMENT            = var.environment
+    VERSION                = "1.0.0"
   }
 
   tags = var.tags
