@@ -22,7 +22,8 @@ type Subscription {
 }
 
 type CrawlerCompleted 
-  @aws_iam {
+  @aws_iam 
+  @aws_api_key {
 	organisation: String
 	entity: String
 	itemsFetched: Int
