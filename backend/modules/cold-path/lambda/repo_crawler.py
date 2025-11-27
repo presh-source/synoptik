@@ -13,8 +13,7 @@ from io import BytesIO
 import boto3
 import pandas as pd
 import requests
-from aws_lambda_powertools import Logger, Metrics, Tracer
-from aws_lambda_powertools.metrics import MetricUnit
+from aws_lambda_powertools import Logger, Tracer
 from botocore.exceptions import ClientError
 
 # AppSync client for publishing completion events
@@ -35,8 +34,7 @@ SLEEP_INTERVAL = float(os.environ.get("SLEEP_INTERVAL", "0.1"))
 # Initialize Powertools
 logger = Logger(service=f"{PROJECT_NAME}-crawler")
 tracer = Tracer(service=f"{PROJECT_NAME}-crawler")
-metrics = Metrics(namespace=f"{PROJECT_NAME.title()}/ColdPath", service="crawler")
-metrics.add_dimension(name="CrawlerType", value="repo")
+
 
 # AWS clients
 dynamodb = boto3.resource("dynamodb")
@@ -57,9 +55,6 @@ def get_last_processed_id() -> int:
         if "Item" in response:
             last_id = int(response["Item"].get("last_processed_id", 0))
             logger.info("Retrieved last processed ID", extra={"last_id": last_id})
-            metrics.add_metric(
-                name="LastProcessedId", unit=MetricUnit.Count, value=last_id
-            )
             return last_id
 
         logger.warning("No bookmark found, starting from 0")
@@ -88,7 +83,6 @@ def update_bookmark(last_id: int, total_processed: int) -> None:
             "Updated bookmark",
             extra={"last_id": last_id, "total_processed": total_processed},
         )
-        metrics.add_metric(name="BookmarkUpdated", unit=MetricUnit.Count, value=1)
 
     except ClientError as e:
         logger.error("Failed to update DynamoDB bookmark", extra={"error": str(e)})
@@ -159,34 +153,20 @@ def save_to_s3_parquet(repositories: list[dict], start_id: int, end_id: int) -> 
                 "size_bytes": len(parquet_buffer.getvalue()),
             },
         )
-        metrics.add_metric(
-            name="ItemsCrawled", unit=MetricUnit.Count, value=len(repositories)
-        )
-        metrics.add_metric(
-            name="RepositoriesSaved", unit=MetricUnit.Count, value=len(repositories)
-        )
-        metrics.add_metric(
-            name="ParquetFileSize",
-            unit=MetricUnit.Bytes,
-            value=len(parquet_buffer.getvalue()),
-        )
 
     except Exception as e:
         logger.error("Failed to write to S3", extra={"error": str(e), "s3_key": s3_key})
-        metrics.add_metric(name="S3WriteErrors", unit=MetricUnit.Count, value=1)
         raise
 
 
 def handle_response(response, retry_count, max_retries):
     if response.status_code == 200:
-        metrics.add_metric(name="APIRequestsSuccess", unit=MetricUnit.Count, value=1)
         return response.json(), True, False
     if response.status_code == 403:
         logger.warning(
             "Rate limit exceeded",
             extra={"rate_limit_reset": response.headers.get("X-RateLimit-Reset")},
         )
-        metrics.add_metric(name="RateLimitExceeded", unit=MetricUnit.Count, value=1)
         if retry_count < max_retries:
             backoff_time = 2**retry_count
             logger.info(
@@ -200,7 +180,6 @@ def handle_response(response, retry_count, max_retries):
         logger.warning(
             "GitHub API server error", extra={"status_code": response.status_code}
         )
-        metrics.add_metric(name="APIServerErrors", unit=MetricUnit.Count, value=1)
         if retry_count < max_retries:
             backoff_time = 2**retry_count
             logger.info(
@@ -217,7 +196,6 @@ def handle_response(response, retry_count, max_retries):
             "body": response.text[:500],
         },
     )
-    metrics.add_metric(name="APIRequestsError", unit=MetricUnit.Count, value=1)
     return None, True, False
 
 
@@ -240,7 +218,6 @@ def fetch_repositories(
     result = None
     for retry_count in range(max_retries + 1):
         try:
-            metrics.add_metric(name="APIRequests", unit=MetricUnit.Count, value=1)
             response = requests.get(url, headers=headers, timeout=30)
 
             # Log rate limit info
@@ -254,11 +231,6 @@ def fetch_repositories(
                     "rate_limit_reset": rate_limit_reset,
                 },
             )
-            metrics.add_metric(
-                name="RateLimitRemaining",
-                unit=MetricUnit.Count,
-                value=int(rate_limit_remaining or 0),
-            )
 
             result, should_break, should_continue = handle_response(
                 response, retry_count, max_retries
@@ -270,7 +242,6 @@ def fetch_repositories(
 
         except requests.exceptions.Timeout:
             logger.warning("Request timeout")
-            metrics.add_metric(name="APITimeouts", unit=MetricUnit.Count, value=1)
             if retry_count < max_retries:
                 backoff_time = 2**retry_count
                 logger.info(
@@ -282,7 +253,6 @@ def fetch_repositories(
             break
         except requests.exceptions.RequestException as e:
             logger.error("Request failed", extra={"error": str(e)})
-            metrics.add_metric(name="APIRequestsError", unit=MetricUnit.Count, value=1)
             if retry_count < max_retries:
                 backoff_time = 2**retry_count
                 logger.info(
@@ -316,9 +286,6 @@ def crawl_repositories(
                 "Approaching timeout, stopping early",
                 extra={"request_number": i + 1, "total_requests": num_requests},
             )
-            metrics.add_metric(
-                name="EarlyStopDueToTimeout", unit=MetricUnit.Count, value=1
-            )
             break
 
         # Fetch repositories
@@ -333,7 +300,6 @@ def crawl_repositories(
 
         if len(repos) == 0:
             logger.info("No more repositories returned, reached end of dataset")
-            metrics.add_metric(name="DatasetEndReached", unit=MetricUnit.Count, value=1)
             break
 
         # Add to batch
@@ -366,20 +332,15 @@ def crawl_repositories(
     if batch_repos:
         save_to_s3_parquet(batch_repos, batch_start_id, current_id)
 
-    metrics.add_metric(
-        name="TotalRepositoriesFetched", unit=MetricUnit.Count, value=total_repos
-    )
     return current_id, total_repos
 
 
 @logger.inject_lambda_context(log_event=True)
 @tracer.capture_lambda_handler
-@metrics.log_metrics(capture_cold_start_metric=True)
 def lambda_handler(_event, context):
     """
     Main Lambda handler
     """
-    metrics.add_metric(name="CrawlerRuns", unit=MetricUnit.Count, value=1)
     logger.info(
         "Starting GitHub repository crawler",
         extra={
@@ -424,23 +385,17 @@ def lambda_handler(_event, context):
             # Publish completion event to AppSync
             try:
                 publish_crawler_completed(
-                    crawler_type="repo",
-                    start_id=start_id,
-                    end_id=last_id,
+                    organisation="github",
+                    entity="repository",
                     items_fetched=total_fetched,
                     total_processed=new_total,
+                    last_processed_id=last_id,
                 )
                 logger.info("Published crawler completion event to AppSync")
-                metrics.add_metric(
-                    name="AppSyncPublishSuccess", unit=MetricUnit.Count, value=1
-                )
             except Exception as e:
                 logger.error(
                     "Failed to publish to AppSync",
                     extra={"error": str(e)},
-                )
-                metrics.add_metric(
-                    name="AppSyncPublishFailure", unit=MetricUnit.Count, value=1
                 )
                 # Don't fail the crawler if AppSync publish fails
 
@@ -456,7 +411,6 @@ def lambda_handler(_event, context):
             }
 
         logger.warning("No progress made in this execution")
-        metrics.add_metric(name="NoProgressMade", unit=MetricUnit.Count, value=1)
         return {
             "statusCode": 200,
             "body": {"message": "No progress made", "start_id": start_id},
@@ -464,5 +418,4 @@ def lambda_handler(_event, context):
 
     except Exception:
         logger.exception("Fatal error in crawler")
-        metrics.add_metric(name="FatalErrors", unit=MetricUnit.Count, value=1)
         raise

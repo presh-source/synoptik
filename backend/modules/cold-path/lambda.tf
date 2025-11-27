@@ -393,6 +393,7 @@ module "telemetry_processor" {
 
   environment_variables = {
     PROJECT_NAME              = var.project_name
+    CRAWL_STATE_TABLE_NAME    = aws_dynamodb_table.crawl_state.name
     TELEMETRY_TABLE_NAME      = aws_dynamodb_table.telemetry.name
     DASHBOARD_APPSYNC_API_URL = var.dashboard_appsync_api_url
     S3_BUCKET_NAME            = var.data_lake_bucket_name

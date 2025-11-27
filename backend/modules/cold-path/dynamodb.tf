@@ -160,6 +160,14 @@ resource "aws_dynamodb_table" "telemetry" {
     projection_type = "ALL"
   }
 
+  # GSI3: Query by log_data
+  global_secondary_index {
+    name            = "LogDataIndex"
+    hash_key        = "log_data"
+    range_key       = "created_at"
+    projection_type = "ALL"
+  }
+
   point_in_time_recovery {
     enabled = true
   }

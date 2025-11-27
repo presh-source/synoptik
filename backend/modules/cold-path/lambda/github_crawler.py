@@ -119,7 +119,7 @@ def save_to_s3_parquet(
                 "count": str(len(items)),
                 "format": "parquet",
                 "compression": "snappy",
-                "crawler_type": config["entity"],
+                "entity": config["entity"],
             },
         )
 
@@ -462,8 +462,6 @@ def lambda_handler(event, context):
 
                 full_metadata = {
                     "run_id": run_id,
-                    "function_name": context.function_name,
-                    "crawler_type": config["entity"],
                     "run_metadata": {
                         "organisation": config["organisation"],
                         "entity": config["entity"],
