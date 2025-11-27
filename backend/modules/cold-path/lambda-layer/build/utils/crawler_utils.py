@@ -10,6 +10,10 @@ from botocore.exceptions import ClientError
 PROJECT_NAME = os.environ.get("PROJECT_NAME")
 CRAWL_STATE_TABLE_NAME = os.environ.get("CRAWL_STATE_TABLE_NAME")
 
+# Initialize Powertools
+logger = Logger(service=f"{PROJECT_NAME}-crawler-utils")
+tracer = Tracer(service=f"{PROJECT_NAME}-crawler-utils")
+
 # Initialize AWS clients
 dynamodb = boto3.resource("dynamodb")
 if CRAWL_STATE_TABLE_NAME:
@@ -18,9 +22,6 @@ else:
     logger.warning("CRAWL_STATE_TABLE_NAME environment variable not set")
     crawl_state_table = None
 
-# Initialize Powertools
-logger = Logger(service=f"{PROJECT_NAME}-crawler-utils")
-tracer = Tracer(service=f"{PROJECT_NAME}-crawler-utils")
 
 @tracer.capture_method
 def decode_state_key(state_key: str) -> tuple[str, str]:
