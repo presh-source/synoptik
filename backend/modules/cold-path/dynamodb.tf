@@ -143,6 +143,10 @@ resource "aws_dynamodb_table" "telemetry" {
     name = "run_id"
     type = "S"
   }
+  attribute {
+    name = "log_data"
+    type = "S"
+  }
 
   # GSI1: Query by entity type and time
   global_secondary_index {
