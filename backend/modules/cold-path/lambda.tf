@@ -354,14 +354,13 @@ module "github_crawler" {
   ]
 
   environment_variables = {
-    CRAWL_STATE_TABLE_NAME    = aws_dynamodb_table.crawl_state.name
-    DASHBOARD_APPSYNC_API_URL = var.dashboard_appsync_api_url
-    S3_BUCKET_NAME            = var.data_lake_bucket_name
-    GITHUB_TOKEN              = var.github_token
-    PROJECT_NAME              = var.project_name
-    SENTRY_DSN                = var.sentry_dsn_backend
-    ENVIRONMENT               = var.environment
-    VERSION                   = "1.0.0"
+    CRAWL_STATE_TABLE_NAME = aws_dynamodb_table.crawl_state.name
+    S3_BUCKET_NAME         = var.data_lake_bucket_name
+    GITHUB_TOKEN           = var.github_token
+    PROJECT_NAME           = var.project_name
+    SENTRY_DSN             = var.sentry_dsn_backend
+    ENVIRONMENT            = var.environment
+    VERSION                = "1.0.0"
   }
 
   tags = var.tags
@@ -393,12 +392,13 @@ module "telemetry_processor" {
   ]
 
   environment_variables = {
-    PROJECT_NAME         = var.project_name
-    TELEMETRY_TABLE_NAME = aws_dynamodb_table.telemetry.name
-    S3_BUCKET_NAME       = var.data_lake_bucket_name
-    SENTRY_DSN           = var.sentry_dsn_backend
-    ENVIRONMENT          = var.environment
-    VERSION              = "1.0.0"
+    PROJECT_NAME              = var.project_name
+    TELEMETRY_TABLE_NAME      = aws_dynamodb_table.telemetry.name
+    DASHBOARD_APPSYNC_API_URL = var.dashboard_appsync_api_url
+    S3_BUCKET_NAME            = var.data_lake_bucket_name
+    SENTRY_DSN                = var.sentry_dsn_backend
+    ENVIRONMENT               = var.environment
+    VERSION                   = "1.0.0"
   }
 
   tags = var.tags
