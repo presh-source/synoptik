@@ -426,7 +426,8 @@ module "telemetry_aggregator" {
 
   layers = [
     local.awssdkpandas_layer,
-    local.powertools_layer
+    local.powertools_layer,
+    module.crawler_dependencies.arn
   ]
 
   environment_variables = {
