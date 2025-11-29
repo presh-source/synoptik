@@ -68,9 +68,7 @@ def publish_crawler_completed(
             "itemsFetched": items_fetched,
             "totalProcessed": total_processed,
             "lastProcessedId": last_processed_id,
-            "updatedAt": datetime.now(timezone.utc)
-            .isoformat()
-            .replace("+00:00", "Z"),
+            "updatedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         }
     }
 

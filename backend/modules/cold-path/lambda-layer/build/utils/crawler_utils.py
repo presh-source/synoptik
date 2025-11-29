@@ -1,6 +1,5 @@
 import base64
 import os
-from datetime import datetime, timezone
 
 import boto3
 from aws_lambda_powertools import Logger, Tracer
@@ -46,10 +45,10 @@ def get_crawler_config(state_key: str) -> dict:
     Fetch crawler configuration from DynamoDB using the state_key.
     Returns a dictionary with configuration and current state.
     """
-    
+
     # Validate state_key format
     decode_state_key(state_key)
-    
+
     if not crawl_state_table:
         raise ValueError("CRAWL_STATE_TABLE_NAME not configured")
 
@@ -73,10 +72,15 @@ def get_crawler_config(state_key: str) -> dict:
             "requests_per_execution": int(item.get("requests_per_execution")),
             "sleep_interval": float(item.get("sleep_interval")),
         }
-        
-        logger.info(f"Loaded configuration for {config['organisation']}/{config['entity']}", extra=config)
+
+        logger.info(
+            f"Loaded configuration for {config['organisation']}/{config['entity']}",
+            extra=config,
+        )
         return config
 
     except ClientError as e:
-        logger.error("Failed to fetch configuration from DynamoDB", extra={"error": str(e)})
+        logger.error(
+            "Failed to fetch configuration from DynamoDB", extra={"error": str(e)}
+        )
         raise
