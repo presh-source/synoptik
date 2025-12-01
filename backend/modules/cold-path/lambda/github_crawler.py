@@ -405,10 +405,11 @@ def lambda_handler(event, context):
 
     if not state_key:
         logger.error("Missing state_key in event")
-        return {
-            "statusCode": 400,
-            "body": {"message": "Missing state_key in event"},
-        }
+        raise ValueError("Missing state_key in event")
+
+    # Decode state_key to get organisation and entity
+    organisation, entity = decode_state_key(state_key)
+    logger.info(f"Processing aggregation for {organisation}/{entity}")
 
     try:
         if not GITHUB_TOKEN:

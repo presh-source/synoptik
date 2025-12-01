@@ -6,6 +6,7 @@ from decimal import Decimal
 import boto3
 from aws_lambda_powertools import Logger, Tracer
 from boto3.dynamodb.conditions import Key
+from utils.crawler_utils import decode_state_key
 from utils.sentry_config import init_sentry
 
 # Initialize Sentry
@@ -49,7 +50,7 @@ def get_hour_boundary():
 
 
 @tracer.capture_method
-def query_items_by_type(crawler_type: str, entity: str, start_time: str, end_time: str):
+def query_items_by_type(entity: str, log_data: str, start_time: str, end_time: str):
     """
     Query items (requests or runs) for a crawler type within the time range.
     Uses GSI1: EntityIndex (entity + created_at)
@@ -61,7 +62,7 @@ def query_items_by_type(crawler_type: str, entity: str, start_time: str, end_tim
             IndexName="EntityIndex",
             KeyConditionExpression=Key("entity").eq(entity)
             & Key("created_at").between(start_time, end_time),
-            FilterExpression=Key("crawler_type").eq(crawler_type),
+            FilterExpression=Key("log_data").eq(log_data),
         )
 
         items.extend(response.get("Items", []))
@@ -71,7 +72,7 @@ def query_items_by_type(crawler_type: str, entity: str, start_time: str, end_tim
                 IndexName="EntityIndex",
                 KeyConditionExpression=Key("entity").eq(entity)
                 & Key("created_at").between(start_time, end_time),
-                FilterExpression=Key("crawler_type").eq(crawler_type),
+                FilterExpression=Key("log_data").eq(log_data),
                 ExclusiveStartKey=response["LastEvaluatedKey"],
             )
             items.extend(response.get("Items", []))
@@ -149,7 +150,8 @@ def calculate_run_stats(runs: list):
 
 @tracer.capture_method
 def write_aggregation(
-    crawler_type: str,
+    organisation: str,
+    entity: str,
     metric_type: str,
     period_key: str,
     stats: dict,
@@ -159,14 +161,15 @@ def write_aggregation(
     Write aggregated stats to DynamoDB.
     period_key: "HOUR#..." or "DAY#..."
     """
-    pk = f"AGG#{crawler_type.upper()}#{metric_type.upper()}"
+    pk = f"AGG#{organisation.upper()}#{entity.upper()}#{metric_type.upper()}"
     sk = period_key
 
     item = {
         "PK": pk,
         "SK": sk,
-        "entity": "aggregation",
-        "crawler_type": crawler_type,
+        "organisation": organisation,
+        "entity": entity,
+        "log_data": "aggregation",
         "metric_type": metric_type,
         "period": "day" if is_daily else "hour",
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -213,16 +216,16 @@ def write_aggregation(
 
 
 @tracer.capture_method
-def perform_daily_rollup(crawler_type: str, day_str: str):
+def perform_daily_rollup(organisation: str, entity: str, day_str: str):
     """
     Aggregate all hourly records for the day into a daily record.
     """
-    logger.info(f"Performing daily rollup for {crawler_type} on {day_str}")
+    logger.info(f"Performing daily rollup for {entity} on {day_str}")
 
     metric_types = ["retrievals", "requests", "runs"]
 
     for metric_type in metric_types:
-        pk = f"AGG#{crawler_type.upper()}#{metric_type.upper()}"
+        pk = f"AGG#{organisation.upper()}#{entity.upper()}#{metric_type.upper()}"
 
         try:
             # Query all hours for this day
@@ -278,7 +281,12 @@ def perform_daily_rollup(crawler_type: str, day_str: str):
 
             # Write daily aggregation
             write_aggregation(
-                crawler_type, metric_type, f"DAY#{day_str}", daily_stats, is_daily=True
+                organisation,
+                entity,
+                metric_type,
+                f"DAY#{day_str}",
+                daily_stats,
+                is_daily=True,
             )
 
         except Exception as e:
@@ -287,61 +295,67 @@ def perform_daily_rollup(crawler_type: str, day_str: str):
 
 @logger.inject_lambda_context
 @tracer.capture_lambda_handler
-def lambda_handler(_event, _context):
+def lambda_handler(event, _context):
     """
-    Main handler for hourly aggregation.
+    Main Lambda handler
+    Expects event to contain "state_key" (encoded)
     """
-    logger.info("Starting hourly aggregation")
+    state_key = event.get("state_key")
 
-    hour_str, start_time, end_time, is_end_of_day = get_hour_boundary()
-    logger.info(f"Processing hour: {hour_str} ({start_time} to {end_time})")
+    if not state_key:
+        logger.error("Missing state_key in event")
+        raise ValueError("Missing state_key in event")
 
-    crawler_types = ["repository", "user"]
+    # Decode state_key to get organisation and entity
+    organisation, entity = decode_state_key(state_key)
+    logger.info(f"Processing aggregation for {organisation}/{entity}")
 
-    for crawler_type in crawler_types:
-        try:
-            # 1. Process Requests
-            requests = query_items_by_type(
-                crawler_type, "request", start_time, end_time
+    try:
+        hour_str, start_time, end_time, is_end_of_day = get_hour_boundary()
+        logger.info(f"Processing hour: {hour_str} ({start_time} to {end_time})")
+
+        # 1. Process Requests
+        requests = query_items_by_type(entity, "request", start_time, end_time)
+        req_stats = None
+
+        if requests:
+            logger.info(f"Found {len(requests)} requests for {organisation}/{entity}")
+            req_stats = calculate_request_stats(requests)
+
+            # Write Retrieval Stats
+            write_aggregation(
+                organisation, entity, "retrievals", f"HOUR#{hour_str}", req_stats
             )
-            req_stats = None
 
-            if requests:
-                logger.info(f"Found {len(requests)} requests for {crawler_type}")
-                req_stats = calculate_request_stats(requests)
+            # Write Request Stats (with errors)
+            write_aggregation(
+                organisation, entity, "requests", f"HOUR#{hour_str}", req_stats
+            )
+        else:
+            logger.info(f"No requests for {organisation}/{entity}")
 
-                # Write Retrieval Stats
-                write_aggregation(
-                    crawler_type, "retrievals", f"HOUR#{hour_str}", req_stats
-                )
+        # 2. Process Runs
+        runs = query_items_by_type(entity, "run", start_time, end_time)
+        run_stats = None
 
-                # Write Request Stats (with errors)
-                write_aggregation(
-                    crawler_type, "requests", f"HOUR#{hour_str}", req_stats
-                )
-            else:
-                logger.info(f"No requests for {crawler_type}")
+        if runs:
+            logger.info(f"Found {len(runs)} runs for {organisation}/{entity}")
+            run_stats = calculate_run_stats(runs)
 
-            # 2. Process Runs
-            runs = query_items_by_type(crawler_type, "run", start_time, end_time)
-            run_stats = None
+            # Write Run Stats
+            write_aggregation(
+                organisation, entity, "runs", f"HOUR#{hour_str}", run_stats
+            )
+        else:
+            logger.info(f"No runs for {organisation}/{entity}")
 
-            if runs:
-                logger.info(f"Found {len(runs)} runs for {crawler_type}")
-                run_stats = calculate_run_stats(runs)
+        # 3 Daily Rollup (if end of day)
+        if is_end_of_day:
+            day_str = hour_str[:10]  # YYYY-MM-DD
+            perform_daily_rollup(organisation, entity, day_str)
 
-                # Write Run Stats
-                write_aggregation(crawler_type, "runs", f"HOUR#{hour_str}", run_stats)
-            else:
-                logger.info(f"No runs for {crawler_type}")
-
-            # 3 Daily Rollup (if end of day)
-            if is_end_of_day:
-                day_str = hour_str[:10]  # YYYY-MM-DD
-                perform_daily_rollup(crawler_type, day_str)
-
-        except Exception as e:
-            logger.error(f"Error processing {crawler_type}: {e}")
-            # Continue to next crawler type instead of failing completely
+    except Exception as e:
+        logger.error(f"Error processing {state_key}: {e}")
+        # Continue to next crawler instead of failing completely
 
     logger.info("Aggregation complete")

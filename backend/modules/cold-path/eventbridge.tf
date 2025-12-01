@@ -144,32 +144,68 @@ resource "aws_lambda_permission" "allow_eventbridge_telemetry_processor" {
   source_arn    = aws_cloudwatch_event_rule.crawler_events.arn
 }
 
-# --------------------------------------------------------------------------------------------------
-# Aggregator Hourly Schedule
-# --------------------------------------------------------------------------------------------------
+# # --------------------------------------------------------------------------------------------------
+# # Aggregator Hourly Schedules
+# # --------------------------------------------------------------------------------------------------
 
-# resource "aws_cloudwatch_event_rule" "aggregator_schedule" {
-#   name                = "${var.environment}-${var.project_name}-aggregator-schedule"
-#   description         = "Trigger hourly aggregation of crawler metrics"
+# # GitHub User Aggregator Schedule
+# resource "aws_cloudwatch_event_rule" "aggregator_user_schedule" {
+#   name                = "${var.environment}-${var.project_name}-aggregator-user-schedule"
+#   description         = "Trigger hourly aggregation for GitHub user crawler metrics"
 #   schedule_expression = "cron(0 * * * ? *)" # Every hour at minute 0
 
 #   tags = var.tags
 # }
 
-# resource "aws_cloudwatch_event_target" "aggregator_lambda" {
-#   rule      = aws_cloudwatch_event_rule.aggregator_schedule.name
-#   target_id = "AggregatorLambdaTarget"
+# resource "aws_cloudwatch_event_target" "aggregator_user_lambda" {
+#   rule      = aws_cloudwatch_event_rule.aggregator_user_schedule.name
+#   target_id = "AggregatorUserLambdaTarget"
 #   arn       = module.aggregator.function_arn
+
+#   input = jsonencode({
+#     state_key = "U1RBVEUjZ2l0aHViI3VzZXI="
+#   })
 
 #   dead_letter_config {
 #     arn = aws_sqs_queue.telemetry_aggregator_dlq.arn
 #   }
 # }
 
-# resource "aws_lambda_permission" "allow_eventbridge_aggregator" {
-#   statement_id  = "AllowExecutionFromEventBridgeAggregator"
+# resource "aws_lambda_permission" "allow_eventbridge_aggregator_user" {
+#   statement_id  = "AllowExecutionFromEventBridgeAggregatorUser"
 #   action        = "lambda:InvokeFunction"
 #   function_name = module.aggregator.function_name
 #   principal     = "events.amazonaws.com"
-#   source_arn    = aws_cloudwatch_event_rule.aggregator_schedule.arn
+#   source_arn    = aws_cloudwatch_event_rule.aggregator_user_schedule.arn
+# }
+
+# # GitHub Repository Aggregator Schedule
+# resource "aws_cloudwatch_event_rule" "aggregator_repository_schedule" {
+#   name                = "${var.environment}-${var.project_name}-aggregator-repository-schedule"
+#   description         = "Trigger hourly aggregation for GitHub repository crawler metrics"
+#   schedule_expression = "cron(0 * * * ? *)" # Every hour at minute 0
+
+#   tags = var.tags
+# }
+
+# resource "aws_cloudwatch_event_target" "aggregator_repository_lambda" {
+#   rule      = aws_cloudwatch_event_rule.aggregator_repository_schedule.name
+#   target_id = "AggregatorRepositoryLambdaTarget"
+#   arn       = module.aggregator.function_arn
+
+#   input = jsonencode({
+#     state_key = "U1RBVEUjZ2l0aHViI3JlcG9zaXRvcnk="
+#   })
+
+#   dead_letter_config {
+#     arn = aws_sqs_queue.telemetry_aggregator_dlq.arn
+#   }
+# }
+
+# resource "aws_lambda_permission" "allow_eventbridge_aggregator_repository" {
+#   statement_id  = "AllowExecutionFromEventBridgeAggregatorRepository"
+#   action        = "lambda:InvokeFunction"
+#   function_name = module.aggregator.function_name
+#   principal     = "events.amazonaws.com"
+#   source_arn    = aws_cloudwatch_event_rule.aggregator_repository_schedule.arn
 # }
