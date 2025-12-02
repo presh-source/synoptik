@@ -128,9 +128,7 @@ def query_cloudwatch_logs(log_group_name: str, start_time: str, end_time: str):
     start_ms = int(datetime.fromisoformat(start_time).timestamp() * 1000)
     end_ms = int(datetime.fromisoformat(end_time).timestamp() * 1000)
 
-    filter_pattern = (
-        "[report_type=REPORT, request_id_label=RequestId:, request_id, ...]"
-    )
+    filter_pattern = '[report_type="REPORT", request_id_label="RequestId:", ...]'
 
     try:
         results = []
@@ -263,10 +261,10 @@ def calculate_run_stats(runs: list, cloudwatch_metrics: list = None):
             m["duration_ms"] for m in cloudwatch_metrics if m.get("duration_ms")
         ]
         if lambda_durations:
-            stats["lambda_total_duration"] = sum(lambda_durations)
-            stats["lambda_avg_duration"] = sum(lambda_durations) / len(lambda_durations)
-            stats["lambda_min_duration"] = min(lambda_durations)
-            stats["lambda_max_duration"] = max(lambda_durations)
+            stats["total_duration"] = sum(lambda_durations)
+            stats["avg_duration"] = sum(lambda_durations) / len(lambda_durations)
+            stats["min_duration"] = min(lambda_durations)
+            stats["max_duration"] = max(lambda_durations)
 
         # Billed duration
         billed_durations = [
@@ -275,10 +273,8 @@ def calculate_run_stats(runs: list, cloudwatch_metrics: list = None):
             if m.get("billed_duration_ms")
         ]
         if billed_durations:
-            stats["lambda_total_billed_duration"] = sum(billed_durations)
-            stats["lambda_avg_billed_duration"] = sum(billed_durations) / len(
-                billed_durations
-            )
+            stats["total_billed_duration"] = sum(billed_durations)
+            stats["avg_billed_duration"] = sum(billed_durations) / len(billed_durations)
 
         # Memory usage
         max_memory_used = [
@@ -287,18 +283,16 @@ def calculate_run_stats(runs: list, cloudwatch_metrics: list = None):
             if m.get("max_memory_used_mb")
         ]
         if max_memory_used:
-            stats["lambda_avg_memory_used"] = sum(max_memory_used) / len(
-                max_memory_used
-            )
-            stats["lambda_max_memory_used"] = max(max_memory_used)
-            stats["lambda_min_memory_used"] = min(max_memory_used)
+            stats["avg_memory_used"] = sum(max_memory_used) / len(max_memory_used)
+            stats["max_memory_used"] = max(max_memory_used)
+            stats["min_memory_used"] = min(max_memory_used)
 
         # Memory size (should be constant)
         memory_sizes = [
             m["memory_size_mb"] for m in cloudwatch_metrics if m.get("memory_size_mb")
         ]
         if memory_sizes:
-            stats["lambda_memory_size"] = memory_sizes[0]  # Should be the same for all
+            stats["memory_size"] = memory_sizes[0]  # Should be the same for all
 
         # Init duration (cold starts)
         init_durations = [
@@ -307,15 +301,13 @@ def calculate_run_stats(runs: list, cloudwatch_metrics: list = None):
             if m.get("init_duration_ms")
         ]
         if init_durations:
-            stats["lambda_cold_starts"] = len(init_durations)
-            stats["lambda_cold_start_rate"] = (len(init_durations) / cw_count) * 100
-            stats["lambda_avg_init_duration"] = sum(init_durations) / len(
-                init_durations
-            )
-            stats["lambda_max_init_duration"] = max(init_durations)
+            stats["cold_starts"] = len(init_durations)
+            stats["cold_start_rate"] = (len(init_durations) / cw_count) * 100
+            stats["avg_init_duration"] = sum(init_durations) / len(init_durations)
+            stats["max_init_duration"] = max(init_durations)
         else:
-            stats["lambda_cold_starts"] = 0
-            stats["lambda_cold_start_rate"] = 0
+            stats["cold_starts"] = 0
+            stats["cold_start_rate"] = 0
 
     return stats
 
@@ -378,20 +370,20 @@ def write_aggregation(
 
         # Add optional CloudWatch metrics
         optional_fields = [
-            "lambda_total_duration",
-            "lambda_avg_duration",
-            "lambda_min_duration",
-            "lambda_max_duration",
-            "lambda_total_billed_duration",
-            "lambda_avg_billed_duration",
-            "lambda_avg_memory_used",
-            "lambda_max_memory_used",
-            "lambda_min_memory_used",
-            "lambda_memory_size",
-            "lambda_cold_starts",
-            "lambda_cold_start_rate",
-            "lambda_avg_init_duration",
-            "lambda_max_init_duration",
+            "total_duration",
+            "avg_duration",
+            "min_duration",
+            "max_duration",
+            "total_billed_duration",
+            "avg_billed_duration",
+            "avg_memory_used",
+            "max_memory_used",
+            "min_memory_used",
+            "memory_size",
+            "cold_starts",
+            "cold_start_rate",
+            "avg_init_duration",
+            "max_init_duration",
         ]
         for field in optional_fields:
             if field in stats:
