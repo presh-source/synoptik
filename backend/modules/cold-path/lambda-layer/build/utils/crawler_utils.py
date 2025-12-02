@@ -71,6 +71,7 @@ def get_crawler_config(state_key: str) -> dict:
             "endpoint": item.get("endpoint"),
             "requests_per_execution": int(item.get("requests_per_execution")),
             "sleep_interval": float(item.get("sleep_interval")),
+            "log_group_name": item.get("log_group_name"),
         }
 
         logger.info(

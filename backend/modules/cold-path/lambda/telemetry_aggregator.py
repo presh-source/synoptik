@@ -1,12 +1,13 @@
 import json
 import os
+import re
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 import boto3
 from aws_lambda_powertools import Logger, Tracer
 from boto3.dynamodb.conditions import Key
-from utils.crawler_utils import decode_state_key
+from utils.crawler_utils import get_crawler_config
 from utils.sentry_config import init_sentry
 
 # Initialize Sentry
@@ -16,7 +17,6 @@ init_sentry()
 PROJECT_NAME = os.environ["PROJECT_NAME"]
 TELEMETRY_TABLE_NAME = os.environ["TELEMETRY_TABLE_NAME"]
 
-
 # Initialize Powertools
 logger = Logger(service=f"{PROJECT_NAME}-github-aggregator")
 tracer = Tracer(service=f"{PROJECT_NAME}-github-aggregator")
@@ -25,6 +25,7 @@ tracer = Tracer(service=f"{PROJECT_NAME}-github-aggregator")
 # Initialize AWS clients
 dynamodb = boto3.resource("dynamodb")
 telemetry_table = dynamodb.Table(TELEMETRY_TABLE_NAME)
+logs_client = boto3.client("logs")
 
 
 def get_hour_boundary():
@@ -117,9 +118,115 @@ def calculate_request_stats(requests: list):
 
 
 @tracer.capture_method
-def calculate_run_stats(runs: list):
+def query_cloudwatch_logs(log_group_name: str, start_time: str, end_time: str):
+    """
+    Query CloudWatch Logs for Lambda REPORT lines within the time range.
+    Returns parsed metrics from REPORT lines.
+    """
+
+    # Convert ISO timestamps to milliseconds since epoch
+    start_ms = int(datetime.fromisoformat(start_time).timestamp() * 1000)
+    end_ms = int(datetime.fromisoformat(end_time).timestamp() * 1000)
+
+    filter_pattern = (
+        "[report_type=REPORT, request_id_label=RequestId:, request_id, ...]"
+    )
+
+    try:
+        results = []
+        response = logs_client.filter_log_events(
+            logGroupName=log_group_name,
+            startTime=start_ms,
+            endTime=end_ms,
+            filterPattern=filter_pattern,
+        )
+
+        for event in response.get("events", []):
+            message = event.get("message", "")
+            parsed = parse_report_line(message)
+            if parsed:
+                results.append(parsed)
+
+        # Handle pagination
+        while "nextToken" in response:
+            response = logs_client.filter_log_events(
+                logGroupName=log_group_name,
+                startTime=start_ms,
+                endTime=end_ms,
+                filterPattern=filter_pattern,
+                nextToken=response["nextToken"],
+            )
+            for event in response.get("events", []):
+                message = event.get("message", "")
+                parsed = parse_report_line(message)
+                if parsed:
+                    results.append(parsed)
+
+        logger.info(f"Found {len(results)} REPORT lines from CloudWatch Logs")
+        return results
+
+    except Exception as e:
+        logger.error(f"Failed to query CloudWatch Logs: {e}")
+        return []
+
+
+def parse_report_line(message: str):
+    """
+    Parse a Lambda REPORT line to extract metrics.
+    Example:
+    REPORT RequestId: 078976cf-2340-498e-8dd9-ef1797447d8f	Duration: 3203.88 ms	Billed Duration: 6852 ms	Memory Size: 256 MB	Max Memory Used: 232 MB	Init Duration: 3647.56 ms
+    """
+
+    if not message.startswith("REPORT"):
+        return None
+
+    try:
+        # Extract RequestId
+        request_id_match = re.search(r"RequestId: ([a-f0-9-]+)", message)
+        request_id = request_id_match.group(1) if request_id_match else None
+
+        # Extract Duration (ms)
+        duration_match = re.search(r"Duration: ([0-9.]+) ms", message)
+        duration_ms = float(duration_match.group(1)) if duration_match else None
+
+        # Extract Billed Duration (ms)
+        billed_match = re.search(r"Billed Duration: ([0-9.]+) ms", message)
+        billed_duration_ms = float(billed_match.group(1)) if billed_match else None
+
+        # Extract Memory Size (MB)
+        memory_size_match = re.search(r"Memory Size: ([0-9]+) MB", message)
+        memory_size_mb = int(memory_size_match.group(1)) if memory_size_match else None
+
+        # Extract Max Memory Used (MB)
+        max_memory_match = re.search(r"Max Memory Used: ([0-9]+) MB", message)
+        max_memory_used_mb = (
+            int(max_memory_match.group(1)) if max_memory_match else None
+        )
+
+        # Extract Init Duration (ms) - may not always be present
+        init_duration_match = re.search(r"Init Duration: ([0-9.]+) ms", message)
+        init_duration_ms = (
+            float(init_duration_match.group(1)) if init_duration_match else None
+        )
+
+        return {
+            "request_id": request_id,
+            "duration_ms": duration_ms,
+            "billed_duration_ms": billed_duration_ms,
+            "memory_size_mb": memory_size_mb,
+            "max_memory_used_mb": max_memory_used_mb,
+            "init_duration_ms": init_duration_ms,
+        }
+    except Exception as e:
+        logger.warning(f"Failed to parse REPORT line: {message}. Error: {e}")
+        return None
+
+
+@tracer.capture_method
+def calculate_run_stats(runs: list, cloudwatch_metrics: list = None):
     """
     Calculate metrics from a list of runs.
+    Optionally include CloudWatch metrics from REPORT lines.
     """
     if not runs:
         return None
@@ -139,13 +246,78 @@ def calculate_run_stats(runs: list):
     items = [float(r.get("retrieval", 0)) for r in runs]
     total_items = sum(items)
 
-    return {
+    stats = {
         "count": count,
         "total_duration": total_duration,
         "avg_duration": avg_duration,
         "total_size": total_size,
         "total_items": total_items,
     }
+
+    # Add CloudWatch metrics if available
+    if cloudwatch_metrics:
+        cw_count = len(cloudwatch_metrics)
+
+        # Lambda execution duration
+        lambda_durations = [
+            m["duration_ms"] for m in cloudwatch_metrics if m.get("duration_ms")
+        ]
+        if lambda_durations:
+            stats["lambda_total_duration"] = sum(lambda_durations)
+            stats["lambda_avg_duration"] = sum(lambda_durations) / len(lambda_durations)
+            stats["lambda_min_duration"] = min(lambda_durations)
+            stats["lambda_max_duration"] = max(lambda_durations)
+
+        # Billed duration
+        billed_durations = [
+            m["billed_duration_ms"]
+            for m in cloudwatch_metrics
+            if m.get("billed_duration_ms")
+        ]
+        if billed_durations:
+            stats["lambda_total_billed_duration"] = sum(billed_durations)
+            stats["lambda_avg_billed_duration"] = sum(billed_durations) / len(
+                billed_durations
+            )
+
+        # Memory usage
+        max_memory_used = [
+            m["max_memory_used_mb"]
+            for m in cloudwatch_metrics
+            if m.get("max_memory_used_mb")
+        ]
+        if max_memory_used:
+            stats["lambda_avg_memory_used"] = sum(max_memory_used) / len(
+                max_memory_used
+            )
+            stats["lambda_max_memory_used"] = max(max_memory_used)
+            stats["lambda_min_memory_used"] = min(max_memory_used)
+
+        # Memory size (should be constant)
+        memory_sizes = [
+            m["memory_size_mb"] for m in cloudwatch_metrics if m.get("memory_size_mb")
+        ]
+        if memory_sizes:
+            stats["lambda_memory_size"] = memory_sizes[0]  # Should be the same for all
+
+        # Init duration (cold starts)
+        init_durations = [
+            m["init_duration_ms"]
+            for m in cloudwatch_metrics
+            if m.get("init_duration_ms")
+        ]
+        if init_durations:
+            stats["lambda_cold_starts"] = len(init_durations)
+            stats["lambda_cold_start_rate"] = (len(init_durations) / cw_count) * 100
+            stats["lambda_avg_init_duration"] = sum(init_durations) / len(
+                init_durations
+            )
+            stats["lambda_max_init_duration"] = max(init_durations)
+        else:
+            stats["lambda_cold_starts"] = 0
+            stats["lambda_cold_start_rate"] = 0
+
+    return stats
 
 
 @tracer.capture_method
@@ -203,6 +375,27 @@ def write_aggregation(
                 "total_items": stats["total_items"],
             }
         )
+
+        # Add optional CloudWatch metrics
+        optional_fields = [
+            "lambda_total_duration",
+            "lambda_avg_duration",
+            "lambda_min_duration",
+            "lambda_max_duration",
+            "lambda_total_billed_duration",
+            "lambda_avg_billed_duration",
+            "lambda_avg_memory_used",
+            "lambda_max_memory_used",
+            "lambda_min_memory_used",
+            "lambda_memory_size",
+            "lambda_cold_starts",
+            "lambda_cold_start_rate",
+            "lambda_avg_init_duration",
+            "lambda_max_init_duration",
+        ]
+        for field in optional_fields:
+            if field in stats:
+                item[field] = stats[field]
 
     # Convert floats to Decimal
     item = json.loads(json.dumps(item), parse_float=Decimal)
@@ -306,8 +499,12 @@ def lambda_handler(event, _context):
         logger.error("Missing state_key in event")
         raise ValueError("Missing state_key in event")
 
-    # Decode state_key to get organisation and entity
-    organisation, entity = decode_state_key(state_key)
+    config = get_crawler_config(state_key)
+
+    organisation = config["organisation"]
+    entity = config["entity"]
+    log_group_name = config.get("log_group_name")
+
     logger.info(f"Processing aggregation for {organisation}/{entity}")
 
     try:
@@ -340,7 +537,23 @@ def lambda_handler(event, _context):
 
         if runs:
             logger.info(f"Found {len(runs)} runs for {organisation}/{entity}")
-            run_stats = calculate_run_stats(runs)
+
+            # Query CloudWatch Logs for Lambda execution metrics
+            cloudwatch_metrics = []
+            if log_group_name:
+                try:
+                    logger.info(f"Querying CloudWatch Logs: {log_group_name}")
+                    cloudwatch_metrics = query_cloudwatch_logs(
+                        log_group_name, start_time, end_time
+                    )
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to query CloudWatch Logs: {e}. Continuing without CloudWatch metrics."
+                    )
+            else:
+                logger.info("No log_group_name configured, skipping CloudWatch metrics")
+
+            run_stats = calculate_run_stats(runs, cloudwatch_metrics)
 
             # Write Run Stats
             write_aggregation(

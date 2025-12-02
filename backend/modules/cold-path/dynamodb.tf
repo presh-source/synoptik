@@ -62,6 +62,9 @@ resource "aws_dynamodb_table_item" "initial_github_repository_bookmark" {
     sleep_interval = {
       N = "0.1"
     }
+    log_group_name = {
+      S = "/aws/lambda/${var.environment}-${var.project_name}-github-crawler"
+    }
   })
 
   lifecycle {
@@ -104,6 +107,9 @@ resource "aws_dynamodb_table_item" "initial_github_user_bookmark" {
     }
     sleep_interval = {
       N = "0.1"
+    }
+    log_group_name = {
+      S = "/aws/lambda/${var.environment}-${var.project_name}-github-crawler"
     }
   })
 

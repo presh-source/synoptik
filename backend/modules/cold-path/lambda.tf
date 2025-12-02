@@ -240,6 +240,15 @@ data "aws_iam_policy_document" "telemetry_aggregator_lambda_policy" {
     ]
     resources = ["*"]
   }
+  statement {
+    effect = "Allow"
+    actions = [
+      "logs:FilterLogEvents"
+    ]
+    resources = [
+      "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/*"
+    ]
+  }
 }
 
 # ============================================================================
@@ -434,8 +443,8 @@ module "telemetry_aggregator" {
     PROJECT_NAME           = var.project_name
     CRAWL_STATE_TABLE_NAME = aws_dynamodb_table.crawl_state.name
     TELEMETRY_TABLE_NAME   = aws_dynamodb_table.telemetry.name
-    SENTRY_DSN             = var.sentry_dsn_backend
     ENVIRONMENT            = var.environment
+    SENTRY_DSN             = var.sentry_dsn_backend
     VERSION                = "1.0.0"
   }
 
