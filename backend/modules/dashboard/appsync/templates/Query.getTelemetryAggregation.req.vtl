@@ -1,13 +1,20 @@
 ## Build the partition key for aggregated data
 #set($pk = "AGG#${ctx.args.organisation.toUpperCase()}#${ctx.args.entity.toUpperCase()}#${ctx.args.metricType.toUpperCase()}")
 
-## Parse ISO timestamps to extract hour boundaries
-#set($startDate = $util.time.parseISO8601($ctx.args.start))
-#set($endDate = $util.time.parseISO8601($ctx.args.end))
+## Extract the hour component from ISO timestamps
+## Input: "2025-12-03T05:51:42.000Z"
+## Output: "HOUR#2025-12-03-05"
+#set($startParts = $ctx.args.start.split("T"))
+#set($startDatePart = $startParts[0])
+#set($startTimePart = $startParts[1])
+#set($startHour = $startTimePart.split(":")[0])
+#set($startSK = "HOUR#${startDatePart}-${startHour}")
 
-## Format to HOUR# prefix (e.g., "HOUR#2025-12-03-05")
-#set($startSK = "HOUR#${startDate.substring(0, 13)}")
-#set($endSK = "HOUR#${endDate.substring(0, 13)}")
+#set($endParts = $ctx.args.end.split("T"))
+#set($endDatePart = $endParts[0])
+#set($endTimePart = $endParts[1])
+#set($endHour = $endTimePart.split(":")[0])
+#set($endSK = "HOUR#${endDatePart}-${endHour}")
 
 {
     "version": "2017-02-28",
