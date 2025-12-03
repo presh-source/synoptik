@@ -40,3 +40,52 @@ input CrawlerCompletedInput {
   totalProcessed: Int!
   updatedAt: AWSDateTime!
 }
+
+type TelemetryAggregation @aws_iam @aws_api_key {
+  organisation: String
+  entity: String
+  metricType: String
+  period: String
+  createdAt: AWSDateTime
+  count: Int
+  
+  # Retrieval Metrics
+  totalRetrieval: Float
+  avgRetrieval: Float
+  minRetrieval: Float
+  maxRetrieval: Float
+  
+  # Request Metrics
+  errorCount: Int
+  errorRate: Float
+  
+  # Run Metrics
+  totalDuration: Float
+  avgDuration: Float
+  totalSize: Float
+  totalItems: Float
+  
+  # CloudWatch Metrics (Optional)
+  minDuration: Float
+  maxDuration: Float
+  totalBilledDuration: Float
+  avgBilledDuration: Float
+  avgMemoryUsed: Float
+  maxMemoryUsed: Float
+  minMemoryUsed: Float
+  memorySize: Int
+  coldStarts: Int
+  coldStartRate: Float
+  avgInitDuration: Float
+  maxInitDuration: Float
+}
+
+extend type Query {
+  getTelemetryAggregation(
+    organisation: String!
+    entity: String!
+    metricType: String!
+    start: String
+    end: String
+  ): [TelemetryAggregation]
+}

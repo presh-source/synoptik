@@ -1,0 +1,20 @@
+{
+    "version": "2017-02-28",
+    "operation": "Query",
+    "index": "EntityIndex",
+    "query": {
+        "expression": "entity = :entity AND created_at BETWEEN :start AND :end",
+        "expressionValues": {
+            ":entity": { "S": "${ctx.args.entity}" },
+            ":start": { "S": "${ctx.args.start}" },
+            ":end": { "S": "${ctx.args.end}" }
+        }
+    },
+    "filter": {
+        "expression": "organisation = :organisation AND metric_type = :metricType",
+        "expressionValues": {
+            ":organisation": { "S": "${ctx.args.organisation}" },
+            ":metricType": { "S": "${ctx.args.metricType}" }
+        }
+    }
+}
