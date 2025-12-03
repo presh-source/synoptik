@@ -1,18 +1,20 @@
-#set($pk = "AGG#${ctx.args.organisation.toUpperCase()}#${ctx.args.entity.toUpperCase()}#${ctx.args.metricType.toUpperCase()}")
-#set($startMillis = $util.time.parseISO8601ToEpochMilli($ctx.args.start))
-#set($endMillis = $util.time.parseISO8601ToEpochMilli($ctx.args.end))
-#set($startSK = "HOUR#" + $util.time.epochMilliToString($startMillis, "yyyy-MM-dd-HH"))
-#set($endSK = "HOUR#" + $util.time.epochMilliToString($endMillis, "yyyy-MM-dd-HH"))
-
 {
     "version": "2017-02-28",
     "operation": "Query",
+    "index": "EntityIndex",
     "query": {
-        "expression": "PK = :pk AND SK BETWEEN :startSK AND :endSK",
+        "expression": "entity = :entity AND created_at BETWEEN :start AND :end",
         "expressionValues": {
-            ":pk": { "S": "$pk" },
-            ":startSK": { "S": "$startSK" },
-            ":endSK": { "S": "$endSK" }
+            ":entity": { "S": "${ctx.args.entity}" },
+            ":start": { "S": "${ctx.args.start}" },
+            ":end": { "S": "${ctx.args.end}" }
+        }
+    },
+    "filter": {
+        "expression": "organisation = :organisation AND metric_type = :metricType",
+        "expressionValues": {
+            ":organisation": { "S": "${ctx.args.organisation}" },
+            ":metricType": { "S": "${ctx.args.metricType}" }
         }
     }
 }
