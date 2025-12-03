@@ -12,24 +12,37 @@ interface TelemetryChartsProps {
 export default function TelemetryCharts({ organisation, entity }: TelemetryChartsProps) {
     const theme = useTheme();
 
-    // Calculate time range (last 24 hours)
+    // Calculate time range (last 6 hours for better performance)
     const end = new Date().toISOString();
-    const start = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const start = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
 
-    const { data, loading } = useQuery(GET_DASHBOARD_METRICS, {
+    const { data, loading, error } = useQuery(GET_DASHBOARD_METRICS, {
         variables: {
             organisation,
             entity,
             start,
             end
         },
-        fetchPolicy: 'network-only',
+        fetchPolicy: 'cache-first', // Use cache to avoid repeated slow queries
     });
 
     if (loading) {
         return (
-            <Box display="flex" justifyContent="center" p={4}>
+            <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" p={4}>
                 <CircularProgress />
+                <Typography variant="body2" color="text.secondary" mt={2}>
+                    Loading telemetry data...
+                </Typography>
+            </Box>
+        );
+    }
+
+    if (error) {
+        return (
+            <Box display="flex" justifyContent="center" p={4}>
+                <Typography variant="body1" color="error">
+                    Error loading telemetry data: {error.message}
+                </Typography>
             </Box>
         );
     }
@@ -37,6 +50,19 @@ export default function TelemetryCharts({ organisation, entity }: TelemetryChart
     const retrievals = data?.retrievals || [];
     const requests = data?.requests || [];
     const runs = data?.runs || [];
+
+    // Check if we have any data
+    const hasData = retrievals.length > 0 || requests.length > 0 || runs.length > 0;
+
+    if (!hasData) {
+        return (
+            <Box display="flex" justifyContent="center" p={4}>
+                <Typography variant="body1" color="text.secondary">
+                    No telemetry data available for the last 6 hours. Data will appear after the next aggregation cycle.
+                </Typography>
+            </Box>
+        );
+    }
 
     // Sort by createdAt
     const sortedRetrievals = [...retrievals].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
@@ -49,7 +75,7 @@ export default function TelemetryCharts({ organisation, entity }: TelemetryChart
             <Grid item xs={12} lg={6}>
                 <Card sx={{ height: '100%', minHeight: 400 }}>
                     <CardContent>
-                        <Typography variant="h6" gutterBottom>Items Retrieved (Last 24h)</Typography>
+                        <Typography variant="h6" gutterBottom>Items Retrieved (Last 6h)</Typography>
                         <ResponsiveContainer width="100%" height={300}>
                             <LineChart data={sortedRetrievals}>
                                 <CartesianGrid strokeDasharray="3 3" />

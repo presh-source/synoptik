@@ -1,20 +1,23 @@
+## Build the partition key for aggregated data
+#set($pk = "AGG#${ctx.args.organisation.toUpperCase()}#${ctx.args.entity.toUpperCase()}#${ctx.args.metricType.toUpperCase()}")
+
+## Parse ISO timestamps to extract hour boundaries
+#set($startDate = $util.time.parseISO8601($ctx.args.start))
+#set($endDate = $util.time.parseISO8601($ctx.args.end))
+
+## Format to HOUR# prefix (e.g., "HOUR#2025-12-03-05")
+#set($startSK = "HOUR#${startDate.substring(0, 13)}")
+#set($endSK = "HOUR#${endDate.substring(0, 13)}")
+
 {
     "version": "2017-02-28",
     "operation": "Query",
-    "index": "EntityIndex",
     "query": {
-        "expression": "entity = :entity AND created_at BETWEEN :start AND :end",
+        "expression": "PK = :pk AND SK BETWEEN :startSK AND :endSK",
         "expressionValues": {
-            ":entity": { "S": "${ctx.args.entity}" },
-            ":start": { "S": "${ctx.args.start}" },
-            ":end": { "S": "${ctx.args.end}" }
-        }
-    },
-    "filter": {
-        "expression": "organisation = :organisation AND metric_type = :metricType",
-        "expressionValues": {
-            ":organisation": { "S": "${ctx.args.organisation}" },
-            ":metricType": { "S": "${ctx.args.metricType}" }
+            ":pk": { "S": "$pk" },
+            ":startSK": { "S": "$startSK" },
+            ":endSK": { "S": "$endSK" }
         }
     }
 }
