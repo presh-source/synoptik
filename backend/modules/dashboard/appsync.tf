@@ -83,6 +83,13 @@ module "appsync" {
       request_template  = file("${path.module}/appsync/templates/Query.getCrawlerState.req.vtl")
       response_template = file("${path.module}/appsync/templates/Query.getCrawlerState.res.vtl")
     }
+    "Query.getTelemetryAggregation" = {
+      type              = "Query"
+      field             = "getTelemetryAggregation"
+      datasource        = "TelemetryTable"
+      request_template  = file("${path.module}/appsync/templates/Query.getTelemetryAggregation.req.vtl")
+      response_template = file("${path.module}/appsync/templates/Query.getTelemetryAggregation.res.vtl")
+    }
     "Mutation.publishCrawlerCompleted" = {
       type              = "Mutation"
       field             = "publishCrawlerCompleted"
