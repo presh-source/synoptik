@@ -9,6 +9,13 @@ schema {
 
 type Query {
   getCrawlerState(organisation: String!, entity: String!): CrawlerCompleted
+  getTelemetryAggregation(
+    organisation: String!
+    entity: String!
+    metricType: String!
+    start: String
+    end: String
+  ): [TelemetryAggregation]
 }
 
 type Mutation {
@@ -78,14 +85,4 @@ type TelemetryAggregation @aws_iam @aws_api_key {
   coldStartRate: Float
   avgInitDuration: Float
   maxInitDuration: Float
-}
-
-extend type Query {
-  getTelemetryAggregation(
-    organisation: String!
-    entity: String!
-    metricType: String!
-    start: String
-    end: String
-  ): [TelemetryAggregation]
 }
