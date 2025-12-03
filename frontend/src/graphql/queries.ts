@@ -14,48 +14,44 @@ export const GET_CRAWLER_STATE = gql`
   }
 `;
 
-export const GET_TELEMETRY_AGGREGATION = gql`
-  query GetTelemetryAggregation(
+export const GET_DASHBOARD_METRICS = gql`
+  query GetDashboardMetrics(
     $organisation: String!
     $entity: String!
-    $metricType: String!
     $start: String
     $end: String
   ) {
-    getTelemetryAggregation(
+    retrievals: getTelemetryAggregation(
       organisation: $organisation
       entity: $entity
-      metricType: $metricType
+      metricType: "retrievals"
       start: $start
       end: $end
     ) {
-      organisation
-      entity
-      metricType
-      period
       createdAt
-      count
-      
-      # Retrieval Metrics
       totalRetrieval
       avgRetrieval
-      minRetrieval
-      maxRetrieval
-      
-      # Request Metrics
+    }
+    requests: getTelemetryAggregation(
+      organisation: $organisation
+      entity: $entity
+      metricType: "requests"
+      start: $start
+      end: $end
+    ) {
+      createdAt
+      count
       errorCount
-      errorRate
-      
-      # Run Metrics
-      totalDuration
+    }
+    runs: getTelemetryAggregation(
+      organisation: $organisation
+      entity: $entity
+      metricType: "runs"
+      start: $start
+      end: $end
+    ) {
+      createdAt
       avgDuration
-      totalSize
-      totalItems
-      
-      # CloudWatch Metrics
-      coldStarts
-      coldStartRate
-      avgInitDuration
       avgMemoryUsed
     }
   }

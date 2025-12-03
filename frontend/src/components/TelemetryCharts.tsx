@@ -1,7 +1,7 @@
 import { useQuery } from '@apollo/client';
 import { Box, Card, CardContent, CircularProgress, Grid, Typography, useTheme } from '@mui/material';
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { GET_TELEMETRY_AGGREGATION } from '../graphql/queries';
+import { GET_DASHBOARD_METRICS } from '../graphql/queries';
 import { formatTimestamp } from '../utils/formatting';
 
 interface TelemetryChartsProps {
@@ -16,40 +16,17 @@ export default function TelemetryCharts({ organisation, entity }: TelemetryChart
     const end = new Date().toISOString();
     const start = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-    const { data: retrievalData, loading: retrievalLoading } = useQuery(GET_TELEMETRY_AGGREGATION, {
+    const { data, loading } = useQuery(GET_DASHBOARD_METRICS, {
         variables: {
             organisation,
             entity,
-            metricType: 'retrievals',
             start,
             end
         },
         fetchPolicy: 'network-only',
     });
 
-    const { data: requestData, loading: requestLoading } = useQuery(GET_TELEMETRY_AGGREGATION, {
-        variables: {
-            organisation,
-            entity,
-            metricType: 'requests',
-            start,
-            end
-        },
-        fetchPolicy: 'network-only',
-    });
-
-    const { data: runData, loading: runLoading } = useQuery(GET_TELEMETRY_AGGREGATION, {
-        variables: {
-            organisation,
-            entity,
-            metricType: 'runs',
-            start,
-            end
-        },
-        fetchPolicy: 'network-only',
-    });
-
-    if (retrievalLoading || requestLoading || runLoading) {
+    if (loading) {
         return (
             <Box display="flex" justifyContent="center" p={4}>
                 <CircularProgress />
@@ -57,9 +34,9 @@ export default function TelemetryCharts({ organisation, entity }: TelemetryChart
         );
     }
 
-    const retrievals = retrievalData?.getTelemetryAggregation || [];
-    const requests = requestData?.getTelemetryAggregation || [];
-    const runs = runData?.getTelemetryAggregation || [];
+    const retrievals = data?.retrievals || [];
+    const requests = data?.requests || [];
+    const runs = data?.runs || [];
 
     // Sort by createdAt
     const sortedRetrievals = [...retrievals].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
