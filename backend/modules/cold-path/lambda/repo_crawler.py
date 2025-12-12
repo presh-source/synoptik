@@ -92,6 +92,25 @@ def update_bookmark(last_id: int, total_processed: int) -> None:
 @tracer.capture_method
 def save_to_s3_parquet(repositories: list[dict], start_id: int, end_id: int) -> None:
     """Save data to S3 as Parquet with partitioning"""
+    # Filter out None values as a safety measure
+    valid_repositories = [
+        repo for repo in repositories if repo is not None and isinstance(repo, dict)
+    ]
+
+    if len(valid_repositories) < len(repositories):
+        logger.warning(
+            "Filtered out invalid repositories in save_to_s3_parquet",
+            extra={
+                "total_count": len(repositories),
+                "valid_count": len(valid_repositories),
+                "filtered_count": len(repositories) - len(valid_repositories),
+            },
+        )
+
+    if not valid_repositories:
+        logger.warning("No valid repositories to save, skipping S3 write")
+        return
+
     now = datetime.now(timezone.utc)
     year = now.year
     month = f"{now.month:02d}"
@@ -103,7 +122,7 @@ def save_to_s3_parquet(repositories: list[dict], start_id: int, end_id: int) -> 
     try:
         # Flatten nested structures for Parquet
         flattened_repos = []
-        for repo in repositories:
+        for repo in valid_repositories:
             flat_repo = {
                 "id": repo.get("id"),
                 "node_id": repo.get("node_id"),
@@ -139,7 +158,7 @@ def save_to_s3_parquet(repositories: list[dict], start_id: int, end_id: int) -> 
             Metadata={
                 "start_id": str(start_id),
                 "end_id": str(end_id),
-                "count": str(len(repositories)),
+                "count": str(len(valid_repositories)),
                 "format": "parquet",
                 "compression": "snappy",
             },
@@ -148,7 +167,7 @@ def save_to_s3_parquet(repositories: list[dict], start_id: int, end_id: int) -> 
         logger.info(
             "Saved repositories to S3",
             extra={
-                "count": len(repositories),
+                "count": len(valid_repositories),
                 "s3_key": s3_key,
                 "size_bytes": len(parquet_buffer.getvalue()),
             },
@@ -302,12 +321,37 @@ def crawl_repositories(
             logger.info("No more repositories returned, reached end of dataset")
             break
 
+        # Filter out None values and invalid repositories
+        valid_repos = [
+            repo
+            for repo in repos
+            if repo is not None and isinstance(repo, dict) and "id" in repo
+        ]
+
+        if len(valid_repos) == 0:
+            logger.warning(
+                "No valid repositories in response",
+                extra={"current_id": current_id, "raw_count": len(repos)},
+            )
+            time.sleep(SLEEP_INTERVAL)
+            continue
+
+        if len(valid_repos) < len(repos):
+            logger.warning(
+                "Filtered out invalid repositories",
+                extra={
+                    "total_received": len(repos),
+                    "valid_count": len(valid_repos),
+                    "filtered_count": len(repos) - len(valid_repos),
+                },
+            )
+
         # Add to batch
-        batch_repos.extend(repos)
-        total_repos += len(repos)
+        batch_repos.extend(valid_repos)
+        total_repos += len(valid_repos)
 
         # Update current_id to the last repo ID in this batch
-        last_repo_id = repos[-1]["id"]
+        last_repo_id = valid_repos[-1]["id"]
         current_id = last_repo_id
 
         logger.debug(

@@ -75,6 +75,29 @@ def save_to_s3_parquet(
     config: dict, items: list[dict], start_id: int, end_id: int
 ) -> dict:
     """Save data to S3 as Parquet with partitioning. Returns file metadata."""
+    # Filter out None values as a safety measure
+    valid_items = [
+        item for item in items if item is not None and isinstance(item, dict)
+    ]
+
+    if len(valid_items) < len(items):
+        logger.warning(
+            "Filtered out invalid items in save_to_s3_parquet",
+            extra={
+                "total_count": len(items),
+                "valid_count": len(valid_items),
+                "filtered_count": len(items) - len(valid_items),
+            },
+        )
+
+    if not valid_items:
+        logger.warning("No valid items to save, skipping S3 write")
+        return {
+            "s3_key": "",
+            "size": 0,
+            "row_count": 0,
+        }
+
     now = datetime.now(timezone.utc)
     year = now.year
     month = f"{now.month:02d}"
@@ -88,7 +111,7 @@ def save_to_s3_parquet(
     try:
         # Flatten nested structures based on type
         flattened_items = []
-        for item in items:
+        for item in valid_items:
             if config["entity"] == "repository":
                 flattened_items.append(flatten_repository(item))
             else:
@@ -116,7 +139,7 @@ def save_to_s3_parquet(
             Metadata={
                 "start_id": str(start_id),
                 "end_id": str(end_id),
-                "count": str(len(items)),
+                "count": str(len(valid_items)),
                 "format": "parquet",
                 "compression": "snappy",
                 "entity": config["entity"],
@@ -126,7 +149,7 @@ def save_to_s3_parquet(
         logger.info(
             "Saved to S3",
             extra={
-                "count": len(items),
+                "count": len(valid_items),
                 "s3_key": s3_key,
                 "size_bytes": len(parquet_buffer.getvalue()),
             },
@@ -135,7 +158,7 @@ def save_to_s3_parquet(
         return {
             "s3_key": s3_key,
             "size": len(parquet_buffer.getvalue()),
-            "row_count": len(items),
+            "row_count": len(valid_items),
         }
 
     except Exception as e:
@@ -315,19 +338,44 @@ def crawl(
             logger.info("No more items returned, reached end of dataset")
             break
 
+        # Filter out None values and invalid items
+        valid_items = [
+            item
+            for item in items
+            if item is not None and isinstance(item, dict) and "id" in item
+        ]
+
+        if len(valid_items) == 0:
+            logger.warning(
+                "No valid items in response",
+                extra={"current_id": current_id, "raw_count": len(items)},
+            )
+            time.sleep(config["sleep_interval"])
+            continue
+
+        if len(valid_items) < len(items):
+            logger.warning(
+                "Filtered out invalid items",
+                extra={
+                    "total_received": len(items),
+                    "valid_count": len(valid_items),
+                    "filtered_count": len(items) - len(valid_items),
+                },
+            )
+
         # Add to batch
-        batch_items.extend(items)
-        total_items += len(items)
+        batch_items.extend(valid_items)
+        total_items += len(valid_items)
 
         # Update current_id to the last item ID in this batch
-        last_item_id = items[-1]["id"]
+        last_item_id = valid_items[-1]["id"]
         current_id = last_item_id
 
         logger.debug(
             "Fetched batch",
             extra={
                 "request_number": i + 1,
-                "items_count": len(items),
+                "items_count": len(valid_items),
                 "last_processed_id": last_item_id,
             },
         )
