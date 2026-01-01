@@ -11,8 +11,6 @@ resource "aws_dynamodb_table" "crawl_state" {
     type = "S"
   }
 
-
-
   point_in_time_recovery {
     enabled = true
   }

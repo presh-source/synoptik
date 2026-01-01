@@ -160,7 +160,7 @@ resource "aws_cloudwatch_event_rule" "aggregator_user_schedule" {
 resource "aws_cloudwatch_event_target" "aggregator_user_lambda" {
   rule      = aws_cloudwatch_event_rule.aggregator_user_schedule.name
   target_id = "AggregatorUserLambdaTarget"
-  arn       = module.aggregator.function_arn
+  arn       = module.telemetry_aggregator.function_arn
 
   input = jsonencode({
     state_key = "U1RBVEUjZ2l0aHViI3VzZXI="
@@ -174,7 +174,7 @@ resource "aws_cloudwatch_event_target" "aggregator_user_lambda" {
 resource "aws_lambda_permission" "allow_eventbridge_aggregator_user" {
   statement_id  = "AllowExecutionFromEventBridgeAggregatorUser"
   action        = "lambda:InvokeFunction"
-  function_name = module.aggregator.function_name
+  function_name = module.telemetry_aggregator.function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.aggregator_user_schedule.arn
 }
@@ -191,7 +191,7 @@ resource "aws_cloudwatch_event_rule" "aggregator_repository_schedule" {
 resource "aws_cloudwatch_event_target" "aggregator_repository_lambda" {
   rule      = aws_cloudwatch_event_rule.aggregator_repository_schedule.name
   target_id = "AggregatorRepositoryLambdaTarget"
-  arn       = module.aggregator.function_arn
+  arn       = module.telemetry_aggregator.function_arn
 
   input = jsonencode({
     state_key = "U1RBVEUjZ2l0aHViI3JlcG9zaXRvcnk="
@@ -205,7 +205,7 @@ resource "aws_cloudwatch_event_target" "aggregator_repository_lambda" {
 resource "aws_lambda_permission" "allow_eventbridge_aggregator_repository" {
   statement_id  = "AllowExecutionFromEventBridgeAggregatorRepository"
   action        = "lambda:InvokeFunction"
-  function_name = module.aggregator.function_name
+  function_name = module.telemetry_aggregator.function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.aggregator_repository_schedule.arn
 }
