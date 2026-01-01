@@ -504,7 +504,7 @@ def lambda_handler(event, context):
                 # Save detailed metadata to S3 to avoid EventBridge 256KB limit
                 now = datetime.now(timezone.utc)
                 metadata_key = (
-                    f"cold-path/github/telemetry/{config['entity']}/"
+                    f"cold-path/{config['organisation']}/telemetry/{config['entity']}/"
                     f"year={now.year}/month={now.month:02d}/day={now.day:02d}/"
                     f"{run_id}.json"
                 )
