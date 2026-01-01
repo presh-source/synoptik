@@ -256,87 +256,87 @@ data "aws_iam_policy_document" "telemetry_aggregator_lambda_policy" {
 # Lambda Functions
 # ============================================================================
 
-module "repo_crawler" {
-  source = "../shared/lambda"
+# module "repo_crawler" {
+#   source = "../shared/lambda"
 
-  project_name         = var.project_name
-  environment          = var.environment
-  function_name        = "repo-crawler"
-  function_description = "Crawls GitHub repositories and stores data in S3"
-  handler              = "repo_crawler.lambda_handler"
-  runtime              = local.runtime
-  timeout              = local.timeout
-  memory_size          = local.memory_size
+#   project_name         = var.project_name
+#   environment          = var.environment
+#   function_name        = "repo-crawler"
+#   function_description = "Crawls GitHub repositories and stores data in S3"
+#   handler              = "repo_crawler.lambda_handler"
+#   runtime              = local.runtime
+#   timeout              = local.timeout
+#   memory_size          = local.memory_size
 
-  filename         = data.archive_file.repo_crawler_lambda.output_path
-  source_code_hash = data.archive_file.repo_crawler_lambda.output_base64sha256
+#   filename         = data.archive_file.repo_crawler_lambda.output_path
+#   source_code_hash = data.archive_file.repo_crawler_lambda.output_base64sha256
 
-  iam_policy_document  = data.aws_iam_policy_document.repo_crawler_lambda_policy.json
-  create_custom_policy = true
-  managed_policy_arns  = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
+#   iam_policy_document  = data.aws_iam_policy_document.repo_crawler_lambda_policy.json
+#   create_custom_policy = true
+#   managed_policy_arns  = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
 
-  layers = [
-    module.crawler_dependencies.arn,
-    local.awssdkpandas_layer,
-    local.powertools_layer
-  ]
+#   layers = [
+#     module.crawler_dependencies.arn,
+#     local.awssdkpandas_layer,
+#     local.powertools_layer
+#   ]
 
-  environment_variables = {
-    DYNAMODB_TABLE_NAME       = aws_dynamodb_table.crawl_state.name
-    S3_BUCKET_NAME            = var.data_lake_bucket_name
-    GITHUB_TOKEN              = var.github_token
-    REQUESTS_PER_EXECUTION    = local.requests_per_execution
-    SLEEP_INTERVAL            = local.sleep_interval
-    PROJECT_NAME              = var.project_name
-    DASHBOARD_APPSYNC_API_URL = var.dashboard_appsync_api_url
-    SENTRY_DSN                = var.sentry_dsn_backend
-    ENVIRONMENT               = var.environment
-    VERSION                   = "1.0.0"
-  }
+#   environment_variables = {
+#     DYNAMODB_TABLE_NAME       = aws_dynamodb_table.crawl_state.name
+#     S3_BUCKET_NAME            = var.data_lake_bucket_name
+#     GITHUB_TOKEN              = var.github_token
+#     REQUESTS_PER_EXECUTION    = local.requests_per_execution
+#     SLEEP_INTERVAL            = local.sleep_interval
+#     PROJECT_NAME              = var.project_name
+#     DASHBOARD_APPSYNC_API_URL = var.dashboard_appsync_api_url
+#     SENTRY_DSN                = var.sentry_dsn_backend
+#     ENVIRONMENT               = var.environment
+#     VERSION                   = "1.0.0"
+#   }
 
-  tags = var.tags
-}
+#   tags = var.tags
+# }
 
-module "user_crawler" {
-  source = "../shared/lambda"
+# module "user_crawler" {
+#   source = "../shared/lambda"
 
-  project_name         = var.project_name
-  environment          = var.environment
-  function_name        = "user-crawler"
-  function_description = "Crawls GitHub users and stores data in S3"
-  handler              = "user_crawler.lambda_handler"
-  runtime              = local.runtime
-  timeout              = local.timeout
-  memory_size          = local.memory_size
+#   project_name         = var.project_name
+#   environment          = var.environment
+#   function_name        = "user-crawler"
+#   function_description = "Crawls GitHub users and stores data in S3"
+#   handler              = "user_crawler.lambda_handler"
+#   runtime              = local.runtime
+#   timeout              = local.timeout
+#   memory_size          = local.memory_size
 
-  filename         = data.archive_file.user_crawler_lambda.output_path
-  source_code_hash = data.archive_file.user_crawler_lambda.output_base64sha256
+#   filename         = data.archive_file.user_crawler_lambda.output_path
+#   source_code_hash = data.archive_file.user_crawler_lambda.output_base64sha256
 
-  iam_policy_document  = data.aws_iam_policy_document.user_crawler_lambda_policy.json
-  create_custom_policy = true
-  managed_policy_arns  = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
+#   iam_policy_document  = data.aws_iam_policy_document.user_crawler_lambda_policy.json
+#   create_custom_policy = true
+#   managed_policy_arns  = ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
 
-  layers = [
-    module.crawler_dependencies.arn,
-    local.awssdkpandas_layer,
-    local.powertools_layer
-  ]
+#   layers = [
+#     module.crawler_dependencies.arn,
+#     local.awssdkpandas_layer,
+#     local.powertools_layer
+#   ]
 
-  environment_variables = {
-    DYNAMODB_TABLE_NAME       = aws_dynamodb_table.crawl_state.name
-    S3_BUCKET_NAME            = var.data_lake_bucket_name
-    GITHUB_TOKEN              = var.github_token
-    REQUESTS_PER_EXECUTION    = local.requests_per_execution
-    SLEEP_INTERVAL            = local.sleep_interval
-    PROJECT_NAME              = var.project_name
-    DASHBOARD_APPSYNC_API_URL = var.dashboard_appsync_api_url
-    SENTRY_DSN                = var.sentry_dsn_backend
-    ENVIRONMENT               = var.environment
-    VERSION                   = "1.0.0"
-  }
+#   environment_variables = {
+#     DYNAMODB_TABLE_NAME       = aws_dynamodb_table.crawl_state.name
+#     S3_BUCKET_NAME            = var.data_lake_bucket_name
+#     GITHUB_TOKEN              = var.github_token
+#     REQUESTS_PER_EXECUTION    = local.requests_per_execution
+#     SLEEP_INTERVAL            = local.sleep_interval
+#     PROJECT_NAME              = var.project_name
+#     DASHBOARD_APPSYNC_API_URL = var.dashboard_appsync_api_url
+#     SENTRY_DSN                = var.sentry_dsn_backend
+#     ENVIRONMENT               = var.environment
+#     VERSION                   = "1.0.0"
+#   }
 
-  tags = var.tags
-}
+#   tags = var.tags
+# }
 
 module "github_crawler" {
   source = "../shared/lambda"
