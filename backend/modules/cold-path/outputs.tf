@@ -6,14 +6,6 @@ output "dynamodb_table_arn" {
   value = aws_dynamodb_table.crawl_state.arn
 }
 
-output "repo_crawler_lambda_arn" {
-  value = module.repo_crawler.function_arn
-}
-
-output "user_crawler_lambda_arn" {
-  value = module.user_crawler.function_arn
-}
-
 output "telemetry_table_name" {
   description = "Name of the telemetry DynamoDB table"
   value       = aws_dynamodb_table.telemetry.name
